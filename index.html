@@ -1,11 +1,652 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Document</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Website</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f4f4f4;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        .question-container {
+            background: white;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px auto;
+            width: 80%;
+            max-width: 600px;
+            text-align: left;
+        }
+        .options {
+            list-style-type: none;
+            padding: 0;
+        }
+        .options li {
+            background: #f9f9f9;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            transition: 0.3s;
+        }
+        .options li:hover {
+            background: #e0e0e0;
+            cursor: pointer;
+        }
+        button {
+            margin-top: 20px;
+            padding: 12px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            border: none;
+            border-radius: 5px;
+            background: #007BFF;
+            color: white;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        #result {
+            font-weight: bold;
+            margin-top: 20px;
+        }
+    </style>
 </head>
 <body>
-  <div>hello</div>
+    <h1>Quiz</h1>
+    <div id="quiz-container" class="question-container"></div>
+    <button onclick="checkAnswers()">Submit</button>
+    <p id="result"></p>
+
+    <script>
+        const questionsText = `
+        Which of the following best describes how Adam Smith's concept of the "invisible hand" manifested during the Industrial Revolution?
+        a. Government regulations guided economic development
+        b. Industrialists deliberately coordinated their efforts for societal benefit
+        c. Individual pursuit of self-interest inadvertently led to broader economic growth
+        d. Religious institutions directed the flow of capital and labor
+
+        How did the reality of labor conditions during the Industrial Revolution challenge Adam Smith's economic theories?
+        a. Workers formed powerful unions that controlled production
+        b. Harsh working conditions and exploitation contradicted the idea of mutually beneficial free labor markets
+        c. The division of labor proved less efficient than Smith predicted
+        d. Government intervention in labor markets exceeded Smith's recommendations
+
+        Which aspect of modern capitalism represents the greatest departure from Adam Smith's original vision of free markets?
+        a. The global nature of trade
+        b. The rise of entrepreneurship
+        c. The prevalence of corporate monopolies
+        d. The use of currency as a medium of exchange
+
+        How did Adam Smith's ideas about the division of labor anticipate technological developments during the later stages of the Industrial Revolution?
+        a. They predicted the invention of steam power
+        b. They directly led to the creation of the telegraph
+        c. They foresaw the development of interchangeable parts
+        d. They conceptually aligned with the efficiency of assembly line production
+
+        What was the main argument in Malthus' An Essay on the Principle of Population?
+        a. Governments should increase welfare programs to support the poor.
+        b. Population grows exponentially, while food supply grows arithmetically, leading to crises.
+        c. Industrialization would solve poverty by creating unlimited resources.
+        d. Technological advancements would always prevent food shortages.
+
+        How did Malthus influence economic policies during the Industrial Revolution?
+        a. He promoted government-funded social welfare programs.
+        b. His ideas led to minimal government aid for the poor, influencing the British Poor Laws.
+        c. He supported unrestricted population growth.
+        d. He argued that capitalism alone would solve poverty.
+
+        Which of the following was a major criticism of Malthus' theory?
+        a. He underestimated the role of technological advancements in increasing food production.
+        b. He overestimated capitalism's ability to solve poverty.
+        c. He ignored the impact of urbanization on industrial progress.
+        d. He argued that government intervention was necessary to limit population growth.
+        
+        What modern issue is most closely related to Malthus' theory?
+        a. The spread of democracy worldwide.
+        b. Climate change and global resource scarcity.
+        c. The rise of artificial intelligence in labor markets.
+        d. The decline of population growth in industrialized nations.
+
+        According to Bentham, what is the measure of right and wrong?
+        a. The greatest happiness, regardless of the number
+        b. The greatest happiness of the greatest number
+        c. The greatest happiness to one's self
+        d. The greatest good
+        
+        What is the utility of an action?
+        a. How much good an action brings to how many people
+        b. How much the results can be utilized
+        c. What the consequences of an action are
+        d. The measure of right and wrong
+        
+        Why did Bentham not like the use of theology and things like “common sense” in moral works?
+        a. He did not believe in God and thought common sense was too general
+        b. He believed that God existed but would throw everything else off
+        c. He did not believe that either was checkable or verifiable and could not be generally defined
+        d. He failed to truly understand the subject and decided to neglect them
+        
+        According to utilitarianism, what would be the best result of an action upon a group of people?
+        a. One person has happiness that outmatches the rest's dissatisfaction
+        b. Everyone is satisfied and is as happy as possible
+        c. Some people are dissatisfied and some are satisfied
+        d. It takes things away from some people and gives their equivalents to the rest
+        
+        What was John Stuart Mill's main belief about individual freedom?
+        a. Freedom is unnecessary for a healthy society.
+        b. People should have unlimited freedom without any restrictions.
+        c. Individual freedom should be protected as long as it doesn't harm others.
+        d. Freedom should only be granted to the wealthy and powerful.
+        
+        How did John Stuart Mill impact labor laws during the Industrial Revolution?
+        a. He advocated for limited working hours and better working conditions for factory workers.
+        b. He wanted to abolish all forms of labor laws.
+        c. He believed workers should not be protected by the government.
+        d. He supported the idea of child labor to increase factory productivity.
+        
+        What was one of John Stuart Mill's key arguments regarding women's rights?
+        a. Women should be denied the right to education and employment.
+        b. Women should only be allowed to work in domestic roles.
+        c. Women should have access to education, employment, and the right to vote.
+        d. Women should not participate in politics or public life.
+        
+        Why did John Stuart Mill believe government intervention was necessary in economic systems?
+        a. To protect workers and ensure social well-being in situations where free markets could lead to exploitation.
+        b. To reduce government control over workers and industries.
+        c. To help only the wealthiest citizens in society.
+        d. To encourage complete free-market capitalism without any regulations.
+
+        What is the main idea of utopian socialism? 
+        a. The creation of a society based on cooperation. 
+        b. The implementation of a Laissez-Faire economy. 
+        c. Social reform could only happen through rebellion. 
+        d. The focus on humanism and individuality. 
+        
+        How did Robert Owen's philosophy view human nature? 
+        a. Humans are born with inherent characteristics. 
+        b. Humans are shaped by their environment. 
+        c. Humans are inclined towards isolation. 
+        d. Humans are fundamentally bad. 
+        
+        Utopian socialism advocated for which of the following in response to the problems of the IR? 
+        a. The implementation of military rule to control the people. 
+        b. The promotion of capitalism and international trade. 
+        c. Complete democracy. 
+        d. Gradual improvements for the working class. 
+        
+        Which of the following is Robert Owen's impact on the modern world? 
+        a. His ideas contributed to the development of social reforms. 
+        b. He created the first fully automated factories to replace the workforce. 
+        c. He advocated for violence and inspired revolutionary movements. 
+        d. He inspired modern thinkers through his critiques of existentialism. 
+
+        What did Marx identify as the fundamental force driving historical change during the Industrial Revolution? 
+        a. The dialectical progression of philosophical ideas from Hegel
+        b. Class struggle between the bourgeoisie and proletariat
+        c. Technological innovation and mechanization of production
+        d. The inherent contradictions within capitalist economic systems
+        
+        How did Marx distinguish his "scientific socialism" from other contemporary social theories? 
+        a. By grounding it in empirical economic data and factory records
+        b. By emphasizing moral arguments about worker dignity
+        c. By focusing on utopian ideals of future societal organization
+        d. By prioritizing gradual reform over revolutionary change
+        
+        According to Marx's analysis of industrial capitalism, which process most directly led to the formation of an urban working class? 
+        a. Alienation of workers from their creative autonomy 
+        b. Extraction of surplus value from labor
+        c. Proletarianization of displaced artisans and peasants
+        d. Recurring economic crises caused by overproduction
+        
+        Which principle of dialectical materialism best explains Marx's prediction that capitalism would eventually give way to socialism? 
+        a. Unity and Struggle of Opposites - the tension between bourgeoisie and proletariat
+        b. Transformation of Quantity into Quality - gradual technological changes leading to new social systems
+        c. Negation of the Negation - socialism retaining industrial productivity while eliminating exploitation
+        d. Historical Inevitability - the deterministic progression of economic systems
+
+        Which one of the following was not an effect of Bessemer Steel?
+        a. Polluted rivers
+        b. Cheaper Steel
+        c. Skyscrapers
+        d. Railroads
+        
+        What was the main factor that influenced Bessemer in his projects?
+        a. Steel is too expensive
+        b. Steel is too brittle
+        c. Steel production has too much manual labor
+        d. Steel production needs to speed up
+        
+        How was Bessemer Steel different from other Steels?
+        a. Bessemer Steel removed carbon and then added it back in a controlled way
+        b. Bessemer Steel used iron from the mines near Sheffield, while other companies got iron from lower quality mines
+        c. Bessemer Steel used the same process, but industrialized it, and incorporated machines, instead of human labor
+        d. Bessemer Steel was created in a more sanitary facility, increasing the purity of the steel
+        
+        What 2 things did Bessemer do that lead to the invention of the Bessemer Process?
+        a. Working in a steel factory
+        b. Revolutionizing bronze dust
+        c. Continuously molding glass
+        d. Working with metallurgy scientists
+
+        What were the main goals of Haussmann's renovation of Paris?
+        a. Make Paris the tallest city in the world with the most skyscrapers
+        b. Modernize Paris by improving sanitation, reducing overcrowding, and making the city more efficient for transportation and commerce
+        c. Modernize NY to make everyone want to move their
+        d. Not change anything and preserve Paris the way it is
+        
+        How did Haussmann's work reflect the ideals of the Industrial Revolution?
+        a. Embraced infrastructure improvements, and efficiency  focusing  on progress and urbanization
+        b. It did not reflect the ideals of the IR
+        c. Discouraged technological progress and promoted rural living instead
+        d. Promoted child labor
+        
+        What was a  major criticism of his project?
+        a. Many working-class citizens were displaced
+        b. No one criticized him and his ideas were immediately welcomed
+        c. Many wanted him to build more castles and royal buildings
+        d. Made Paris to dirty
+        
+        How do we see Haussmann's influence in cities today?
+        a. Many cities now prioritize wide streets, zoning laws, and green spaces, similar to Haussmann's ideas
+        b. Cities today aren't influenced by Haussmann
+        c. Skyscrapers and futuristic smart cities have replaced all historical urban planning concepts
+
+        What areas of the IR did the creation of dynamite influence?
+        a. Urbanization
+        b. Resources 
+        c. A and B 
+        d. Energy Generation
+        e. All of the above
+        
+        Why was the Nobel Prize created?
+        a. So people wouldn't die 
+        b. So military weapons wouldn't be made
+        c. So  that Nobel would have no money
+        d. To balance Nobel's legacy
+        
+        How does the Nobel Prize relate to principles of the IR?
+        a. Celebrating urbanization
+        b. Valuing human advancement
+        c. Manufacturing materials 
+        d. Thinking about farming
+        
+        How did the IR influence Nobel's creation of dynamite?
+        a. Working conditions weren't controllable because of the reliance on gunpowder
+        b. scientists didn't have the correct equipment in labs
+        c. Nobel was in debt and needed money
+        d. The factories weren't safe because of the heavy machinery used
+
+        How did Andrew Carnegie's steel production impact the growth of American cities?
+        a. It led to the decline of urban development as people moved to rural areas
+        b. It provided strong and affordable steel for bridges, skyscrapers, and railroads
+        c. It caused a decrease in factory jobs as automation replaced workers
+        d. It slowed down industrial expansion due to high steel prices
+        
+        Why was Andrew Carnegie's steel industry important to the Industrial Revolution?
+        a. It allowed the U.S. to become less dependent on European imports
+        b. It led to the immediate rise of labor unions across the country
+        c. It made steel too expensive for smaller businesses to use
+        d. It caused a decline in railroad construction and urban growth
+        
+        Which of the following best describes Carnegie's approach to philanthropy?
+        a. He believed the rich should donate their wealth to benefit society
+        b. He thought only the government should provide social services
+        c. He focused on giving money directly to individual workers
+        d. He refused to donate money, believing in total self-reliance
+        
+        What was a major contradiction in Carnegie's actions as both an industrialist and a philanthropist?
+        a. He supported labor unions but fired workers who joined them
+        b. He built libraries and schools but paid low wages to his workers
+        c. He helped struggling businesses but refused to donate to education
+        d. He promoted workplace safety but invested in dangerous industries
+
+        How did Rockefeller's business practices influence modern corporations?
+        a. Promoting gov. ownership of industries
+        b. Pioneering strategies like mergers, acquisitions, and horizontal integration
+        c. By discouraging competition and innovation in the market
+        d. By prioritizing small businesses over large-scale industrialization
+        
+        Why did the U.S. government enforce antitrust laws against Standard Oil?
+        a. To encourage Rockefeller to expand internationally
+        b. To increase oil production nationwide
+        c. To prevent monopolistic control and restore market competition
+        d. To support Rockefeller's philanthropic efforts
+        
+        How did Rockefeller's influence on the oil industry shape global energy markets today?
+        a. Establishing oil as a global commodity
+        b. Discouraging oil production and pushing for renewable energy sources
+        c. By making oil an exclusive resource only for large corporations
+        d. By creating government-owned oil industries worldwide
+        
+        How did Rockefeller demonstrate economic reasoning in managing scarce resources?
+        a. Reducing production to increase oil prices
+        b. Restricting oil exports to maintain domestic supply
+        c. Relying solely on gov. subsidies to grow Standard Oil
+        d. Increasing efficiency and lowering costs through consolidation
+
+        What was Alessandro Volta's main contribution to science?
+        a. He discovered electricity in living organisms
+        b. He invented the first true battery, the Voltaic Pile
+        c. He created the first light bulb
+        d. He developed the steam engine
+        
+        How did the Voltaic Pile generate electricity?
+        a. By using a spinning magnet
+        b. By harnessing solar energy
+        c. By using alternating layers of zinc and copper with a saltwater or acid-soaked cloth
+        d. By burning coal to produce steam
+        
+        Why was Volta's invention important to the Industrial Revolution?
+        a. It provided a stable and reliable source of electrical energy
+        b. It replaced steam engines in factories
+        c. It made it possible to build railroads
+        d. It allowed for the mass production of light bulbs
+        
+        What was the main disagreement between Alessandro Volta and Luigi Galvani?
+        a. Volta believed electricity came from chemical reactions, while Galvani thought it was a biological force
+        b. Volta supported steam power, while Galvani promoted wind energy
+        c. Galvani invented the first battery, but Volta claimed credit
+        d. They disagreed on the use of batteries in electric cars
+
+        What was Michael Faraday's most important contribution to modern electrical technology?
+        a. The invention of the battery
+        b. The discovery of electromagnetic induction
+        c. The creation of the first steam engine
+        d. The development of alternating current(AC)
+        
+        How did Faraday's discoveries impact the Industrial Revolution?
+        a. They allowed factories to reduce energy costs by over 80% through efficient electric motors
+        b. They led to an immediate replacement of steam engines with electric power
+        c. They contributed to the decline of urbanization by making rural life easier
+        d. They caused governments to abandon investment in industrial technology
+        
+        Which of the following explains how Faraday's concept of electromagnetic fields shaped modern physics?
+        a. It provided a foundation for nuclear energy production
+        b. It allowed scientists to explain the nature of radio waves and wireless communication
+        c. It directly led to the invention of the first airplane
+        d. It replaced Newton's laws of motion in classical mechanics
+        
+        Why did Faraday refuse knighthood and avoid working on military projects?
+        a. He believed science should serve military and not be used for war
+        b. He was not recognized enough for his contributions
+        c. He wanted to dedicate his life to astronomy instead
+        d. He was against the use of electricity in any form
+
+        How did Nikolaus Otto's internal combustion engine contribute to the expansion of global trade?
+        a. It enabled faster and more efficient transportation, allowing goods to be transported more quickly and cost-effectively over long distances.
+        b. It led to the immediate decline of steam-powered trains and ships, forcing industries to switch entirely to gasoline-powered alternatives.
+        c. It reduced industrial production, as factories required fewer workers due to automation.
+        d. It decreased the demand for fossil fuels, as more industries transitioned to electric power sources.
+        
+        How did Nikolaus Otto's invention of the internal combustion engine contribute to changes in transportation during the Industrial Revolution?
+        a. It led to the decline of steam-powered transportation, as internal combustion engines became the dominant force in trains and ships.
+        b. It allowed for the development of automobiles and motorized vehicles, providing a more efficient and compact alternative to steam engines.
+        c. It accelerated the expansion of railroads, as internal combustion engines replaced electric-powered locomotives.
+        d. It reduced the need for fossil fuels in transportation, as Otto's engine primarily relied on renewable energy sources.
+        
+        What major industry grew because of Otto's invention?
+        a. The textile industry, because of its reliance on mechanized looms and steam power
+        b. The mining industry, because of its need for powerful machinery to extract resources
+        c. The automotive and oil industries, because of the widespread adoption of gasoline-powered vehicles.
+        d. The printing industry, because of its shift from manual labor to machine-powered presses
+        
+        Which of the following best explains why Nikolaus Otto's internal combustion engine had a lasting impact on industrial and economic development?
+        a. It increased global dependence on fossil fuels, as gasoline and oil became essential for powering vehicles, factories, and machinery.
+        b. It immediately replaced all steam-powered engines, revolutionizing every sector of industry overnight with its superior efficiency.
+        c. It eliminated the need for human and animal labor in agriculture, as combustion engines fully mechanized farming within a few decades.
+        d. It limited technological advancements in other industries, as all resources were diverted to refining and mass-producing Otto’s engine.
+
+        How did the steam locomotive end up creating more jobs?
+        a. It led to the railroad which required people to build it
+        b. It required people to generate the energy on the vehicle
+        c. It needed more fuel so there were additional jobs in mining
+        d. A and c
+        
+        Who were the key inventors of the original steam locomotive?
+        a. James Watt
+        b. James Watt, and the Stephensons worked together
+        c. George, Robert, and George Robert Stephenson
+        d. None of the above
+        
+        When the first engine was built, what was the main problem with it?
+        a. Expensive
+        b. Large
+        c. Required rare materials
+        d. Inefficient
+        
+        What was the major impact of the steam locomotive?
+        a. Made steam production more efficient
+        b. Led to new engineering principles
+        c. Everyone wanted it
+        d. Improved the economy with more jobs and lower prices
+
+        What was the first significant invention by Gottlieb Daimler and when was it developed?
+        a. High-speed gasoline engine in 1885
+        b. Four-wheeled automobile in 1886
+        c. Motorcycle in 1885
+        d. Carburetor design in 1885
+        
+        How did the Industrial Revolution influence Daimler's work?
+        a. Provided technological foundations like the four-stroke engine
+        b. Created a demand for efficient transportation
+        c. Both a and b
+        d. Neither a nor b
+        
+        What was the impact of Daimler's automobile on society during the Industrial Revolution?
+        a. Enhanced transportation speed and accessibility
+        b. Spurred growth in related industries
+        c. Facilitated urban migration
+        d. All of the above
+        
+        How does the automobile's development reflect the broader trends of the Industrial Revolution?
+        a. It was a product of mechanization and mass production
+        b. It addressed the need for efficient transportation in expanding cities
+        c. It led to governmental adaptations in infrastructure and regulations
+        d. All of the above
+
+        Which of the following best describes the Wright brothers' primary contribution to modern transportation? 
+        a. They replaced steam engines with electric-powered trains. 
+        b. They invented the concept of mass transportation for cities. 
+        c. They achieved the first powered and controlled airplane flight, enabling efficient global travel. 
+        d. They focused on improving maritime navigation for faster sea voyages.
+        
+        The development of airplanes following the Wright Flyer contributed most to which of the following economic effects? 
+        a. The reduction of local markets and the collapse of trade barriers. 
+        b. The globalization of trade, increased tourism, and enhanced communication between nations. 
+        c. The elimination of shipping industries as air travel became dominant. 
+        d. The creation of national markets replacing international trade
+        
+        The Wright brothers' success in aviation inspired future advancements in which fields? 
+        a. Maritime engineering and underwater exploration.
+        b. Space exploration and advancements in aerodynamics. 
+        c. Renewable energy sources and agricultural technologies. 
+        d. Robotics and urban infrastructure development.
+        
+        How did the Wright brothers' invention most significantly impact global military strategies? 
+        a. By providing new means of air surveillance and speed during conflicts. 
+        b. By designing airplanes that replaced submarines in naval warfare. 
+        c. By inventing more efficient land vehicles for ground combat. 
+        d. By introducing large-scale air transportation for troop movements.
+
+        What was one groundbreaking feature of the Analytical Engine that distinguished it from earlier calculating devices?
+        a. It could store instructions for multiple calculations
+        b. It was powered by electricity
+        c. It used steam power for faster calculations
+        d. It relied on human operators for manual input
+        
+        How did Babbage's Analytical Engine influence industries during the Industrial Revolution?
+        a. It replaced textile machines in factories
+        b. It introduced mechanical automation for complex calculations
+        c. It improved coal mining techniques
+        d. It streamlined steam engine production
+        
+        Babbage's Analytical Engine raised early concerns about automation's impact on labor. What was a key argument from critics at the time?
+        a. Machines might replace skilled artisans and reduce employment opportunities
+        b. Automation would increase wages for factory workers
+        c. Machines would become too complex for workers to understand
+        d. Automation would make manual calculations obsolete, leading to inaccurate results
+        
+        Babbage's work introduced the idea that machines could replicate aspects of human thought through logic and algorithms. What philosophical question did this raise about technology's role in society?
+        a. Could machines eventually surpass human intelligence?
+        b. Could machines develop creativity and emotion?
+        c. Could machines replace traditional educational institutions?
+        d. Could machines undermine the role of democracy in decision-making?
+
+        How does the telegraph reflect the IR (common denominators)? 
+        a. It added to the interconnection fostered during the IR
+        b. It added to the class struggles Marx warned about in his manifesto
+        c. It's another example of optimization from one technology to another
+        d. A and C
+        
+        Which of the following best describes the role of the telegraph in the communication's evolution (choose 2):
+        a. It was a culmination of decades of evolution
+        b. It kicked off decades of evolution
+        c. It wasn't individually important, but it led to important inventions
+        d. It had no role in evolution
+        
+        Which “theme” of the IR caused the success of Morse's telegraph?
+        a. Efficiency
+        b. Economy
+        c. Factory
+        d. Laissez-Faire
+        
+        How did the telegraph relate to mail carrying? (Choose 2 best answers)
+        a. It made mail fully obsolete
+        b. It made mail less prevalent
+        c. It made mail less expensive
+        d. Both used railway
+
+        How did the harmonic telegraph help the invention of the telephone?
+        a. It allowed for more lines to be transmitted at once
+        b. It allowed for multiple frequencies to be transmitted
+        c. It gave Bell the idea for the telephone
+        d. It gave Bell an edge over his rival Gray
+        
+        What profession was Bell in and how did that help?
+        a. He was a  Professor and that gave him compassion
+        b. He taught the deaf and that gave him a knowledge of sound
+        c. He was a professor and that gave him knowledge of electrical components
+        d. He was a businessman that gave him funding for his project
+        
+        How did the Telephone help Women?
+        a. It gave them jobs as telephone operators
+        b. It pushed suffrage rights for women
+        c. It allowed them to communicate with their family within household
+        d. It allowed for better education of women through homeschooling
+        
+        What did the harmonic telegraph have that previous telegraphs didn't?
+        a. A wireless system that allowed for instant communication
+        d. An multiple wires that could be sent through one telegraph
+        c. An alternative to noisy telegraphs that interrupted each other
+        d. A way to transmit up to 10 different messages on the same line
+
+        Which of the following was not a way in which wireless telegraphy positively impacted society? 
+        a. Allowed soldiers to discuss strategies and learn important information from different locations 
+        b. Allowed prompt communication between private business owners and their associates
+        c. Allowed ships to signal to locations on shore when facing danger/trouble
+        d. Allowed operators to send a voice message to the receiving telegraph
+        
+        What was the main reason as to why Marconi kept updating his invention? 
+        a. To increase the distance that the signals could travel 
+        b. To make the product look more appealing so more people would buy it 
+        c. To add the feature where vocal transmissions could be sent through the telegraph
+        d. To reduce the disruptive noise made by the telegraph when sending signals 
+        
+        Which of the following was not a way in which wireless telegraphy affected the Industrial Revolution?
+        a. Helped railroad communication to make transportation of goods, materials and people faster and more efficient 
+        b. Made real time information available for businesses to make quick and advised financial decisions, which boosted the economy 
+        c. Decreased production costs by allowing negotiations to occur through the telegraph signals 
+        d. Increased overall efficiency of business employees by giving a communication source for quick spreading of important information  
+        
+        Which of the following was not a restriction for the wireless telegraph? 
+        a. The signals were in morse code and not spoken words, which took more time to translate and understand
+        b. The telegraph channel was open to everybody so at times important and classified messages could be heard by people with wrong intentions, leading to potential danger 
+        c. Many telegraphs were placed within close vicinity to each other so sometimes the channel in which the signal traveled through could get mixed with another channel and the message could end up being mixed or unclear.
+        d. The signal was usually translated by trained operators led to an increase in job opportunities for people who could decode morse code 
+
+        How did the eradication of smallpox demonstrate the power of scientific advancements in history?
+        a. It proved that early medical discoveries had little lasting impact on modern science.
+        b. It showed that disease prevention could be achieved on a global scale through vaccines.
+        c. It demonstrated that public health improvements led to the territorial expansion of countries.
+        d. It showed that the government was to have no interference on public health initiatives.
+        
+        How did Jenner's experiences lead him to the discovery of the vaccine?
+        a. His work with fossils allowed him to study early strains of smallpox.
+        b. His apprenticeship in the apothecary inspired him to use cowpox in variolation.
+        c. His work as a physician exposed him to patients with naturally occuring immunity to smallpox.
+        d. His connections in the government provided him with laboratory equipment to research smallpox sores.
+        
+        How was the practice of variolation helpful in the discovery of modern vaccines?
+        a. It was proven to directly prevent mutations of viruses, which made it easier to create vaccines.
+        b. It proved that immunity could only be achieved through natural infection, not medical intervention.
+        c. It proved that exposure to a weakened form of a disease could provide immunity.
+        d. It led to the discovery of antibiotics, which replaced the need for vaccines.
+        
+        How did Jenner's work impact the Industrial Revolution?
+        a. He invested the money from his grants into overseas ventures.
+        b. It increased the birth rate, in turn boosting the population.
+        c. It decreased the mortality rate, which led to a growing workforce.
+        d. He aided in the organization of a labor union to advocate for workers' rights.
+
+        `;
+
+        const answerKey = ['c', 'b', 'c', 'd', 'b', 'b', 'a', 'b', 'b', 'a', 'c', 'b', 'c', 'a', 'c', 'a', 'a', 'b', 'd', 'a', 'b', 'a', 'c', 'a', 'd', 'a', 'a', 'b', 'b', 'a', 'a', 'a', 'c', 'd', 'b', 'a', 'b', 'a', 'b', 'b', 'b', 'c', 'a', 'd', 'b', 'c', 'a', 'a', 'b', 'a', 'b', 'a', 'a', 'b', 'c', 'a', 'd', 'c', 'd', 'd', 'a', 'c', 'd', 'd', 'c', 'b', 'b', 'a', 'a', 'b', 'a', 'a', 'd', 'a', 'a', 'b', 'b', 'b', 'a', 'd', 'd', 'a', 'c', 'd', 'b', 'b', 'c', 'c'];
+
+        function loadQuestions() {
+            const blocks = questionsText.trim().split(/\n\s*\n/);
+            let quizContainer = document.getElementById('quiz-container');
+            quizContainer.innerHTML = '';
+
+            blocks.forEach((block, index) => {
+                let lines = block.trim().split('\n');
+                let questionText = lines[0];
+                let options = lines.slice(1);
+
+                let questionDiv = document.createElement('div');
+                questionDiv.classList.add('question');
+                questionDiv.innerHTML = `<p><strong>${questionText}</strong></p>`;
+
+                let optionsList = document.createElement('ul');
+                optionsList.classList.add('options');
+
+                options.forEach((option, idx) => {
+                    let li = document.createElement('li');
+                    li.innerHTML = `<label><input type="radio" name="q${index}" value="${String.fromCharCode(97 + idx)}"> ${option.trim()}</label>`;
+                    optionsList.appendChild(li);
+                });
+
+                questionDiv.appendChild(optionsList);
+                quizContainer.appendChild(questionDiv);
+            });
+        }
+
+        function checkAnswers() {
+            let score = 0;
+            answerKey.forEach((correctAnswer, index) => {
+                let selected = document.querySelector(`input[name="q${index}"]:checked`);
+                if (selected && selected.value === correctAnswer) {
+                    score++;
+                }
+            });
+            let result = document.getElementById('result');
+            result.textContent = `You scored ${score} out of ${answerKey.length}.`;
+        }
+
+        loadQuestions();
+    </script>
 </body>
+<footer>
+    <p>Made by Anish Mhaskar</p>
+    <p>MCQs From Edison Academy Magent School Class of 2028</p>
+</footer>
 </html>
