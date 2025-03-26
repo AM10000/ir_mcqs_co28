@@ -16,7 +16,7 @@
         h1 {
             color: #333;
         }
-        .question-container {
+        .question-container, .chat-container {
             background: white;
             box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
             border-radius: 10px;
@@ -36,12 +36,6 @@
             margin: 5px 0;
             border-radius: 5px;
             transition: 0.3s;
-        }
-        .options li.correct {
-            background: #c8e6c9;
-        }
-        .options li.incorrect {
-            background: #ffcdd2;
         }
         .options li:hover {
             background: #e0e0e0;
@@ -66,6 +60,20 @@
             font-weight: bold;
             margin-top: 20px;
         }
+        .correct {
+            background-color: #c8e6c9;
+        }
+        .incorrect {
+            background-color: #ffcccb;
+        }
+        .chat-container textarea {
+            width: 100%;
+            height: 100px;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
@@ -73,6 +81,13 @@
     <div id="quiz-container" class="question-container"></div>
     <button onclick="checkAnswers()">Submit</button>
     <p id="result"></p>
+
+    <div class="chat-container">
+        <h2>Ask Gemini AI</h2>
+        <textarea id="chatInput" placeholder="Ask a question..."></textarea>
+        <button onclick="askGemini()">Send</button>
+        <p id="chatResponse"></p>
+    </div>
 
     <script>
         const questionsText = `
@@ -1157,9 +1172,7 @@
 
                 options.forEach((option, idx) => {
                     let li = document.createElement('li');
-                    let optionValue = String.fromCharCode(97 + idx);
-                    li.innerHTML = `<label><input type="radio" name="q${index}" value="${optionValue}"> ${option.trim()}</label>`;
-                    li.setAttribute('data-value', optionValue);
+                    li.innerHTML = `<label><input type="radio" name="q${index}" value="${String.fromCharCode(97 + idx)}"> ${option.trim()}</label>`;
                     optionsList.appendChild(li);
                 });
 
@@ -1169,39 +1182,50 @@
         }
 
         function checkAnswers() {
-            let score = 0;
+            let result = document.getElementById('result');
             let questions = document.querySelectorAll('.question');
             
             questions.forEach((question, index) => {
-                let selected = question.querySelector(`input[name="q${index}"]:checked`);
-                let options = question.querySelectorAll('li');
-                
-                options.forEach(option => {
-                    option.classList.remove('correct', 'incorrect');
-                    if (option.getAttribute('data-value') === answerKey[index]) {
-                        option.classList.add('correct');
-                    }
-                });
-                
+                let selected = question.querySelector('input[name="q' + index + '"]:checked');
                 if (selected) {
-                    if (selected.value === answerKey[index]) {
-                        score++;
+                    let selectedAnswer = selected.value;
+                    if (selectedAnswer === answerKey[index]) {
+                        question.classList.add('correct');
                     } else {
-                        let incorrectOption = question.querySelector(`li[data-value="${selected.value}"]`);
-                        incorrectOption.classList.add('incorrect');
+                        question.classList.add('incorrect');
                     }
                 }
             });
-            
-            let result = document.getElementById('result');
-            result.textContent = `You scored ${score} out of ${answerKey.length}.`;
+            result.textContent = 'Quiz submitted! Check answers marked in green (correct) and red (incorrect).';
         }
+
+        async function askGemini() {
+    const API_KEY = "AIzaSyBXOkt0C-3MeZ9VCGdi8tiTaaHRnSLk3ZQ";
+    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+    
+    let chatInput = document.getElementById('chatInput').value;
+    let chatResponse = document.getElementById('chatResponse');
+    
+    let response = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            contents: [{ parts: [{ text: chatInput }] }]
+        })
+    });
+    
+    let data = await response.json();
+    
+    // Ensure we access the correct response structure
+    if (data && data.candidates && data.candidates.length > 0 && data.candidates[0].content) {
+        chatResponse.textContent = data.candidates[0].content.parts[0].text;
+    } else {
+        chatResponse.textContent = "Error: Unable to fetch response.";
+    }
+}
+
 
         loadQuestions();
     </script>
 </body>
-<footer>
-    <div>Made By Anish Mhaskar</div>
-    <div>MCQs By Edison Academy Magnet School CO28</div>
-</footer>
 </html>
