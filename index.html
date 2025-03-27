@@ -83,8 +83,8 @@
     <p id="result"></p>
 
     <div class="chat-container">
-        <h2>Ask Gemini AI</h2>
-        <textarea id="chatInput" placeholder="Ask a question..."></textarea>
+        <h2>How did the IR lead to social and economic changes in Europe?</h2>
+        <textarea id="chatInput" placeholder="Type here..."></textarea>
         <button onclick="askGemini()">Send</button>
         <p id="chatResponse"></p>
     </div>
@@ -1205,24 +1205,85 @@
     
     let chatInput = document.getElementById('chatInput').value;
     let chatResponse = document.getElementById('chatResponse');
-    
-    let response = await fetch(API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            contents: [{ parts: [{ text: chatInput }] }]
-        })
-    });
-    
-    let data = await response.json();
-    
-    // Ensure we access the correct response structure
-    if (data && data.candidates && data.candidates.length > 0 && data.candidates[0].content) {
-        chatResponse.textContent = data.candidates[0].content.parts[0].text;
-    } else {
-        chatResponse.textContent = "Error: Unable to fetch response.";
+
+    if (!chatInput.trim()) {
+        chatResponse.textContent = "Please enter a question before submitting.";
+        return;
+    }
+
+    // Show loading message
+    chatResponse.innerHTML = "<em>Loading...</em>";
+
+    let referenceText = `Economic changes: 
+
+The IR shifted society from an agriculture based economy to a manufacturing economy. 
+New machines and new power sources made industries more efficient. 
+Many products were manufactured rather than made by hand. 
+This allowed for mass production. 
+Wider distribution of wealth. 
+Increased international trade with the inventions of the train and the steam engine. 
+The ideas of laissez-faire economics spread. Its supporters pointed to the success of the early IR, in which the government had played a limited role. 
+
+
+Social changes: 
+
+The IR helped create a new middle class and a new urban working class. 
+It created job opportunities for the middle class. The entrepreneurs who set the IR in motion benefitted the most. 
+It also created jobs in factories for the working class. 
+
+Upper class - People of the highest level of society who were usually born into wealth and were the most educated. 
+Ex: Titled nobility such as dukes and earls. 
+They continued to exist as they had before the IR but weren't as secure as before, as many from the middle class gained wealth and power. 
+
+Growing middle class - Entrepreneurs who weren't extremely wealthy but profited from the growth of industry. 
+Ex: Merchants, inventors, shopkeepers, bankers, teachers, skilled labors
+Members came from a variety of backgrounds. 
+Included working class people who found new jobs due to industrialization. 
+They enjoyed a comfortable lifestyle. 
+They were the new bourgeoisie. 
+
+Working class - People with jobs that required limited skill and provided low pay. Typically physical labor. 
+Ex: Agricultural workers, factory workers, and servants
+They lived in slums in very poor conditions. 
+`;
+
+    let requestBody = {
+        contents: [{
+            parts: [{
+                text: `Compare the following input to the reference text and suggest improvements to make it more similar.\n\nReference Text:\n"${referenceText}"\n\nUser Input:\n"${chatInput}"\n\nProvide a structured response with clear sections, bullet points for suggestions, and an improved version of the input formatted cleanly.`
+            }]
+        }]
+    };
+
+    try {
+        let response = await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(requestBody)
+        });
+
+        let data = await response.json();
+        
+        if (data && data.candidates && data.candidates.length > 0 && data.candidates[0].content) {
+            let responseText = data.candidates[0].content.parts[0].text;
+
+            // Format response
+            responseText = responseText.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>") // Bold
+                                       .replace(/\*(.*?)\*/g, "<em>$1</em>") // Italic
+                                       .replace(/\n/g, "<br>") // Newlines
+                                       .replace(/\•/g, "• "); // Bullet points
+
+            chatResponse.innerHTML = responseText;
+        } else {
+            chatResponse.innerHTML = "<strong>Error:</strong> Unable to fetch response.";
+        }
+    } catch (error) {
+        chatResponse.innerHTML = "<strong>Error:</strong> Failed to connect to Gemini AI.";
     }
 }
+
+
+
 
 
         loadQuestions();
