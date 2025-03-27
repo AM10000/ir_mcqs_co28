@@ -67,12 +67,15 @@
             background-color: #ffcccb;
         }
         .chat-container textarea {
-            width: 100%;
-            height: 100px;
+            min-height: 30px; /* Initial height */
+            width: 95%;
             padding: 10px;
             border-radius: 5px;
             border: 1px solid #ccc;
             margin-top: 10px;
+            line-height: 1.5;
+            resize: none;
+            overflow: hidden;
         }
     </style>
 </head>
@@ -84,9 +87,24 @@
 
     <div class="chat-container">
         <h2>How did the IR lead to social and economic changes in Europe?</h2>
-        <textarea id="chatInput" placeholder="Type here..."></textarea>
-        <button onclick="askGemini()">Send</button>
-        <p id="chatResponse"></p>
+        <textarea id="chatInput1" placeholder="Enter your text here..." oninput="autoExpand(this)"></textarea>
+        <button onclick="askGemini('chatInput1', 'chatResponse1', referenceText1)">Send</button>
+        <p id="chatResponse1"></p>
+    
+        <h2>How did an agricultural revolution contribute to population growth?</h2>
+        <textarea id="chatInput2" placeholder="Enter your text here..." oninput="autoExpand(this)"></textarea>
+        <button onclick="askGemini('chatInput2', 'chatResponse2', referenceText2)">Send</button>
+        <p id="chatResponse2"></p>
+
+        <h2>What did the Darby family contribute to the IR?</h2>
+        <textarea id="chatInput3" placeholder="Enter your text here..." oninput="autoExpand(this)"></textarea>
+        <button onclick="askGemini('chatInput3', 'chatResponse3', referenceText3)">Send</button>
+        <p id="chatResponse3"></p>
+
+        <h2>What conditions in Britain paved the way for the IR?</h2>
+        <textarea id="chatInput4" placeholder="Enter your text here..." oninput="autoExpand(this)"></textarea>
+        <button onclick="askGemini('chatInput4', 'chatResponse4', referenceText4)">Send</button>
+        <p id="chatResponse4"></p>
     </div>
 
     <script>
@@ -1199,22 +1217,8 @@
             result.textContent = 'Quiz submitted! Check answers marked in green (correct) and red (incorrect).';
         }
 
-        async function askGemini() {
-    const API_KEY = "AIzaSyBXOkt0C-3MeZ9VCGdi8tiTaaHRnSLk3ZQ";
-    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
-    
-    let chatInput = document.getElementById('chatInput').value;
-    let chatResponse = document.getElementById('chatResponse');
-
-    if (!chatInput.trim()) {
-        chatResponse.textContent = "Please enter a question before submitting.";
-        return;
-    }
-
-    // Show loading message
-    chatResponse.innerHTML = "<em>Loading...</em>";
-
-    let referenceText = `Economic changes: 
+    // Define separate reference texts
+    const referenceText1 = `Economic changes: 
 
 The IR shifted society from an agriculture based economy to a manufacturing economy. 
 New machines and new power sources made industries more efficient. 
@@ -1246,44 +1250,108 @@ Working class - People with jobs that required limited skill and provided low pa
 Ex: Agricultural workers, factory workers, and servants
 They lived in slums in very poor conditions. 
 `;
+    const referenceText2 = `Agricultural Revolution
+The agricultural revolution in the 1700s was actually the second one. The first one happened about 11,000 years ago when people started to learn farming
+Dutch started to fill the sea with land to make more room for growing crops
+In the 1700s, farmers started to explore new technologies, including chemical additions, and soil techniques
+The Seed Drill was invented, which made seed planting more efficient
+Many farmers were fired to further reduce costs of farming
 
-    let requestBody = {
-        contents: [{
-            parts: [{
-                text: `Compare the following input to the reference text and suggest improvements to make it more similar.\n\nReference Text:\n"${referenceText}"\n\nUser Input:\n"${chatInput}"\n\nProvide a structured response with clear sections, bullet points for suggestions, and an improved version of the input formatted cleanly.`
-            }]
-        }]
-    };
+Population Growth
+More food…
+Less famine → Many people at the time(specifically in the lower class) were dying of not having enough food
+More variety → People were generally healthier with a balanced diet
+More knowledge about “good foods” → People were able to actually have a choice when it came to foods, instead of eating everything that was available
+Better sanitation and hygiene
+The impact of the population growth, was that it led to more workers for the Industrial Revolution
+This combined with the less people actually working on farms, paved the way to more innovation and technology throughout Europe
+`;
 
-    try {
-        let response = await fetch(API_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(requestBody)
-        });
+    const referenceText3 = `Smelting
 
-        let data = await response.json();
-        
-        if (data && data.candidates && data.candidates.length > 0 && data.candidates[0].content) {
-            let responseText = data.candidates[0].content.parts[0].text;
+(1709)
 
-            // Format response
-            responseText = responseText.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>") // Bold
-                                       .replace(/\*(.*?)\*/g, "<em>$1</em>") // Italic
-                                       .replace(/\n/g, "<br>") // Newlines
-                                       .replace(/\•/g, "• "); // Bullet points
 
-            chatResponse.innerHTML = responseText;
-        } else {
-            chatResponse.innerHTML = "<strong>Error:</strong> Unable to fetch response.";
+Abraham Darby developed a method of smelting iron (separating iron from its ore) using coal rather than charcoal. The traditional methods of using charcoal were costly, inefficient, and produced brittle iron. With the new developments, coal burned hotter and cleaner than charcoal, allowing for cheaper and large-scale iron production. 
+
+
+The Iron Bridge
+(1777-1779)
+
+
+Abraham Darby III built the world's first Iron Bridge over the River Severn, marking a revolutionary engineering achievement. Before this, people had been unable to build bridges out of iron because it was weak, brittle, expensive, and limited construction knowledge. The Iron Bridge became the catalyst for cast iron use in architecture.
+
+
+
+
+
+Effects on IR: 
+Lowered Costs: Iron became cheaper to produce, leading to mass production. Therefore, it became more affordable for industries and its use in factories, architecture, and machines increased.
+Stronger Iron: The new iron was of higher quality, making stronger machines, tools, railways, etc.
+Industrialization: Coalbrookedale and similar regions became centers of iron production, fueling industrial growth. Factory expansion also led to job growth, urbanization, and advancements in technology. 
+`
+    const referenceText4 = `Historians have long debated over why the industrial revolution first emerged in Great Britain in the late 1700s. This was due to a plethora of factors that, when considered together, made Britain the ideal birthplace of the industrial revolution. These advantages included abundant natural resources, a growing labor force, available capital for investment, and a culture of entrepreneurship. These are referred to as the four factors of production, which are essential for manufacturing goods. Along with these factors, Britain’s industrial expansion was also aided by a growing demand for goods and new technologies. 
+
+Natural Resources and Geography: During the 1700s, Britain capitalized on its abundant natural resources, particularly coal for steam engines and iron for machinery. Despite being a small nation, these resources played a crucial role in industrial development. Britain’s geography provided further advantages, as its ports and extensive trade networks allowed for the import of raw materials and the export of finished goods. The country also benefited from streams and rivers, which were initially used for water power and later developed into canals for transportation. 
+
+Labor and Capital: Britain’s Industrial Revolution required a large workforce to mine resources, build factories, and operate machinery. The Agricultural Revolution freed many people from farm work, while a population boom further increased the labor supply and demand for goods. To support industrial growth, capital was essential for developing industries such as mining, railroads, and factories. Wealthy landowners, banks, and merchants provided this capital, much of it coming from profits in overseas trade, including the slave trade. 
+
+Entrepreneurs and Investors: Britain had skilled mechanics who created innovative inventions and worked with entrepreneurs to profit from them. Entrepreneurs played a key role by managing and taking financial risks to start new businesses. While technology was crucial to the Industrial Revolution, it was not the sole cause. Industrialization only occurred when other factors such as supply and demand were also present. 
+
+In addition to these factors of production, Britain's government played a key role in fostering economic growth by removing barriers to the movement of goods, unlike other European countries with heavy tolls and restrictions. The government also built a strong navy that protected its empire and overseas trade. Social attitudes shifted to support economic changes, as the upper class, despite their disdain for business people, accepted the wealth generated by new entrepreneurs. Religious groups promoted values like thrift and hard work, which aligned with the goals of inventors, bankers, and risk-takers. These factors together encouraged a focus on innovation and the pursuit of new ventures.
+`
+    async function askGemini(inputId, responseId, referenceText) {
+        let chatInput = document.getElementById(inputId).value;
+        let chatResponse = document.getElementById(responseId);
+
+        if (!chatInput.trim()) {
+            chatResponse.textContent = "Please enter a question before submitting.";
+            return;
         }
-    } catch (error) {
-        chatResponse.innerHTML = "<strong>Error:</strong> Failed to connect to Gemini AI.";
+
+        // Show loading message
+        chatResponse.innerHTML = "<em>Loading...</em>";
+
+        let requestBody = {
+            contents: [{
+                parts: [{
+                    text: `Compare the following input to the reference text and suggest improvements to make it more similar.\n\nReference Text:\n"${referenceText}"\n\nUser Input:\n"${chatInput}"\n\nProvide a structured response with clear sections, bullet points for suggestions, and an improved version of the input formatted cleanly.`
+                }]
+            }]
+        };
+
+        try {
+            let response = await fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(requestBody)
+            });
+
+            let data = await response.json();
+
+            if (data && data.candidates && data.candidates.length > 0 && data.candidates[0].content) {
+                let responseText = data.candidates[0].content.parts[0].text;
+
+                // Format response
+                responseText = responseText.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>") // Bold
+                                        .replace(/\*(.*?)\*/g, "<em>$1</em>") // Italic
+                                        .replace(/\n/g, "<br>") // Newlines
+                                        .replace(/\•/g, "• "); // Bullet points
+
+                chatResponse.innerHTML = responseText;
+            } else {
+                chatResponse.innerHTML = "<strong>Error:</strong> Unable to fetch response.";
+            }
+        } catch (error) {
+            chatResponse.innerHTML = "<strong>Error:</strong> Failed to connect to Gemini AI.";
+        }
     }
-}
 
 
-
+    function autoExpand(textarea) {
+        textarea.style.height = 0; // Reset height to recalculate
+        textarea.style.height = textarea.scrollHeight-20 + "px"; // Adjust height dynamically
+    }
 
 
         loadQuestions();
