@@ -1215,23 +1215,33 @@
         }
 
         function checkAnswers() {
-            let result = document.getElementById('result');
+            let score = 0;
             let questions = document.querySelectorAll('.question');
             
             questions.forEach((question, index) => {
-                let selected = question.querySelector('input[name="q' + index + '"]:checked');
+                let selected = question.querySelector(`input[name="q${index}"]:checked`);
+                let options = question.querySelectorAll('li');
+                
+                options.forEach(option => {
+                    option.classList.remove('correct', 'incorrect');
+                    if (option.getAttribute('data-value') === answerKey[index]) {
+                        option.classList.add('correct');
+                    }
+                });
+                
                 if (selected) {
-                    let selectedAnswer = selected.value;
-                    if (selectedAnswer === answerKey[index]) {
-                        question.classList.add('correct');
+                    if (selected.value === answerKey[index]) {
+                        score++;
                     } else {
-                        question.classList.add('incorrect');
+                        let incorrectOption = question.querySelector(`li[data-value="${selected.value}"]`);
+                        incorrectOption.classList.add('incorrect');
                     }
                 }
             });
-            result.textContent = 'Quiz submitted! Check answers marked in green (correct) and red (incorrect).';
+            
+            let result = document.getElementById('result');
+            result.textContent = `You scored ${score} out of ${answerKey.length}.`;
         }
-
     // Define separate reference texts
     const referenceText1 = `Economic changes: 
 
