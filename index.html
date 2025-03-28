@@ -1186,6 +1186,7 @@
         const answerKey = ['c', 'b', 'c', 'd', 'b', 'b', 'a', 'b', 'b', 'a', 'c', 'b', 'c', 'a', 'c', 'a', 'a', 'b', 'd', 'a', 'b', 'a', 'c', 'a', 'd', 'a', 'a', 'b', 'b', 'a', 'a', 'a', 'c', 'd', 'b', 'a', 'b', 'a', 'b', 'b', 'b', 'c', 'a', 'd', 'b', 'c', 'a', 'a', 'b', 'a', 'b', 'a', 'a', 'b', 'c', 'a', 'd', 'c', 'd', 'd', 'a', 'c', 'd', 'd', 'c', 'b', 'b', 'a', 'a', 'b', 'a', 'a', 'd', 'a', 'a', 'b', 'b', 'b', 'a', 'd', 'd', 'a', 'c', 'd', 'b', 'b', 'c', 'c', 'c', 'b', 'b', 'a', 'b', 'a', 'a', 'a', 'b', 'b', 'b', 'a', 'd', 'b', 'c', 'a', 'c', 'd', 'a', 'c', 'b', 'c', 'a', 'c', 'b', 'a', 'c', 'c', 'b', 'c', 'b', 'c', 'b', 'a', 'a', 'd', 'c', 'b', 'a', 'd', 'b', 'a', 'b', 'c', 'a', 'b', 'b', 'a', 'b', 'd', 'b', 'a', 'c', 'a', 'b', 'b', 'b', 'a', 'b', 'b', 'b', 'a', 'a', 'd', 'd', 'b', 'b', 'a', 'd', 'b', 'a', 'c', 'a', 'b', 'b', 'a', 'b', 'b', 'a', 'b', 'b', 'c', 'b', 'a', 'c', 'a', 'b', 'd'];
 
 
+
         function loadQuestions() {
             const blocks = questionsText.trim().split(/\n\s*\n/);
             let quizContainer = document.getElementById('quiz-container');
@@ -1205,7 +1206,9 @@
 
                 options.forEach((option, idx) => {
                     let li = document.createElement('li');
-                    li.innerHTML = `<label><input type="radio" name="q${index}" value="${String.fromCharCode(97 + idx)}"> ${option.trim()}</label>`;
+                    let optionValue = String.fromCharCode(97 + idx);
+                    li.innerHTML = `<label><input type="radio" name="q${index}" value="${optionValue}"> ${option.trim()}</label>`;
+                    li.setAttribute('data-value', optionValue);
                     optionsList.appendChild(li);
                 });
 
