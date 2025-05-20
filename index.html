@@ -27,6 +27,7 @@
 
     const camera = new THREE.PerspecxtiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
     function moveCamera() {
+      camera.lookAt(0,0,0);
       camera.rotation.y+=Math.PI/16;
     };
     const renderer = new THREE.WebGLRenderer();
