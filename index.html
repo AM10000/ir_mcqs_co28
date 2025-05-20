@@ -39,9 +39,8 @@
     const platforms = [];
 
     for (let i = 0; i < 7; i++) {
-        makePlatform(i*5, i*5, 0, 4, 4, 0.5, scene, platforms);
+        makePlatform(i*5, i*5, i*2, 4, 4, 0.5, scene, platforms);
     }
-    makePlatform(35, 35, 2, 4, 4, 0.5, scene, platforms);
     const player = new THREE.Mesh(
       new THREE.BoxGeometry(1, 1, 1),
       new THREE.MeshStandardMaterial({ color: 0xff0000 })
