@@ -21,7 +21,9 @@
         scene.add(platform);
         platformList.push(platform);
     };
-
+    function moveCamera(event, cam) {
+      cam.position.set(0, event.clientX, event.clientY);
+    };
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0xa0d0ff);
 
@@ -56,6 +58,7 @@
 
     document.addEventListener('keydown', e => keys[e.key.toLowerCase()] = true);
     document.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
+    document.addEventListener('mousemove', moveCamera(e, camera));
     function animate() {
       requestAnimationFrame(animate);
       if (keys['a']) player.position.x -= 0.1;
