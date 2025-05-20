@@ -35,9 +35,9 @@
     const light = new THREE.DirectionalLight(0xffffff, 1);
     light.position.set(10, 20, 10);
     scene.add(light);
-    const controls = new OrbitControls(camera, renderer.domElement);
+    // const controls = new OrbitControls(camera, renderer.domElement);
     camera.position.set(0, 20, 50);
-    controls.update();
+    // controls.update();
     const ambient = new THREE.AmbientLight(0x404040);
     scene.add(ambient);
     const platformMaterial = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
@@ -84,9 +84,9 @@
       }
 
 
-	    controls.update();
+	    // controls.update();
 
-	    renderer.render( scene, camera );
+	    // renderer.render( scene, camera );
       camera.position.x = player.position.x;
       camera.position.z = player.position.z + 10;
       camera.lookAt(player.position);
