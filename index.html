@@ -11,7 +11,7 @@
 <body>
   <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
   <script>
-    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    // import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
     function makePlatform(x, y, z, height, width, depth, scene, platformList) {
         const platform = new THREE.Mesh(
             new THREE.BoxGeometry(width, depth, height),
@@ -26,8 +26,6 @@
     scene.background = new THREE.Color(0xa0d0ff);
 
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-
-  
 
     const renderer = new THREE.WebGLRenderer();
     renderer.setSize(window.innerWidth, window.innerHeight);
