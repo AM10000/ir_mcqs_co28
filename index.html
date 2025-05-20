@@ -25,9 +25,9 @@
     scene.background = new THREE.Color(0xa0d0ff);
 
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-    // function moveCamera() {
-    //   camera.position.set((event.clientX, event.clientX, event.clientX));
-    // };
+    function moveCamera() {
+      camera.position.set((event.clientX, event.clientX, event.clientX));
+    };
     camera.position.set(0, 20, 50);
 
     const renderer = new THREE.WebGLRenderer();
@@ -59,7 +59,7 @@
 
     document.addEventListener('keydown', e => keys[e.key.toLowerCase()] = true);
     document.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
-    // document.addEventListener('mousemove', moveCamera);
+    document.addEventListener('mousemove', moveCamera);
     function animate() {
       requestAnimationFrame(animate);
       if (keys['a']) player.position.x -= 0.1;
