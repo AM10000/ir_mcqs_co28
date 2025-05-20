@@ -8,9 +8,10 @@
     canvas { display: block; }
   </style>
 </head>
-<body>
+<body onmousemove="changeCam(event, camera)">
   <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
   <script>
+    import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
     function makePlatform(x, y, z, height, width, depth, scene, platformList) {
         const platform = new THREE.Mesh(
             new THREE.BoxGeometry(width, depth, height),
@@ -19,6 +20,9 @@
         platform.position.set(x, z, y);
         scene.add(platform);
         platformList.push(platform);
+    };
+    function changeCam(event, cam){
+      cam.position.set(0, event.clientX, event.clientY);
     };
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0xa0d0ff);
