@@ -42,12 +42,50 @@
     makePlatform(i*5, i*5, i*2, 4, 4, 0.5, scene, platforms);
   }
 
-  const player = new THREE.Mesh(
-    new THREE.BoxGeometry(1, 1, 1),
-    new THREE.MeshStandardMaterial({ color: 0xff0000 })
-  );
-  player.position.set(0, 1, 0);
-  scene.add(player);
+const player = new THREE.Group();
+
+const torso = new THREE.Mesh(
+  new THREE.BoxGeometry(1, 1.5, 0.5),
+  new THREE.MeshStandardMaterial({ color: 0x0077ff })
+);
+torso.position.y = 1.5;
+player.add(torso);
+
+const head = new THREE.Mesh(
+  new THREE.BoxGeometry(0.6, 0.6, 0.6),
+  new THREE.MeshStandardMaterial({ color: 0xffcc99 })
+);
+head.position.y = 2.4;
+player.add(head);
+
+const armMaterial = new THREE.MeshStandardMaterial({ color: 0x0077ff });
+const leftArm = new THREE.Mesh(new THREE.BoxGeometry(0.3, 1.2, 0.3), armMaterial);
+const rightArm = leftArm.clone();
+
+leftArm.position.set(-0.65, 1.5, 0);
+rightArm.position.set(0.65, 1.5, 0);
+player.add(leftArm, rightArm);
+
+const legMaterial = new THREE.MeshStandardMaterial({ color: 0x333333 });
+const leftLeg = new THREE.Mesh(new THREE.BoxGeometry(0.4, 2.3, 0.4), legMaterial);
+const rightLeg = leftLeg.clone();
+
+leftLeg.position.set(-0.3, 0.3, 0);
+rightLeg.position.set(0.3, 0.3, 0);
+player.add(leftLeg, rightLeg);
+
+player.position.set(0, 0, 0);
+player.scale.set(0.6, 0.6, 0.6);
+scene.add(player);
+player.userData = {
+  leftArm,
+  rightArm,
+  leftLeg,
+  rightLeg,
+  walkTime: 0
+};
+
+
 
   let velocityY = 0;
   let onGround = false;
@@ -119,7 +157,7 @@
       }
     });
 
-    if (keys[' '] && onGround) velocityY = 0.15;
+    if (keys[' '] && onGround) velocityY = 0.22;
 
     const cameraDistance = 6;
     const cameraHeight = 2;
@@ -131,12 +169,27 @@
     );
 
     const cameraPosition = player.position.clone().sub(lookDirection.clone().multiplyScalar(zoomDistance));
+    player.rotation.y = yaw + Math.PI;
 
     cameraPosition.y += cameraHeight;
     camera.position.copy(cameraPosition);
 
     camera.lookAt(player.position.clone().add(new THREE.Vector3(0, 1, 0)));
 
+    // Walking animation
+const isMoving = direction.lengthSq() > 0.0001;
+if (isMoving) {
+  player.userData.walkTime += 0.2; // control walk speed
+} else {
+  player.userData.walkTime = 0;
+}
+
+const swing = Math.sin(player.userData.walkTime) * 0.5;
+
+player.userData.leftArm.rotation.x = swing;
+player.userData.rightArm.rotation.x = -swing;
+player.userData.leftLeg.rotation.x = -swing;
+player.userData.rightLeg.rotation.x = swing;
 
     renderer.render(scene, camera);
   }
