@@ -145,6 +145,32 @@
       zoomDistance = Math.max(2, Math.min(15, zoomDistance));
     });
 
+    // Listen once outside animate for player updates
+    firebase.database().ref('players').on('value', (snapshot) => {
+      const data = snapshot.val() || {};
+      const now = Date.now();
+
+      // Remove disconnected players
+      for (const id in otherPlayers) {
+        if (!data[id] || !data[id].lastUpdate || (now - data[id].lastUpdate) > disconnectThreshold) {
+          scene.remove(otherPlayers[id]);
+          delete otherPlayers[id];
+        }
+      }
+
+      // Add/update other players
+      for (const id in data) {
+        if (id !== playerId) {
+          if (!otherPlayers[id]) {
+            const newPlayer = createPlayer(0xff0000);
+            scene.add(newPlayer);
+            otherPlayers[id] = newPlayer;
+          }
+          otherPlayers[id].position.set(data[id].x, data[id].y, data[id].z);
+        }
+      }
+    });
+
     function animate() {
       requestAnimationFrame(animate);
 
@@ -212,40 +238,12 @@
       player.userData.leftLeg.rotation.x = -swing;
       player.userData.rightLeg.rotation.x = swing;
 
-      // Update own player position with lastUpdate timestamp
+      // Update own player position & timestamp every frame
       firebase.database().ref('players/' + playerId).set({
         x: player.position.x,
         y: player.position.y,
         z: player.position.z,
         lastUpdate: Date.now()
-      });
-
-      // Listen for all players data updates
-      firebase.database().ref('players').on('value', (snapshot) => {
-        const data = snapshot.val() || {};
-        const now = Date.now();
-
-        // Remove stale players
-        for (const id in otherPlayers) {
-          if (!data[id] || !data[id].lastUpdate || (now - data[id].lastUpdate) > disconnectThreshold) {
-            console.log(`Removing stale player: ${id}`);
-            scene.remove(otherPlayers[id]);
-            delete otherPlayers[id];
-          }
-        }
-
-        // Add/update other players
-        for (const id in data) {
-          if (id !== playerId) {
-            if (!otherPlayers[id]) {
-              const newPlayer = createPlayer(0xff0000);
-              scene.add(newPlayer);
-              otherPlayers[id] = newPlayer;
-              console.log(`Added new player: ${id}`);
-            }
-            otherPlayers[id].position.set(data[id].x, data[id].y, data[id].z);
-          }
-        }
       });
 
       renderer.render(scene, camera);
