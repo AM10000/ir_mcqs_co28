@@ -26,18 +26,21 @@
 
     const app = firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
+    const playersRef = db.ref('players');
     const playerId = "player_" + Math.random().toString(36).substring(2, 10);
     const otherPlayers = {};
-    const disconnectThreshold = 5000; // 5 seconds
+
+    // Threshold for considering player disconnected (ms)
+    const disconnectThreshold = 10000; // 10 seconds
 
     function makePlatform(x, y, z, height, width, depth, scene, platformList, color=0x00ff00) {
-        const platform = new THREE.Mesh(
-            new THREE.BoxGeometry(width, depth, height),
-            new THREE.MeshStandardMaterial({ color: color })
-        );
-        platform.position.set(x, z, y);
-        scene.add(platform);
-        platformList.push(platform);
+      const platform = new THREE.Mesh(
+        new THREE.BoxGeometry(width, depth, height),
+        new THREE.MeshStandardMaterial({ color: color })
+      );
+      platform.position.set(x, z, y);
+      scene.add(platform);
+      platformList.push(platform);
     }
 
     let zoomDistance = 6;
@@ -57,20 +60,20 @@
     const platforms = [];
     const killBricks = [];
     for (let i = 1; i < 5; i++) {
-      makePlatform(0, i, i, 1, 3, 0.5, scene, platforms, color=0x000dff);
+      makePlatform(0, i, i, 1, 3, 0.5, scene, platforms, 0x000dff);
     }
     makePlatform(0, 0, 0, 10000, 10000, 0.5, scene, platforms);
-    makePlatform(0, 6, 5, 3, 3, 0.5, scene, platforms, color=0x000dff);
+    makePlatform(0, 6, 5, 3, 3, 0.5, scene, platforms, 0x000dff);
     for (let i=1; i<5; i++) {
-      makePlatform(-i-1, 6, i+5, 3, 1, 0.5, scene, platforms, color=0x000dff);
+      makePlatform(-i-1, 6, i+5, 3, 1, 0.5, scene, platforms, 0x000dff);
     }
     for(let i=1; i<5; i++) {
       if (i%2==1){
-        makePlatform(-i*5-5, 6, 9, 3, 3, 0.5, scene, platforms, color=0x000dff);
-        makePlatform(-i*5-5, 5, 9.5, 1, 3, 0.5, scene, killBricks, color=0xff0000);
+        makePlatform(-i*5-5, 6, 9, 3, 3, 0.5, scene, platforms, 0x000dff);
+        makePlatform(-i*5-5, 5, 9.5, 1, 3, 0.5, scene, killBricks, 0xff0000);
       } else {
-        makePlatform(-i*5-5, 6, 9, 3, 3, 0.5, scene, platforms, color=0x000dff);
-        makePlatform(-i*5-5, 7, 9.5, 1, 3, 0.5, scene, killBricks, color=0xff0000);
+        makePlatform(-i*5-5, 6, 9, 3, 3, 0.5, scene, platforms, 0x000dff);
+        makePlatform(-i*5-5, 7, 9.5, 1, 3, 0.5, scene, killBricks, 0xff0000);
       }
     }
 
@@ -102,7 +105,7 @@
       group.add(leftLeg, rightLeg);
 
       group.scale.set(0.6, 0.6, 0.6);
-      group.userData = { leftArm, rightArm, leftLeg, rightLeg, walkTime: 0 };
+      group.userData = { leftArm, rightArm, leftLeg, rightLeg, walkTime: 0, lastUpdate: Date.now() };
 
       return group;
     }
@@ -145,48 +148,69 @@
       zoomDistance = Math.max(2, Math.min(15, zoomDistance));
     });
 
-    // Listen once outside animate for player updates
-    firebase.database().ref('players').on('value', (snapshot) => {
-      const data = snapshot.val() || {};
-      const now = Date.now();
+    // Handle Firebase player events incrementally
+    playersRef.on('child_added', snapshot => {
+      const id = snapshot.key;
+      if (id === playerId) return;
+      const data = snapshot.val();
+      if (!otherPlayers[id]) {
+        const newPlayer = createPlayer(0xff0000);
+        scene.add(newPlayer);
+        otherPlayers[id] = newPlayer;
+      }
+      otherPlayers[id].position.set(data.x, data.y, data.z);
+      otherPlayers[id].userData.lastUpdate = Date.now();
+    });
 
-      // Remove disconnected players
+    playersRef.on('child_changed', snapshot => {
+      const id = snapshot.key;
+      if (id === playerId) return;
+      const data = snapshot.val();
+      if (otherPlayers[id]) {
+        otherPlayers[id].position.set(data.x, data.y, data.z);
+        otherPlayers[id].userData.lastUpdate = Date.now();
+      }
+    });
+
+    playersRef.on('child_removed', snapshot => {
+      const id = snapshot.key;
+      if (otherPlayers[id]) {
+        scene.remove(otherPlayers[id]);
+        delete otherPlayers[id];
+      }
+    });
+
+    // Periodic cleanup of disconnected players
+    setInterval(() => {
+      const now = Date.now();
       for (const id in otherPlayers) {
-        if (!data[id] || !data[id].lastUpdate || (now - data[id].lastUpdate) > disconnectThreshold) {
+        if (now - otherPlayers[id].userData.lastUpdate > disconnectThreshold) {
           scene.remove(otherPlayers[id]);
           delete otherPlayers[id];
         }
       }
+    }, 3000);
 
-      // Add/update other players
-      for (const id in data) {
-        if (id !== playerId) {
-          if (!otherPlayers[id]) {
-            const newPlayer = createPlayer(0xff0000);
-            scene.add(newPlayer);
-            otherPlayers[id] = newPlayer;
-          }
-          otherPlayers[id].position.set(data[id].x, data[id].y, data[id].z);
-        }
-      }
-    });
+    // Throttle own position updates to Firebase
+    const updateIntervalMs = 200;
+    let lastUpdateTime = 0;
 
-    function animate() {
+    function animate(time = 0) {
       requestAnimationFrame(animate);
 
+      // Movement input
       const direction = new THREE.Vector3();
       const speed = 0.1;
-
       if (keys['w']) direction.z -= 1;
       if (keys['s']) direction.z += 1;
       if (keys['a']) direction.x -= 1;
       if (keys['d']) direction.x += 1;
-
       direction.applyEuler(new THREE.Euler(0, yaw + Math.PI, 0));
 
       player.position.x += direction.x * speed;
       player.position.z += direction.z * speed;
 
+      // Gravity and ground check
       velocityY -= 0.01;
       player.position.y += velocityY;
 
@@ -201,6 +225,7 @@
           onGround = true;
         }
       });
+
       killBricks.forEach(p => {
         const px = Math.abs(player.position.x - p.position.x) < p.geometry.parameters.width/2;
         const pz = Math.abs(player.position.z - p.position.z) < p.geometry.parameters.depth/2;
@@ -215,19 +240,19 @@
 
       if (keys[' '] && onGround) velocityY = 0.22;
 
+      // Camera positioning
       const lookDirection = new THREE.Vector3(
         Math.sin(yaw) * Math.cos(pitch),
         Math.sin(pitch),
         Math.cos(yaw) * Math.cos(pitch)
       );
-
       const cameraPosition = player.position.clone().sub(lookDirection.clone().multiplyScalar(zoomDistance));
       player.rotation.y = yaw + Math.PI;
-
       cameraPosition.y += 2;
       camera.position.copy(cameraPosition);
       camera.lookAt(player.position.clone().add(new THREE.Vector3(0, 1, 0)));
 
+      // Animation swings for limbs
       const isMoving = direction.lengthSq() > 0.0001;
       if (isMoving) player.userData.walkTime += 0.2;
       else player.userData.walkTime = 0;
@@ -238,13 +263,16 @@
       player.userData.leftLeg.rotation.x = -swing;
       player.userData.rightLeg.rotation.x = swing;
 
-      // Update own player position & timestamp every frame
-      firebase.database().ref('players/' + playerId).set({
-        x: player.position.x,
-        y: player.position.y,
-        z: player.position.z,
-        lastUpdate: Date.now()
-      });
+      // Throttled update to Firebase
+      if (time - lastUpdateTime > updateIntervalMs) {
+        lastUpdateTime = time;
+        playersRef.child(playerId).set({
+          x: player.position.x,
+          y: player.position.y,
+          z: player.position.z,
+          lastUpdate: Date.now()
+        });
+      }
 
       renderer.render(scene, camera);
     }
