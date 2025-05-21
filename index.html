@@ -11,10 +11,10 @@
 <body>
   <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
   <script>
-    function makePlatform(x, y, z, height, width, depth, scene, platformList) {
+    function makePlatform(x, y, z, height, width, depth, scene, platformList, color=0x00ff00) {
         const platform = new THREE.Mesh(
             new THREE.BoxGeometry(width, depth, height),
-            platformMaterial
+            new THREE.MeshStandardMaterial({ color: color })
         );
         platform.position.set(x, z, y);
         scene.add(platform);
@@ -39,9 +39,9 @@
   const platformMaterial = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
 
   for (let i = 0; i < 5; i++) {
-    makePlatform(i*3, i*3, i*2, 1, 3, 0.5, scene, platforms);
+    makePlatform(i*3, i*3, i*2, 1, 3, 0.5, scene, platforms, color=0x000dff);
   }
-
+  makePlatform(0, 0, 0, 10000, 10000, 0.5, scene, platforms);
 const player = new THREE.Group();
 
 const torso = new THREE.Mesh(
