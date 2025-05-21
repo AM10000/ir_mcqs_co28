@@ -144,6 +144,34 @@
       zoomDistance = Math.max(2, Math.min(15, zoomDistance));
     });
 
+    // Timeout for disconnecting players who haven't updated in 5 seconds
+    const disconnectThreshold = 5000;
+
+    firebase.database().ref('players').on('value', (snapshot) => {
+      const data = snapshot.val() || {};
+      const now = Date.now();
+
+      // Remove players who left or timed out
+      for (const id in otherPlayers) {
+        if (!data[id] || now - data[id].lastUpdate > disconnectThreshold) {
+          scene.remove(otherPlayers[id]);
+          delete otherPlayers[id];
+        }
+      }
+
+      // Add/update other players
+      for (const id in data) {
+        if (id !== playerId) {
+          if (!otherPlayers[id]) {
+            const newPlayer = createPlayer(0xff0000);
+            scene.add(newPlayer);
+            otherPlayers[id] = newPlayer;
+          }
+          otherPlayers[id].position.set(data[id].x, data[id].y, data[id].z);
+        }
+      }
+    });
+
     function animate() {
       requestAnimationFrame(animate);
 
@@ -211,39 +239,12 @@
       player.userData.leftLeg.rotation.x = -swing;
       player.userData.rightLeg.rotation.x = swing;
 
-      // Update own player data with lastUpdate timestamp
+      // Update own player position and timestamp only
       firebase.database().ref('players/' + playerId).set({
         x: player.position.x,
         y: player.position.y,
         z: player.position.z,
         lastUpdate: Date.now()
-      });
-
-      // Listen for all players data and manage disconnects
-      firebase.database().ref('players').on('value', (snapshot) => {
-        const data = snapshot.val() || {};
-        const now = Date.now();
-        const disconnectThreshold = 5000; // 5 seconds timeout
-
-        // Remove players who haven't updated recently or no longer exist in DB
-        for (const id in otherPlayers) {
-          if (!data[id] || now - data[id].lastUpdate > disconnectThreshold) {
-            scene.remove(otherPlayers[id]);
-            delete otherPlayers[id];
-          }
-        }
-
-        // Add or update players
-        for (const id in data) {
-          if (id !== playerId) {
-            if (!otherPlayers[id]) {
-              const newPlayer = createPlayer(0xff0000);
-              scene.add(newPlayer);
-              otherPlayers[id] = newPlayer;
-            }
-            otherPlayers[id].position.set(data[id].x, data[id].y, data[id].z);
-          }
-        }
       });
 
       renderer.render(scene, camera);
