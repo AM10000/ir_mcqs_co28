@@ -37,10 +37,12 @@
       }
     });
 
-    playerRef.set({ x: 0, y: 0, z: 0 });
+    // Set initial position and health for local player -- health integration
+    playerRef.set({ x: 0, y: 0, z: 0, health: 100 });
     playerRef.onDisconnect().remove();
 
     const otherPlayers = {};
+
     class Bullet {
         constructor(position, direction) {
             const geometry = new THREE.SphereGeometry(0.1, 8, 8);
@@ -134,6 +136,7 @@
         const position = player.position.clone().add(new THREE.Vector3(0, 1.5, 0)); // Adjust as needed
         bullets.push(new Bullet(position, direction));
     });
+
     function updateBullets() {
         bullets.forEach((bullet, index) => {
             bullet.update();
@@ -144,6 +147,8 @@
             }
         });
     }
+
+    // Health bar creation and update -- health integration
     function createHealthBar(player) {
         const canvas = document.createElement('canvas');
         canvas.width = 128;
@@ -159,6 +164,7 @@
         player.add(sprite);
         player.healthBar = { sprite, context, texture };
     }
+
     function updateHealthBar(player) {
         const { context, texture } = player.healthBar;
         context.clearRect(0, 0, 128, 16);
@@ -177,293 +183,171 @@
       group.add(torso);
 
       const head = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.6, 0.6), new THREE.MeshStandardMaterial({ color: 0xffcc99 }));
-      head.position.y = 2.4;
+      head.position.set(0, 2.5, 0);
       group.add(head);
 
-      const armMaterial = new THREE.MeshStandardMaterial({ color });
-      const leftArm = new THREE.Mesh(new THREE.BoxGeometry(0.3, 1.2, 0.3), armMaterial);
-      const rightArm = leftArm.clone();
+      // Limbs
+      const leftArm = new THREE.Mesh(new THREE.BoxGeometry(0.3, 1.2, 0.3), new THREE.MeshStandardMaterial({ color }));
+      leftArm.position.set(-0.85, 1.4, 0);
+      group.add(leftArm);
 
-      leftArm.position.set(-0.65, 1.5, 0);
-      rightArm.position.set(0.65, 1.5, 0);
-      group.add(leftArm, rightArm);
+      const rightArm = new THREE.Mesh(new THREE.BoxGeometry(0.3, 1.2, 0.3), new THREE.MeshStandardMaterial({ color }));
+      rightArm.position.set(0.85, 1.4, 0);
+      group.add(rightArm);
 
-      const legMaterial = new THREE.MeshStandardMaterial({ color: 0x333333 });
-      const leftLeg = new THREE.Mesh(new THREE.BoxGeometry(0.4, 2.3, 0.4), legMaterial);
-      const rightLeg = leftLeg.clone();
+      const leftLeg = new THREE.Mesh(new THREE.BoxGeometry(0.4, 1.5, 0.4), new THREE.MeshStandardMaterial({ color: 0x000000 }));
+      leftLeg.position.set(-0.3, 0, 0);
+      group.add(leftLeg);
 
-      leftLeg.position.set(-0.3, 0.3, 0);
-      rightLeg.position.set(0.3, 0.3, 0);
-      group.add(leftLeg, rightLeg);
+      const rightLeg = new THREE.Mesh(new THREE.BoxGeometry(0.4, 1.5, 0.4), new THREE.MeshStandardMaterial({ color: 0x000000 }));
+      rightLeg.position.set(0.3, 0, 0);
+      group.add(rightLeg);
 
-      group.scale.set(0.6, 0.6, 0.6);
-      group.userData = { leftArm, rightArm, leftLeg, rightLeg, walkTime: 0 };
+      // Add health bar -- health integration
+      group.health = 100;
+      createHealthBar(group);
+      updateHealthBar(group);
 
       return group;
     }
 
-    function checkCollisions() {
-        bullets.forEach((bullet, bIndex) => {
-            for (const id in otherPlayers) {
-                const other = otherPlayers[id];
-
-                const distance = bullet.mesh.position.distanceTo(other.position);
-                if (distance < 1) {
-                    scene.remove(bullet.mesh);
-                    bullets.splice(bIndex, 1);
-
-                    other.health -= 10;
-                    if (other.health < 0) other.health = 0;
-
-                    updateHealthBar(other);
-
-                    firebase.database().ref(`players/${id}`).update({
-                    health: other.health,
-                    });
-
-                    break;
-                }
-            }
-            const distance = bullet.mesh.position.distanceTo(player.position);
-            if (distance < 1) {
-                scene.remove(bullet.mesh);
-                bullets.splice(bIndex, 1);
-
-                player.health -= 10;
-                if (player.health < 0) player.health = 0;
-
-                updateHealthBar(player);
-
-                firebase.database().ref(`players/${playerId}`).update({
-                health: player.health,
-                });
-            }
-        });
-    }
-
-
     const player = createPlayer();
-    createHealthBar(player);
-    player.position.set(0, 0, 0);
     scene.add(player);
 
-    let velocityY = 0;
-    let onGround = false;
+    // Other players group container
+    const otherPlayersGroup = new THREE.Group();
+    scene.add(otherPlayersGroup);
+
+    // Keyboard controls
     const keys = {};
     document.addEventListener('keydown', e => keys[e.key.toLowerCase()] = true);
     document.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
 
-    let yaw = 0;
-    let pitch = 0;
-    player.health = 100;
+    let velocity = new THREE.Vector3();
+    let direction = new THREE.Vector3();
+    const speed = 0.1;
 
-    document.body.addEventListener('click', () => {
-      renderer.domElement.requestPointerLock();
-    });
+    // Raycaster for ground collision
+    const raycaster = new THREE.Raycaster();
+    let canJump = false;
+    let yVelocity = 0;
 
-    document.addEventListener('pointerlockchange', () => {
-      if (document.pointerLockElement === renderer.domElement) {
-        document.addEventListener('mousemove', onMouseMove, false);
+    function updatePlayer() {
+      // Movement input
+      direction.set(0, 0, 0);
+      if (keys['w']) direction.z -= 1;
+      if (keys['s']) direction.z += 1;
+      if (keys['a']) direction.x -= 1;
+      if (keys['d']) direction.x += 1;
+      direction.normalize();
+
+      // Apply movement relative to camera rotation
+      const angle = camera.rotation.y;
+      const moveX = direction.x * Math.cos(angle) - direction.z * Math.sin(angle);
+      const moveZ = direction.x * Math.sin(angle) + direction.z * Math.cos(angle);
+
+      velocity.x = moveX * speed;
+      velocity.z = moveZ * speed;
+
+      // Gravity & jumping
+      yVelocity -= 0.01; // gravity
+      raycaster.set(player.position.clone().add(new THREE.Vector3(0, 0.1, 0)), new THREE.Vector3(0, -1, 0));
+      const intersects = raycaster.intersectObjects(platforms);
+      if (intersects.length > 0 && intersects[0].distance < 1.6) {
+        yVelocity = Math.max(0, yVelocity);
+        canJump = true;
       } else {
-        document.removeEventListener('mousemove', onMouseMove, false);
+        canJump = false;
       }
-    });
 
-    function onMouseMove(event) {
-      const movementX = event.movementX || 0;
-      const movementY = event.movementY || 0;
-      yaw -= movementX * 0.002;
-      pitch -= movementY * 0.002;
-      pitch = Math.max(-Math.PI / 2 + 0.1, Math.min(Math.PI / 2 - 0.1, pitch));
+      if (keys[' '] && canJump) {
+        yVelocity = 0.2;
+      }
+
+      player.position.x += velocity.x;
+      player.position.z += velocity.z;
+      player.position.y += yVelocity;
+      if (player.position.y < 1) {
+        player.position.y = 1;
+        yVelocity = 0;
+        canJump = true;
+      }
+
+      // Collisions with kill bricks
+      for (const brick of killBricks) {
+        const distance = player.position.distanceTo(brick.position);
+        if (distance < 1.5) {
+          player.health -= 1;
+          if (player.health < 0) player.health = 0;
+          updateHealthBar(player);
+        }
+      }
+
+      // Update health in Firebase -- health integration
+      playerRef.update({
+        x: player.position.x,
+        y: player.position.y,
+        z: player.position.z,
+        health: player.health
+      });
+
+      // If player health zero, respawn at origin
+      if (player.health <= 0) {
+        player.position.set(0, 1, 0);
+        player.health = 100;
+        updateHealthBar(player);
+        playerRef.update({ health: player.health });
+      }
     }
 
-    document.addEventListener('wheel', (event) => {
-      zoomDistance += event.deltaY * 0.01;
-      zoomDistance = Math.max(2, Math.min(15, zoomDistance));
-    });
-
-    db.ref('players').on('value', (snapshot) => {
-      const data = snapshot.val() || {};
+    // Listen for other players data changes
+    db.ref('players').on('value', snapshot => {
+      const players = snapshot.val() || {};
+      // Remove players that left
       for (const id in otherPlayers) {
-        if (!data[id]) {
-          scene.remove(otherPlayers[id]);
+        if (!(id in players)) {
+          otherPlayersGroup.remove(otherPlayers[id]);
           delete otherPlayers[id];
         }
       }
-      for (const id in data) {
-        if (id !== playerId) {
-          if (!otherPlayers[id]) {
-            const newPlayer = createPlayer(0xff0000);
-            scene.add(newPlayer);
-            otherPlayers[id] = newPlayer;
-          }
-          otherPlayers[id].position.set(data[id].x, data[id].y, data[id].z);
+      for (const id in players) {
+        if (id === playerId) continue;
+        if (!(id in otherPlayers)) {
+          const newPlayer = createPlayer(0xff0000);
+          otherPlayers[id] = newPlayer;
+          otherPlayersGroup.add(newPlayer);
+        }
+        const data = players[id];
+        const op = otherPlayers[id];
+        op.position.set(data.x, data.y, data.z);
+        if (op.health !== data.health) {
+          op.health = data.health;
+          updateHealthBar(op);
         }
       }
     });
 
-    document.addEventListener('keydown', e => {
-      if (e.key.toLowerCase() === 'c') {
-        db.ref('players').once('value').then(snapshot => {
-          const players = snapshot.val() || {};
-          for (const id in players) {
-            if (id !== playerId) {
-              db.ref('players/' + id).remove();
-            }
-          }
-          console.log('Cleared all other players.');
-        });
-      }
-    });
+    camera.position.set(0, 5, 10);
 
-function animate() {
-  requestAnimationFrame(animate);
+    function animate() {
+      requestAnimationFrame(animate);
+      updatePlayer();
+      updateBullets();
 
-  const direction = new THREE.Vector3();
-  const speed = 0.1;
+      // Camera follow
+      camera.position.lerp(new THREE.Vector3(player.position.x, player.position.y + zoomDistance, player.position.z + zoomDistance), 0.1);
+      camera.lookAt(player.position);
 
-  if (keys['w']) direction.z -= 1;
-  if (keys['s']) direction.z += 1;
-  if (keys['a']) direction.x -= 1;
-  if (keys['d']) direction.x += 1;
-
-  direction.applyEuler(new THREE.Euler(0, yaw + Math.PI, 0));
-  direction.normalize();
-
-  velocityY -= 0.01; // gravity always applies
-  player.position.y += velocityY;
-
-  onGround = false;
-  let standingPlatform = null;
-
-  for (const p of platforms) {
-    const halfWidth = p.geometry.parameters.width / 2;
-    const halfDepth = p.geometry.parameters.depth / 2;
-    const halfHeight = p.geometry.parameters.height / 2;
-    const px = p.position.x, pz = p.position.z, py = p.position.y;
-
-    const overX = Math.abs(player.position.x - px) < halfWidth;
-    const overZ = Math.abs(player.position.z - pz) < halfDepth;
-    const overY = Math.abs(player.position.y - p.position.y) < p.geometry.parameters.height * 2;
-    const platformTopY = py + halfHeight;
-    const platformBottomY = py - halfHeight;
-    const playerTop = player.position.y + 1.0;
-    const playerBottom = player.position.y;
-
-    // Falling: check landing on top
-    if (velocityY <= 0 && overX && overZ && overY) {
-      player.position.y = p.position.y+0.75;
-      velocityY = 0;
-      onGround = true;
-      standingPlatform = p;
-      break;
+      renderer.render(scene, camera);
     }
-
-    // Jumping up: check hitting bottom
-    if (velocityY > 0 && overX && overZ && playerTop > platformBottomY - 0.2 && playerTop < platformBottomY + 0.2) {
-      player.position.y = platformBottomY - 1.0;
-      velocityY = -0.01; // start falling
-    }
-  }
-
-  // Horizontal collision
-  const proposedX = player.position.x + direction.x * speed;
-  const proposedZ = player.position.z + direction.z * speed;
-  const playerY = player.position.y;
-
-  let canMoveX = true;
-  let canMoveZ = true;
-
-  for (const p of platforms) {
-    if (p === standingPlatform) continue;
-
-    const halfWidth = p.geometry.parameters.width / 2;
-    const halfDepth = p.geometry.parameters.depth / 2;
-    const halfHeight = p.geometry.parameters.height / 2;
-    const px = p.position.x;
-    const pz = p.position.z;
-    const py = p.position.y;
-
-    const verticalOverlap = playerY + 0.9 > py - halfHeight && playerY < py + halfHeight + 0.9;
-
-    if (verticalOverlap) {
-      if (
-        Math.abs(proposedX - px) < halfWidth + 0.3 &&
-        Math.abs(player.position.z - pz) < halfDepth + 0.3
-      ) canMoveX = false;
-
-      if (
-        Math.abs(player.position.x - px) < halfWidth + 0.3 &&
-        Math.abs(proposedZ - pz) < halfDepth + 0.3
-      ) canMoveZ = false;
-    }
-  }
-
-  for (const p of bouncers) {
-    const px = Math.abs(player.position.x - p.position.x) < p.geometry.parameters.width / 2;
-    const pz = Math.abs(player.position.z - p.position.z) < p.geometry.parameters.depth / 2;
-    const py = Math.abs(player.position.y - p.position.y) < p.geometry.parameters.height * 2;
-    if (px && pz && py && velocityY < 0) velocityY = 10;
-  }
-
-  if (canMoveX) player.position.x = proposedX;
-  if (canMoveZ) player.position.z = proposedZ;
-
-  // Kill bricks
-  killBricks.forEach(p => {
-    const px = Math.abs(player.position.x - p.position.x) < p.geometry.parameters.width / 2;
-    const pz = Math.abs(player.position.z - p.position.z) < p.geometry.parameters.depth / 2;
-    const py = Math.abs(player.position.y - p.position.y) < p.geometry.parameters.height * 2;
-    if (px && pz && py) {
-      velocityY = 0;
-      player.position.set(0, 0, 0);
-      onGround = true;
-    }
-  });
-
-  if (keys[' '] && onGround) velocityY = 0.22;
-
-const lookDirection = new THREE.Vector3(
-  Math.sin(yaw) * Math.cos(pitch),
-  Math.sin(pitch),
-  Math.cos(yaw) * Math.cos(pitch)
-);
-
-// Player should face the same direction as camera
-player.rotation.y = yaw + Math.PI;
-
-
-  const cameraPosition = player.position.clone().sub(lookDirection.clone().multiplyScalar(zoomDistance));
-  cameraPosition.y += 2;
-  camera.position.copy(cameraPosition);
-  camera.lookAt(player.position.clone().add(new THREE.Vector3(0, 1, 0)));
-
-  const isMoving = direction.lengthSq() > 0.0001;
-  if (isMoving) player.userData.walkTime += 0.2;
-  else player.userData.walkTime = 0;
-
-  const swing = Math.sin(player.userData.walkTime) * 0.5;
-  player.userData.leftArm.rotation.x = swing;
-  player.userData.rightArm.rotation.x = -swing;
-  player.userData.leftLeg.rotation.x = -swing;
-  player.userData.rightLeg.rotation.x = swing;
-
-  playerRef.set({
-    x: player.position.x,
-    y: player.position.y,
-    z: player.position.z
-  });
-  updateBullets();
-  checkCollisions();
-  renderer.render(scene, camera);
-}
-
-
-
-
-
 
     animate();
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth/window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
   </script>
 </body>
 </html>
