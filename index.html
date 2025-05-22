@@ -220,7 +220,7 @@ function animate() {
   for (const p of platforms) {
     const halfWidth = p.geometry.parameters.width / 2;
     const halfDepth = p.geometry.parameters.depth / 2;
-    const halfHeight = p.geometry.parameters.height / 2;
+    const halfHeight = p.geometry.parameters.height*2;
 
     // Check if player is horizontally over the platform
     const overX = Math.abs(player.position.x - p.position.x) < halfWidth + 0.3;
