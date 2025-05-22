@@ -231,7 +231,7 @@
         const pz = Math.abs(player.position.z - p.position.z) < p.geometry.parameters.depth/2;
         const py = Math.abs(player.position.y - p.position.y) < p.geometry.parameters.height*2;
         if (px && pz && py && velocityY <= 0) {
-          if (velocityY<=0){
+          if (direction.x!=0){
             player.position.x-=direction.x*speed;
             onGround=true;
             velocityY = 0;
