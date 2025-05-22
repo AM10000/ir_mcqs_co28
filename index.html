@@ -227,7 +227,7 @@ function animate() {
     const overZ = Math.abs(player.position.z - p.position.z) < halfDepth + 0.3;
 
     // Player height approx 1.5 scaled by 0.6 = ~0.9, adjust landing offset as needed
-    const playerFeetY = player.position.y-0.5;  // assume player.position.y at feet level
+    const playerFeetY = player.position.y+0.5;  // assume player.position.y at feet level
 
     // Check if player is falling onto platform
     if (overX && overZ) {
