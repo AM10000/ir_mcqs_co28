@@ -191,93 +191,127 @@
       }
     });
 
-    function animate() {
-      requestAnimationFrame(animate);
+function animate() {
+  requestAnimationFrame(animate);
 
-      const direction = new THREE.Vector3();
-      const speed = 0.1;
+  const direction = new THREE.Vector3();
+  const speed = 0.1;
 
-      if (keys['w']) direction.z -= 1;
-      if (keys['s']) direction.z += 1;
-      if (keys['a']) direction.x -= 1;
-      if (keys['d']) direction.x += 1;
+  if (keys['w']) direction.z -= 1;
+  if (keys['s']) direction.z += 1;
+  if (keys['a']) direction.x -= 1;
+  if (keys['d']) direction.x += 1;
 
-      direction.applyEuler(new THREE.Euler(0, yaw + Math.PI, 0));
-      const newPosition = player.position.clone().add(direction.clone().multiplyScalar(speed));
+  direction.applyEuler(new THREE.Euler(0, yaw + Math.PI, 0));
+  direction.normalize();
 
-      let canMove = true;
-      platforms.forEach(p => {
-        const dx = Math.abs(newPosition.x - p.position.x);
-        const dz = Math.abs(newPosition.z - p.position.z);
-        const dy = Math.abs(player.position.y - p.position.y);
-        const width = p.geometry.parameters.width / 2 + 0.3;
-        const depth = p.geometry.parameters.depth / 2 + 0.3;
-        const height = p.geometry.parameters.height;
-        if (dx < width && dz < depth && dy < height + 1.5) {
-          canMove = false;
-        }
-      });
-      if (canMove) player.position.copy(newPosition);
+  // Proposed new position after move
+  const newX = player.position.x + direction.x * speed;
+  const newZ = player.position.z + direction.z * speed;
+  const playerY = player.position.y;
 
-      velocityY -= 0.01;
-      player.position.y += velocityY;
+  // Check horizontal collision with platforms before moving
+  let canMoveX = true;
+  let canMoveZ = true;
 
-      onGround = false;
-      platforms.forEach(p => {
-        const px = Math.abs(player.position.x - p.position.x) < p.geometry.parameters.width/2;
-        const pz = Math.abs(player.position.z - p.position.z) < p.geometry.parameters.depth/2;
-        const py = Math.abs(player.position.y - p.position.y) < p.geometry.parameters.height*2;
-        if (px && pz && py && velocityY < 0) {
-          velocityY = 0;
-          player.position.y = p.position.y + 0.75;
-          onGround = true;
-        }
-      });
-      killBricks.forEach(p => {
-        const px = Math.abs(player.position.x - p.position.x) < p.geometry.parameters.width/2;
-        const pz = Math.abs(player.position.z - p.position.z) < p.geometry.parameters.depth/2;
-        const py = Math.abs(player.position.y - p.position.y) < p.geometry.parameters.height*2;
-        if (px && pz && py) {
-          velocityY = 0;
-          player.position.y = 0;
-          player.position.x = 0;
-          onGround = true;
-        }
-      });
+  for (const p of platforms) {
+    const halfWidth = p.geometry.parameters.width / 2;
+    const halfDepth = p.geometry.parameters.depth / 2;
+    const halfHeight = p.geometry.parameters.height / 2;
+    const px = p.position.x;
+    const pz = p.position.z;
+    const py = p.position.y;
 
-      if (keys[' '] && onGround) velocityY = 0.22;
+    // Check if player's vertical position overlaps platform height (with a margin)
+    const verticalOverlap = playerY + 1 > py - halfHeight && playerY < py + halfHeight + 1;
 
-      const lookDirection = new THREE.Vector3(
-        Math.sin(yaw) * Math.cos(pitch),
-        Math.sin(pitch),
-        Math.cos(yaw) * Math.cos(pitch)
-      );
-
-      const cameraPosition = player.position.clone().sub(lookDirection.clone().multiplyScalar(zoomDistance));
-      player.rotation.y = yaw + Math.PI;
-
-      cameraPosition.y += 2;
-      camera.position.copy(cameraPosition);
-      camera.lookAt(player.position.clone().add(new THREE.Vector3(0, 1, 0)));
-
-      const isMoving = direction.lengthSq() > 0.0001;
-      if (isMoving) player.userData.walkTime += 0.2;
-      else player.userData.walkTime = 0;
-
-      const swing = Math.sin(player.userData.walkTime) * 0.5;
-      player.userData.leftArm.rotation.x = swing;
-      player.userData.rightArm.rotation.x = -swing;
-      player.userData.leftLeg.rotation.x = -swing;
-      player.userData.rightLeg.rotation.x = swing;
-
-      playerRef.set({
-        x: player.position.x,
-        y: player.position.y,
-        z: player.position.z
-      });
-
-      renderer.render(scene, camera);
+    if (verticalOverlap) {
+      // Check if moving on X would cause collision
+      if (
+        Math.abs(newX - px) < halfWidth + 0.3 && // 0.3 as player collision radius approx
+        Math.abs(player.position.z - pz) < halfDepth + 0.3
+      ) {
+        canMoveX = false;
+      }
+      // Check if moving on Z would cause collision
+      if (
+        Math.abs(player.position.x - px) < halfWidth + 0.3 &&
+        Math.abs(newZ - pz) < halfDepth + 0.3
+      ) {
+        canMoveZ = false;
+      }
     }
+  }
+
+  // Apply movement only if allowed
+  if (canMoveX) player.position.x = newX;
+  if (canMoveZ) player.position.z = newZ;
+
+  // Gravity and vertical movement unchanged
+  velocityY -= 0.01;
+  player.position.y += velocityY;
+
+  onGround = false;
+  platforms.forEach(p => {
+    const px = Math.abs(player.position.x - p.position.x) < p.geometry.parameters.width/2;
+    const pz = Math.abs(player.position.z - p.position.z) < p.geometry.parameters.depth/2;
+    const py = Math.abs(player.position.y - p.position.y) < p.geometry.parameters.height*2;
+    if (px && pz && py && velocityY < 0) {
+      velocityY = 0;
+      player.position.y = p.position.y + 0.75;
+      onGround = true;
+    }
+  });
+
+  killBricks.forEach(p => {
+    const px = Math.abs(player.position.x - p.position.x) < p.geometry.parameters.width/2;
+    const pz = Math.abs(player.position.z - p.position.z) < p.geometry.parameters.depth/2;
+    const py = Math.abs(player.position.y - p.position.y) < p.geometry.parameters.height*2;
+    if (px && pz && py) {
+      velocityY = 0;
+      player.position.y = 0;
+      player.position.x = 0;
+      onGround = true;
+    }
+  });
+
+  if (keys[' '] && onGround) velocityY = 0.22;
+
+  // Camera and player rotation code unchanged
+  const lookDirection = new THREE.Vector3(
+    Math.sin(yaw) * Math.cos(pitch),
+    Math.sin(pitch),
+    Math.cos(yaw) * Math.cos(pitch)
+  );
+
+  const cameraPosition = player.position.clone().sub(lookDirection.clone().multiplyScalar(zoomDistance));
+  player.rotation.y = yaw + Math.PI;
+
+  cameraPosition.y += 2;
+  camera.position.copy(cameraPosition);
+  camera.lookAt(player.position.clone().add(new THREE.Vector3(0, 1, 0)));
+
+  // Walking animation unchanged
+  const isMoving = direction.lengthSq() > 0.0001;
+  if (isMoving) player.userData.walkTime += 0.2;
+  else player.userData.walkTime = 0;
+
+  const swing = Math.sin(player.userData.walkTime) * 0.5;
+  player.userData.leftArm.rotation.x = swing;
+  player.userData.rightArm.rotation.x = -swing;
+  player.userData.leftLeg.rotation.x = -swing;
+  player.userData.rightLeg.rotation.x = swing;
+
+  // Update own position in DB
+  playerRef.set({
+    x: player.position.x,
+    y: player.position.y,
+    z: player.position.z
+  });
+
+  renderer.render(scene, camera);
+}
+
 
     animate();
   </script>
