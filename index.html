@@ -63,7 +63,7 @@
     }
     function makeCircle(x, y, z, radius, scene, list, color=0x000dff) {
       const shape = new THREE.Mesh(
-            new THREE.CircleGeometry(radius),
+            new THREE.CylinderGeometry(radius, radius, 0.1),
             new THREE.MeshStandardMaterial({ color: color })
         );
       shape.position.set(x, z, y);
