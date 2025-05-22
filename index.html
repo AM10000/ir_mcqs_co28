@@ -205,16 +205,40 @@ function animate() {
   direction.applyEuler(new THREE.Euler(0, yaw + Math.PI, 0));
   direction.normalize();
 
-  // Proposed new position after move
+  // Gravity and vertical movement unchanged
+  velocityY -= 0.01;
+  player.position.y += velocityY;
+
+  onGround = false;
+  let standingPlatform = null;
+
+  // Find platform player is standing on
+  for (const p of platforms) {
+    const px = Math.abs(player.position.x - p.position.x) < p.geometry.parameters.width / 2;
+    const pz = Math.abs(player.position.z - p.position.z) < p.geometry.parameters.depth / 2;
+    const py = player.position.y - p.position.y;
+
+    // Check if player is just above the platform (within a small margin)
+    if (px && pz && py >= 0 && py < 0.75 && velocityY <= 0) {
+      velocityY = 0;
+      player.position.y = p.position.y + 0.75;
+      onGround = true;
+      standingPlatform = p;
+      break; // Found platform, no need to continue
+    }
+  }
+
+  // Horizontal movement with collision, excluding standing platform
   const newX = player.position.x + direction.x * speed;
   const newZ = player.position.z + direction.z * speed;
   const playerY = player.position.y;
 
-  // Check horizontal collision with platforms before moving
   let canMoveX = true;
   let canMoveZ = true;
 
   for (const p of platforms) {
+    if (p === standingPlatform) continue; // skip platform player is standing on
+
     const halfWidth = p.geometry.parameters.width / 2;
     const halfDepth = p.geometry.parameters.depth / 2;
     const halfHeight = p.geometry.parameters.height / 2;
@@ -222,18 +246,18 @@ function animate() {
     const pz = p.position.z;
     const py = p.position.y;
 
-    // Check if player's vertical position overlaps platform height (with a margin)
+    // Check vertical overlap (player height approx 1.5)
     const verticalOverlap = playerY + 1 > py - halfHeight && playerY < py + halfHeight + 1;
 
     if (verticalOverlap) {
-      // Check if moving on X would cause collision
+      // Check collision on X axis
       if (
-        Math.abs(newX - px) < halfWidth + 0.3 && // 0.3 as player collision radius approx
+        Math.abs(newX - px) < halfWidth + 0.3 && 
         Math.abs(player.position.z - pz) < halfDepth + 0.3
       ) {
         canMoveX = false;
       }
-      // Check if moving on Z would cause collision
+      // Check collision on Z axis
       if (
         Math.abs(player.position.x - px) < halfWidth + 0.3 &&
         Math.abs(newZ - pz) < halfDepth + 0.3
@@ -243,26 +267,10 @@ function animate() {
     }
   }
 
-  // Apply movement only if allowed
   if (canMoveX) player.position.x = newX;
   if (canMoveZ) player.position.z = newZ;
 
-  // Gravity and vertical movement unchanged
-  velocityY -= 0.01;
-  player.position.y += velocityY;
-
-  onGround = false;
-  platforms.forEach(p => {
-    const px = Math.abs(player.position.x - p.position.x) < p.geometry.parameters.width/2;
-    const pz = Math.abs(player.position.z - p.position.z) < p.geometry.parameters.depth/2;
-    const py = Math.abs(player.position.y - p.position.y) < p.geometry.parameters.height*2;
-    if (px && pz && py && velocityY < 0) {
-      velocityY = 0;
-      player.position.y = p.position.y + 0.75;
-      onGround = true;
-    }
-  });
-
+  // Kill bricks logic unchanged
   killBricks.forEach(p => {
     const px = Math.abs(player.position.x - p.position.x) < p.geometry.parameters.width/2;
     const pz = Math.abs(player.position.z - p.position.z) < p.geometry.parameters.depth/2;
@@ -277,7 +285,7 @@ function animate() {
 
   if (keys[' '] && onGround) velocityY = 0.22;
 
-  // Camera and player rotation code unchanged
+  // Camera and rotation unchanged
   const lookDirection = new THREE.Vector3(
     Math.sin(yaw) * Math.cos(pitch),
     Math.sin(pitch),
@@ -302,7 +310,6 @@ function animate() {
   player.userData.leftLeg.rotation.x = -swing;
   player.userData.rightLeg.rotation.x = swing;
 
-  // Update own position in DB
   playerRef.set({
     x: player.position.x,
     y: player.position.y,
@@ -311,6 +318,7 @@ function animate() {
 
   renderer.render(scene, camera);
 }
+
 
 
     animate();
