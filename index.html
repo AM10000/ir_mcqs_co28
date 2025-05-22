@@ -205,30 +205,30 @@ function animate() {
   direction.applyEuler(new THREE.Euler(0, yaw + Math.PI, 0));
   direction.normalize();
 
-  // Gravity and vertical movement unchanged
+  // Apply gravity and vertical movement
   velocityY -= 0.01;
   player.position.y += velocityY;
 
   onGround = false;
   let standingPlatform = null;
 
-  // Find platform player is standing on
+  // Vertical collision check with ALL platforms (to stand on floor or platforms)
   for (const p of platforms) {
     const px = Math.abs(player.position.x - p.position.x) < p.geometry.parameters.width / 2;
     const pz = Math.abs(player.position.z - p.position.z) < p.geometry.parameters.depth / 2;
     const py = player.position.y - p.position.y;
 
-    // Check if player is just above the platform (within a small margin)
+    // Check if player is standing on this platform
     if (px && pz && py >= 0 && py < 0.75 && velocityY <= 0) {
       velocityY = 0;
       player.position.y = p.position.y + 0.75;
       onGround = true;
       standingPlatform = p;
-      break; // Found platform, no need to continue
+      break;  // Found platform player stands on
     }
   }
 
-  // Horizontal movement with collision, excluding standing platform
+  // Prepare new proposed horizontal positions
   const newX = player.position.x + direction.x * speed;
   const newZ = player.position.z + direction.z * speed;
   const playerY = player.position.y;
@@ -236,8 +236,9 @@ function animate() {
   let canMoveX = true;
   let canMoveZ = true;
 
+  // Horizontal collision checks with all platforms except standingPlatform
   for (const p of platforms) {
-    if (p === standingPlatform) continue; // skip platform player is standing on
+    if (p === standingPlatform) continue; // skip platform player stands on
 
     const halfWidth = p.geometry.parameters.width / 2;
     const halfDepth = p.geometry.parameters.depth / 2;
@@ -246,7 +247,7 @@ function animate() {
     const pz = p.position.z;
     const py = p.position.y;
 
-    // Check vertical overlap (player height approx 1.5)
+    // Check vertical overlap (considering player height ~1.5)
     const verticalOverlap = playerY + 1 > py - halfHeight && playerY < py + halfHeight + 1;
 
     if (verticalOverlap) {
@@ -285,7 +286,6 @@ function animate() {
 
   if (keys[' '] && onGround) velocityY = 0.22;
 
-  // Camera and rotation unchanged
   const lookDirection = new THREE.Vector3(
     Math.sin(yaw) * Math.cos(pitch),
     Math.sin(pitch),
@@ -299,7 +299,6 @@ function animate() {
   camera.position.copy(cameraPosition);
   camera.lookAt(player.position.clone().add(new THREE.Vector3(0, 1, 0)));
 
-  // Walking animation unchanged
   const isMoving = direction.lengthSq() > 0.0001;
   if (isMoving) player.userData.walkTime += 0.2;
   else player.userData.walkTime = 0;
@@ -310,6 +309,7 @@ function animate() {
   player.userData.leftLeg.rotation.x = -swing;
   player.userData.rightLeg.rotation.x = swing;
 
+  // Update own position in DB (outside listener, so only once per frame)
   playerRef.set({
     x: player.position.x,
     y: player.position.y,
@@ -318,6 +318,7 @@ function animate() {
 
   renderer.render(scene, camera);
 }
+
 
 
 
