@@ -220,14 +220,14 @@ function animate() {
   for (const p of platforms) {
     const halfWidth = p.geometry.parameters.width / 2;
     const halfDepth = p.geometry.parameters.depth / 2;
-    const halfHeight = p.geometry.parameters.height*2;
+    const halfHeight = p.geometry.parameters.height/2;
 
     // Check if player is horizontally over the platform
     const overX = Math.abs(player.position.x - p.position.x) < halfWidth + 0.3;
     const overZ = Math.abs(player.position.z - p.position.z) < halfDepth + 0.3;
 
     // Player height approx 1.5 scaled by 0.6 = ~0.9, adjust landing offset as needed
-    const playerFeetY = player.position.y;  // assume player.position.y at feet level
+    const playerFeetY = player.position.y-0.5;  // assume player.position.y at feet level
 
     // Check if player is falling onto platform
     if (overX && overZ) {
