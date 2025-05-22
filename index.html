@@ -235,7 +235,7 @@ function animate() {
       const platformTopY = p.position.y + halfHeight;
 
       // If player is below or slightly above platform top, and falling down
-      if (velocityY <= 0 && playerFeetY <= platformTopY + 0.05 && playerFeetY >= platformTopY - 0.5) {
+      if (velocityY <= 0 && Math.abs(player.position.y - p.position.y) < p.geometry.parameters.height*2) {
         // Snap player to platform top
         player.position.y = platformTopY;
         velocityY = 0;
