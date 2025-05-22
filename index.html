@@ -323,11 +323,15 @@ function animate() {
 
   if (keys[' '] && onGround) velocityY = 0.22;
 
-  const lookDirection = new THREE.Vector3(
-    Math.sin(yaw) * Math.cos(pitch),
-    Math.sin(pitch),
-    Math.cos(yaw) * Math.cos(pitch)
-  );
+const lookDirection = new THREE.Vector3(
+  Math.sin(yaw) * Math.cos(pitch),
+  Math.sin(pitch),
+  Math.cos(yaw) * Math.cos(pitch)
+);
+
+// Player should face the same direction as camera
+player.rotation.y = yaw + Math.PI;
+
 
   const cameraPosition = player.position.clone().sub(lookDirection.clone().multiplyScalar(zoomDistance));
   cameraPosition.y += 2;
