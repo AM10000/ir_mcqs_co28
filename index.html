@@ -409,14 +409,19 @@
         renderer.render(scene, camera);
 
         // Update local player position in Firebase
-        playerRef.update({
-            x: player.position.x,
-            y: player.position.y,
-            z: player.position.z
-        });
         if (player.health !== lastHealth) {
-            playerRef.update({ health: player.health });
+            playerRef.update({
+                x: player.position.x,
+                y: player.position.y,
+                z: player.position.z
+            });
             lastHealth = player.health;
+        } else {
+            playerRef.update({
+                x: player.position.x,
+                y: player.position.y,
+                z: player.position.z
+            });
         }
 
     }
