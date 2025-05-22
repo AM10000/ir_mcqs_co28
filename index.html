@@ -51,7 +51,15 @@
         scene.add(platform);
         platformList.push(platform);
     }
-
+    function makeTorus(x, y, z, radius, tube, radialSegments, tubularSegments, scene, list, color=0x000dff){
+      const shape = new THREE.Mesh(
+            new THREE.TorusGeometry(radius, tube, radialSegments, tubularSegments),
+            new THREE.MeshStandardMaterial({ color: color })
+        );
+      shape.position.set(x, z, y);
+      scene.add(shape);
+      list.push(shape);
+    }
     let zoomDistance = 6;
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0xa0d0ff);
@@ -68,6 +76,7 @@
 
     const platforms = [];
     const killBricks = [];
+    const rings = [];
     for (let i = 1; i < 5; i++) {
       makePlatform(0, i, i, 1, 3, 0.5, scene, platforms, color=0x000dff);
     }
@@ -88,6 +97,7 @@
     makePlatform(-34, 6, 9, 7, 10, 0.5, scene, platforms, color=0x000dff);
     makePlatform(-32, 6, 12, 7, 0.5, 10, scene, platforms, color=0x000dff);
     makePlatform(-36, 6, 12, 7, 0.5, 10, scene, platforms, color=0x000dff);
+    makeTorus(0, 0, 5, 10, 1, 30, 200, scene, rings);
     function createPlayer(color = 0x0077ff) {
       const group = new THREE.Group();
 
