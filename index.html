@@ -408,13 +408,13 @@
         renderer.render(scene, camera);
 
         // Update local player position in Firebase
-        playerRef.set({
+        playerRef.update({
             x: player.position.x,
             y: player.position.y,
             z: player.position.z
         });
         if (player.health !== lastHealth) {
-            playerRef.set({ health: player.health });
+            playerRef.update({ health: player.health });
             lastHealth = player.health;
         }
 
@@ -425,11 +425,8 @@
    db.ref('players').on('value', snapshot => {
   const data = snapshot.val() || {};
   for (const id in data) {
-    
     if (id !== playerId) {
-      const pdata = data[id];
       if (!otherPlayers[id]) {
-
         const newPlayer = createPlayer(0xff0000);
         newPlayer.health = pdata.health ?? 100;
         createHealthBar(newPlayer);
@@ -438,11 +435,11 @@
         otherPlayers[id] = newPlayer;
       }
       const other = otherPlayers[id];
-      other.position.set(pdata.x, pdata.y, pdata.z);
-      if (typeof pdata.health === 'number') {
+      other.position.set(data[id].x, data[id].y, data[id].z);
+    //   if (typeof data[id].health === 'number') {
         other.health = pdata.health;
         updateHealthBar(other);
-      }
+    //   }
     }
   }
   // Clean up players that disconnected
@@ -453,7 +450,6 @@
     }
   }
 });
-
   </script>
 </body>
 </html>
