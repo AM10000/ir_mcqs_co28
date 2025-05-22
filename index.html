@@ -252,7 +252,7 @@ function animate() {
 
     // Falling: check landing on top
     if (velocityY <= 0 && overX && overZ && overY) {
-      player.position.y = platformTopY;
+      player.position.y = p.position.y+0.75;
       velocityY = 0;
       onGround = true;
       standingPlatform = p;
