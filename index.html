@@ -213,99 +213,179 @@
     document.addEventListener('keydown', (e) => { keys[e.code] = true; });
     document.addEventListener('keyup', (e) => { keys[e.code] = false; });
 
-    function checkCollisionWithPlatforms(obj) {
-      for (const platform of platforms) {
-        const dx = Math.abs(obj.position.x - platform.position.x);
-        const dy = Math.abs(obj.position.y - platform.position.y);
-        const dz = Math.abs(obj.position.z - platform.position.z);
-        if (dx < 1.5 && dy < 1.5 && dz < 0.5) {
-          return true;
-        }
-      }
-      return false;
-    }
-
-    function checkCollisionWithKillBricks(obj) {
-      for (const brick of killBricks) {
-        const dx = Math.abs(obj.position.x - brick.position.x);
-        const dy = Math.abs(obj.position.y - brick.position.y);
-        const dz = Math.abs(obj.position.z - brick.position.z);
-        if (dx < 1.5 && dy < 1.5 && dz < 0.5) {
-          return true;
-        }
-      }
-      return false;
-    }
 
     function animate() {
-      requestAnimationFrame(animate);
+        requestAnimationFrame(animate);
 
-      velocity.x = 0;
-      velocity.z = 0;
-      const speed = 0.1;
+        const direction = new THREE.Vector3();
+        const speed = 0.1;
 
-      if (keys['KeyW']) velocity.z -= speed;
-      if (keys['KeyS']) velocity.z += speed;
-      if (keys['KeyA']) velocity.x -= speed;
-      if (keys['KeyD']) velocity.x += speed;
+        if (keys['w']) direction.z -= 1;
+        if (keys['s']) direction.z += 1;
+        if (keys['a']) direction.x -= 1;
+        if (keys['d']) direction.x += 1;
 
-      player.position.add(velocity);
+        direction.applyEuler(new THREE.Euler(0, yaw + Math.PI, 0));
+        direction.normalize();
 
-      if (checkCollisionWithPlatforms(player)) {
-        // If on platform, can move freely
-      } else {
-        // If not on platform, fall down
-        player.position.y -= 0.1;
-      }
+        velocityY -= 0.01; // gravity always applies
+        player.position.y += velocityY;
 
-      if (checkCollisionWithKillBricks(player)) {
-        player.position.set(0, 10, 0);
-        player.health = 100; // reset health on death
-        updateHealthBar(player);
-      }
+        onGround = false;
+        let standingPlatform = null;
 
-      // Update bullets positions
-      updateBullets();
+        for (const p of platforms) {
+            const halfWidth = p.geometry.parameters.width / 2;
+            const halfDepth = p.geometry.parameters.depth / 2;
+            const halfHeight = p.geometry.parameters.height / 2;
+            const px = p.position.x, pz = p.position.z, py = p.position.y;
 
-      // Collision between bullets and other players or self
-      bullets.forEach((bullet, bulletIndex) => {
-        // Check collision with other players
-        for (const id in otherPlayers) {
-          const other = otherPlayers[id];
-          if (bullet.mesh.position.distanceTo(other.position) < 1) {
-            // Decrease health of other player on hit
-            if (typeof other.health === 'undefined') other.health = 100; // safety check
-            other.health -= 10;
-            updateHealthBar(other);
-            // Remove bullet
+            const overX = Math.abs(player.position.x - px) < halfWidth;
+            const overZ = Math.abs(player.position.z - pz) < halfDepth;
+            const overY = Math.abs(player.position.y - p.position.y) < p.geometry.parameters.height * 2;
+            const platformTopY = py + halfHeight;
+            const platformBottomY = py - halfHeight;
+            const playerTop = player.position.y + 1.0;
+            const playerBottom = player.position.y;
+
+            // Falling: check landing on top
+            if (velocityY <= 0 && overX && overZ && overY) {
+            player.position.y = p.position.y+0.75;
+            velocityY = 0;
+            onGround = true;
+            standingPlatform = p;
+            break;
+            }
+
+            // Jumping up: check hitting bottom
+            if (velocityY > 0 && overX && overZ && playerTop > platformBottomY - 0.2 && playerTop < platformBottomY + 0.2) {
+            player.position.y = platformBottomY - 1.0;
+            velocityY = -0.01; // start falling
+            }
+        }
+
+        // Horizontal collision
+        const proposedX = player.position.x + direction.x * speed;
+        const proposedZ = player.position.z + direction.z * speed;
+        const playerY = player.position.y;
+
+        let canMoveX = true;
+        let canMoveZ = true;
+
+        for (const p of platforms) {
+            if (p === standingPlatform) continue;
+
+            const halfWidth = p.geometry.parameters.width / 2;
+            const halfDepth = p.geometry.parameters.depth / 2;
+            const halfHeight = p.geometry.parameters.height / 2;
+            const px = p.position.x;
+            const pz = p.position.z;
+            const py = p.position.y;
+
+            const verticalOverlap = playerY + 0.9 > py - halfHeight && playerY < py + halfHeight + 0.9;
+
+            if (verticalOverlap) {
+            if (
+                Math.abs(proposedX - px) < halfWidth + 0.3 &&
+                Math.abs(player.position.z - pz) < halfDepth + 0.3
+            ) canMoveX = false;
+
+            if (
+                Math.abs(player.position.x - px) < halfWidth + 0.3 &&
+                Math.abs(proposedZ - pz) < halfDepth + 0.3
+            ) canMoveZ = false;
+            }
+        }
+
+        for (const p of bouncers) {
+            const px = Math.abs(player.position.x - p.position.x) < p.geometry.parameters.width / 2;
+            const pz = Math.abs(player.position.z - p.position.z) < p.geometry.parameters.depth / 2;
+            const py = Math.abs(player.position.y - p.position.y) < p.geometry.parameters.height * 2;
+            if (px && pz && py && velocityY < 0) velocityY = 10;
+        }
+
+        if (canMoveX) player.position.x = proposedX;
+        if (canMoveZ) player.position.z = proposedZ;
+
+        // Kill bricks
+        killBricks.forEach(p => {
+            const px = Math.abs(player.position.x - p.position.x) < p.geometry.parameters.width / 2;
+            const pz = Math.abs(player.position.z - p.position.z) < p.geometry.parameters.depth / 2;
+            const py = Math.abs(player.position.y - p.position.y) < p.geometry.parameters.height * 2;
+            if (px && pz && py) {
+            velocityY = 0;
+            player.position.set(0, 0, 0);
+            onGround = true;
+            }
+        });
+
+        if (keys[' '] && onGround) velocityY = 0.22;
+
+        const lookDirection = new THREE.Vector3(
+        Math.sin(yaw) * Math.cos(pitch),
+        Math.sin(pitch),
+        Math.cos(yaw) * Math.cos(pitch)
+        );
+
+        // Player should face the same direction as camera
+        player.rotation.y = yaw + Math.PI;
+
+
+        const cameraPosition = player.position.clone().sub(lookDirection.clone().multiplyScalar(zoomDistance));
+        cameraPosition.y += 2;
+        camera.position.copy(cameraPosition);
+        camera.lookAt(player.position.clone().add(new THREE.Vector3(0, 1, 0)));
+
+        const isMoving = direction.lengthSq() > 0.0001;
+        if (isMoving) player.userData.walkTime += 0.2;
+        else player.userData.walkTime = 0;
+
+        const swing = Math.sin(player.userData.walkTime) * 0.5;
+        player.userData.leftArm.rotation.x = swing;
+        player.userData.rightArm.rotation.x = -swing;
+        player.userData.leftLeg.rotation.x = -swing;
+        player.userData.rightLeg.rotation.x = swing;
+
+
+        // Update bullets positions
+        updateBullets();
+
+        // Collision between bullets and other players or self
+        bullets.forEach((bullet, bulletIndex) => {
+            // Check collision with other players
+            for (const id in otherPlayers) {
+            const other = otherPlayers[id];
+            if (bullet.mesh.position.distanceTo(other.position) < 1) {
+                // Decrease health of other player on hit
+                if (typeof other.health === 'undefined') other.health = 100; // safety check
+                other.health -= 10;
+                updateHealthBar(other);
+                // Remove bullet
+                scene.remove(bullet.mesh);
+                bullets.splice(bulletIndex, 1);
+                break;
+            }
+            }
+            // Check collision with local player (friendly fire possible)
+            if (bullet.mesh.position.distanceTo(player.position) < 1) {
+            player.health -= 10;
+            if (player.health < 0) player.health = 0;
+            updateHealthBar(player);
             scene.remove(bullet.mesh);
             bullets.splice(bulletIndex, 1);
-            break;
-          }
-        }
-        // Check collision with local player (friendly fire possible)
-        if (bullet.mesh.position.distanceTo(player.position) < 1) {
-          player.health -= 10;
-          if (player.health < 0) player.health = 0;
-          updateHealthBar(player);
-          scene.remove(bullet.mesh);
-          bullets.splice(bulletIndex, 1);
-        }
-      });
+            }
+        });
 
-      // Update camera to follow player
-      camera.position.set(player.position.x, player.position.y + 3, player.position.z + zoomDistance);
-      camera.lookAt(player.position);
 
-      renderer.render(scene, camera);
+        renderer.render(scene, camera);
 
-      // Update local player position in Firebase
-      playerRef.set({
-        x: player.position.x,
-        y: player.position.y,
-        z: player.position.z,
-        health: player.health // send health to database
-      });
+        // Update local player position in Firebase
+        playerRef.set({
+            x: player.position.x,
+            y: player.position.y,
+            z: player.position.z,
+            health: player.health // send health to database
+        });
     }
     animate();
 
