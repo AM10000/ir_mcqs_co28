@@ -244,14 +244,14 @@ function animate() {
 
     const overX = Math.abs(player.position.x - px) < halfWidth;
     const overZ = Math.abs(player.position.z - pz) < halfDepth;
-
+    const overY = Math.abs(player.position.y - p.position.y) < p.geometry.parameters.height * 2;
     const platformTopY = py + halfHeight;
     const platformBottomY = py - halfHeight;
     const playerTop = player.position.y + 1.0;
     const playerBottom = player.position.y;
 
     // Falling: check landing on top
-    if (velocityY <= 0 && overX && overZ && playerBottom > platformTopY - 0.2 && playerBottom < platformTopY + 0.2) {
+    if (velocityY <= 0 && overX && overZ && overY) {
       player.position.y = platformTopY;
       velocityY = 0;
       onGround = true;
