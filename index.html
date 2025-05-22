@@ -213,29 +213,6 @@
     document.addEventListener('keydown', (e) => { keys[e.code] = true; });
     document.addEventListener('keyup', (e) => { keys[e.code] = false; });
 
-    function checkCollisionWithPlatforms(obj) {
-      for (const platform of platforms) {
-        const dx = Math.abs(obj.position.x - platform.position.x);
-        const dy = Math.abs(obj.position.y - platform.position.y);
-        const dz = Math.abs(obj.position.z - platform.position.z);
-        if (dx < 1.5 && dy < 1.5 && dz < 0.5) {
-          return true;
-        }
-      }
-      return false;
-    }
-
-    function checkCollisionWithKillBricks(obj) {
-      for (const brick of killBricks) {
-        const dx = Math.abs(obj.position.x - brick.position.x);
-        const dy = Math.abs(obj.position.y - brick.position.y);
-        const dz = Math.abs(obj.position.z - brick.position.z);
-        if (dx < 1.5 && dy < 1.5 && dz < 0.5) {
-          return true;
-        }
-      }
-      return false;
-    }
 
     function animate() {
       requestAnimationFrame(animate);
