@@ -12,7 +12,6 @@
   <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
-
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyDsQeMfBn2nOlSd_tZk9IdXZI8UEKa5Jx0",
@@ -27,6 +26,20 @@
     const app = firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     const playerId = "player_" + Math.random().toString(36).substring(2, 10);
+    const playerRef = db.ref('players/' + playerId);
+
+    db.ref('players').once('value').then(snapshot => {
+      const players = snapshot.val() || {};
+      for (const id in players) {
+        if (id !== playerId) {
+          db.ref('players/' + id).remove();
+        }
+      }
+    });
+
+    playerRef.set({ x: 0, y: 0, z: 0 });
+    playerRef.onDisconnect().remove();
+
     const otherPlayers = {};
 
     function makePlatform(x, y, z, height, width, depth, scene, platformList, color=0x00ff00) {
@@ -144,6 +157,40 @@
       zoomDistance = Math.max(2, Math.min(15, zoomDistance));
     });
 
+    db.ref('players').on('value', (snapshot) => {
+      const data = snapshot.val() || {};
+      for (const id in otherPlayers) {
+        if (!data[id]) {
+          scene.remove(otherPlayers[id]);
+          delete otherPlayers[id];
+        }
+      }
+      for (const id in data) {
+        if (id !== playerId) {
+          if (!otherPlayers[id]) {
+            const newPlayer = createPlayer(0xff0000);
+            scene.add(newPlayer);
+            otherPlayers[id] = newPlayer;
+          }
+          otherPlayers[id].position.set(data[id].x, data[id].y, data[id].z);
+        }
+      }
+    });
+
+    document.addEventListener('keydown', e => {
+      if (e.key.toLowerCase() === 'c') {
+        db.ref('players').once('value').then(snapshot => {
+          const players = snapshot.val() || {};
+          for (const id in players) {
+            if (id !== playerId) {
+              db.ref('players/' + id).remove();
+            }
+          }
+          console.log('Cleared all other players.');
+        });
+      }
+    });
+
     function animate() {
       requestAnimationFrame(animate);
 
@@ -156,35 +203,21 @@
       if (keys['d']) direction.x += 1;
 
       direction.applyEuler(new THREE.Euler(0, yaw + Math.PI, 0));
+      const newPosition = player.position.clone().add(direction.clone().multiplyScalar(speed));
 
-      const nextX = player.position.x + direction.x * speed;
-      const nextZ = player.position.z + direction.z * speed;
-
-      let canMoveX = true;
-      let canMoveZ = true;
-
+      let canMove = true;
       platforms.forEach(p => {
-        const px = p.position.x;
-        const pz = p.position.z;
-        const py = p.position.y;
-
-        const w = p.geometry.parameters.width / 2;
-        const d = p.geometry.parameters.depth / 2;
-        const h = p.geometry.parameters.height;
-
-        const halfSize = 0.3;
-
-        if (Math.abs(nextX - px) < w + halfSize && Math.abs(player.position.z - pz) < d && Math.abs(player.position.y - py) < h) {
-          canMoveX = false;
-        }
-
-        if (Math.abs(player.position.x - px) < w && Math.abs(nextZ - pz) < d + halfSize && Math.abs(player.position.y - py) < h) {
-          canMoveZ = false;
+        const dx = Math.abs(newPosition.x - p.position.x);
+        const dz = Math.abs(newPosition.z - p.position.z);
+        const dy = Math.abs(player.position.y - p.position.y);
+        const width = p.geometry.parameters.width / 2 + 0.3;
+        const depth = p.geometry.parameters.depth / 2 + 0.3;
+        const height = p.geometry.parameters.height;
+        if (dx < width && dz < depth && dy < height + 1.5) {
+          canMove = false;
         }
       });
-
-      if (canMoveX) player.position.x = nextX;
-      if (canMoveZ) player.position.z = nextZ;
+      if (canMove) player.position.copy(newPosition);
 
       velocityY -= 0.01;
       player.position.y += velocityY;
@@ -237,7 +270,7 @@
       player.userData.leftLeg.rotation.x = -swing;
       player.userData.rightLeg.rotation.x = swing;
 
-      firebase.database().ref('players/' + playerId).set({
+      playerRef.set({
         x: player.position.x,
         y: player.position.y,
         z: player.position.z
@@ -245,26 +278,6 @@
 
       renderer.render(scene, camera);
     }
-
-    firebase.database().ref('players').on('value', (snapshot) => {
-      const data = snapshot.val();
-      for (const id in otherPlayers) {
-        if (!data || !data[id]) {
-          scene.remove(otherPlayers[id]);
-          delete otherPlayers[id];
-        }
-      }
-      for (const id in data) {
-        if (id !== playerId) {
-          if (!otherPlayers[id]) {
-            const newPlayer = createPlayer(0xff0000);
-            scene.add(newPlayer);
-            otherPlayers[id] = newPlayer;
-          }
-          otherPlayers[id].position.set(data[id].x, data[id].y, data[id].z);
-        }
-      }
-    });
 
     animate();
   </script>
