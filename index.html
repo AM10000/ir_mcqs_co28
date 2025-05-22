@@ -205,21 +205,42 @@
     function checkCollisions() {
         bullets.forEach((bullet, bIndex) => {
             for (const id in otherPlayers) {
-            const other = otherPlayers[id];
-            const distance = bullet.mesh.position.distanceTo(other.position);
-            if (distance < 1) { // Adjust collision radius as needed
-                // Reduce health
-                other.health -= 10;
-                // Remove bullet
+                const other = otherPlayers[id];
+
+                const distance = bullet.mesh.position.distanceTo(other.position);
+                if (distance < 1) {
+                    scene.remove(bullet.mesh);
+                    bullets.splice(bIndex, 1);
+
+                    other.health -= 10;
+                    if (other.health < 0) other.health = 0;
+
+                    updateHealthBar(other);
+
+                    firebase.database().ref(`players/${id}`).update({
+                    health: other.health,
+                    });
+
+                    break;
+                }
+            }
+            const distance = bullet.mesh.position.distanceTo(player.position);
+            if (distance < 1) {
                 scene.remove(bullet.mesh);
                 bullets.splice(bIndex, 1);
-                // Update health bar
-                updateHealthBar(other);
-                break;
-            }
+
+                player.health -= 10;
+                if (player.health < 0) player.health = 0;
+
+                updateHealthBar(player);
+
+                firebase.database().ref(`players/${playerId}`).update({
+                health: player.health,
+                });
             }
         });
     }
+
 
     const player = createPlayer();
     createHealthBar(player);
