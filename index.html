@@ -61,6 +61,16 @@
       scene.add(shape);
       list.push(shape);
     }
+    function makeCircle(x, y, z, radius, scene, list, color=0x000dff) {
+      const shape = new THREE.Mesh(
+            new THREE.CircleGeometry(radius),
+            new THREE.MeshStandardMaterial({ color: color })
+        );
+      shape.position.set(x, z, y);
+      shape.rotation.x=Math.PI/2;
+      scene.add(shape);
+      list.push(shape);
+    }
     let zoomDistance = 6;
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0xa0d0ff);
@@ -99,6 +109,7 @@
     makePlatform(-32, 6, 12, 7, 0.5, 10, scene, platforms, color=0x000dff);
     makePlatform(-36, 6, 12, 7, 0.5, 10, scene, platforms, color=0x000dff);
     makeTorus(0, 0, 5, 1, 0.1, 30, 200, scene, rings);
+    makeCircle(0, 0, 5, 1, scene, rings);
     function createPlayer(color = 0x0077ff) {
       const group = new THREE.Group();
 
