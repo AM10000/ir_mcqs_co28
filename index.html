@@ -408,43 +408,50 @@
         renderer.render(scene, camera);
 
         // Update local player position in Firebase
-        playerRef.set({
+        playerRef.update({
             x: player.position.x,
             y: player.position.y,
-            z: player.position.z,
-            health: player.health // send health to database
+            z: player.position.z
         });
+        if (player.health !== lastHealth) {
+            playerRef.update({ health: player.health });
+            lastHealth = player.health;
+        }
+
     }
     animate();
 
     // Listen for other players updates
-    db.ref('players').on('value', snapshot => {
-      const data = snapshot.val() || {};
-      for (const id in data) {
-        if (id !== playerId) {
-          if (!otherPlayers[id]) {
-            const newPlayer = createPlayer(0xff0000);
-            newPlayer.health = data[id].health ?? 100; // added fix: initialize health from db or 100
-            createHealthBar(newPlayer);
-            updateHealthBar(newPlayer);
-            scene.add(newPlayer);
-            otherPlayers[id] = newPlayer;
-          } else {
-            // Update health from database to keep synced
-            otherPlayers[id].health = data[id].health ?? otherPlayers[id].health;
-          }
-          otherPlayers[id].position.set(data[id].x, data[id].y, data[id].z);
-          updateHealthBar(otherPlayers[id]);
-        }
+   db.ref('players').on('value', snapshot => {
+  const data = snapshot.val() || {};
+  for (const id in data) {
+    const pdata = data[id];
+    if (id !== playerId) {
+      if (!otherPlayers[id]) {
+        const newPlayer = createPlayer(0xff0000);
+        newPlayer.health = pdata.health ?? 100;
+        createHealthBar(newPlayer);
+        updateHealthBar(newPlayer);
+        scene.add(newPlayer);
+        otherPlayers[id] = newPlayer;
       }
-      // Remove players who left
-      for (const id in otherPlayers) {
-        if (!data[id]) {
-          scene.remove(otherPlayers[id]);
-          delete otherPlayers[id];
-        }
+      const other = otherPlayers[id];
+      other.position.set(pdata.x, pdata.y, pdata.z);
+      if (typeof pdata.health === 'number') {
+        other.health = pdata.health;
+        updateHealthBar(other);
       }
-    });
+    }
+  }
+  // Clean up players that disconnected
+  for (const id in otherPlayers) {
+    if (!data[id]) {
+      scene.remove(otherPlayers[id]);
+      delete otherPlayers[id];
+    }
+  }
+});
+
   </script>
 </body>
 </html>
