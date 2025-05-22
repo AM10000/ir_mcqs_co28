@@ -41,6 +41,20 @@
     playerRef.onDisconnect().remove();
 
     const otherPlayers = {};
+    class Bullet {
+        constructor(position, direction) {
+            const geometry = new THREE.SphereGeometry(0.1, 8, 8);
+            const material = new THREE.MeshStandardMaterial({ color: 0xffff00 });
+            this.mesh = new THREE.Mesh(geometry, material);
+            this.mesh.position.copy(position);
+            this.velocity = direction.clone().multiplyScalar(0.5);
+            scene.add(this.mesh);
+        }
+
+        update() {
+            this.mesh.position.add(this.velocity);
+        }
+    }
 
     function makePlatform(x, y, z, height, width, depth, scene, platformList, color=0x00ff00) {
         const platform = new THREE.Mesh(
@@ -111,6 +125,50 @@
     makePlatform(-36, 6, 12, 7, 0.5, 10, scene, platforms, color=0x000dff);
     makeTorus(0, 0, 5, 1, 0.1, 30, 200, scene, rings);
     makeCircle(0, 0, 5, 1, scene, bouncers);
+
+    const bullets = [];
+
+    document.addEventListener('mousedown', () => {
+        const direction = new THREE.Vector3();
+        camera.getWorldDirection(direction);
+        const position = player.position.clone().add(new THREE.Vector3(0, 1.5, 0)); // Adjust as needed
+        bullets.push(new Bullet(position, direction));
+    });
+    function updateBullets() {
+        bullets.forEach((bullet, index) => {
+            bullet.update();
+            // Remove bullets that are too far
+            if (bullet.mesh.position.length() > 100) {
+            scene.remove(bullet.mesh);
+            bullets.splice(index, 1);
+            }
+        });
+    }
+    function createHealthBar(player) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 128;
+        canvas.height = 16;
+        const context = canvas.getContext('2d');
+        context.fillStyle = 'green';
+        context.fillRect(0, 0, 128, 16);
+        const texture = new THREE.CanvasTexture(canvas);
+        const material = new THREE.SpriteMaterial({ map: texture });
+        const sprite = new THREE.Sprite(material);
+        sprite.scale.set(2, 0.25, 1);
+        sprite.position.set(0, 2.5, 0); // Position above the player's head
+        player.add(sprite);
+        player.healthBar = { sprite, context, texture };
+    }
+    function updateHealthBar(player) {
+        const { context, texture } = player.healthBar;
+        context.clearRect(0, 0, 128, 16);
+        context.fillStyle = 'red';
+        context.fillRect(0, 0, 128, 16);
+        context.fillStyle = 'green';
+        context.fillRect(0, 0, (player.health / 100) * 128, 16);
+        texture.needsUpdate = true;
+    }
+
     function createPlayer(color = 0x0077ff) {
       const group = new THREE.Group();
 
@@ -144,7 +202,27 @@
       return group;
     }
 
+    function checkCollisions() {
+        bullets.forEach((bullet, bIndex) => {
+            for (const id in otherPlayers) {
+            const other = otherPlayers[id];
+            const distance = bullet.mesh.position.distanceTo(other.position);
+            if (distance < 1) { // Adjust collision radius as needed
+                // Reduce health
+                other.health -= 10;
+                // Remove bullet
+                scene.remove(bullet.mesh);
+                bullets.splice(bIndex, 1);
+                // Update health bar
+                updateHealthBar(other);
+                break;
+            }
+            }
+        });
+    }
+
     const player = createPlayer();
+    createHealthBar(player);
     player.position.set(0, 0, 0);
     scene.add(player);
 
@@ -156,6 +234,7 @@
 
     let yaw = 0;
     let pitch = 0;
+    player.health = 100;
 
     document.body.addEventListener('click', () => {
       renderer.domElement.requestPointerLock();
@@ -353,7 +432,8 @@ player.rotation.y = yaw + Math.PI;
     y: player.position.y,
     z: player.position.z
   });
-
+  updateBullets();
+  checkCollisions();
   renderer.render(scene, camera);
 }
 
