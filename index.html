@@ -425,9 +425,11 @@
    db.ref('players').on('value', snapshot => {
   const data = snapshot.val() || {};
   for (const id in data) {
-    const pdata = data[id];
+    
     if (id !== playerId) {
+      const pdata = data[id];
       if (!otherPlayers[id]) {
+
         const newPlayer = createPlayer(0xff0000);
         newPlayer.health = pdata.health ?? 100;
         createHealthBar(newPlayer);
