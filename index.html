@@ -275,94 +275,65 @@ function animate() {
   let canMoveZ = true;
 
   for (const p of platforms) {
-    if (p === standingPlatform) continue;
-
     const halfWidth = p.geometry.parameters.width / 2;
     const halfDepth = p.geometry.parameters.depth / 2;
     const halfHeight = p.geometry.parameters.height / 2;
-    const px = p.position.x;
-    const pz = p.position.z;
-    const py = p.position.y;
+    const px = p.position.x, pz = p.position.z, py = p.position.y;
 
-    const verticalOverlap = playerY + 0.9 > py - halfHeight && playerY < py + halfHeight + 0.9;
+    const overY = Math.abs(playerY - py) < (halfHeight + 0.75);
 
-    if (verticalOverlap) {
-      if (
-        Math.abs(proposedX - px) < halfWidth + 0.3 &&
-        Math.abs(player.position.z - pz) < halfDepth + 0.3
-      ) canMoveX = false;
-
-      if (
-        Math.abs(player.position.x - px) < halfWidth + 0.3 &&
-        Math.abs(proposedZ - pz) < halfDepth + 0.3
-      ) canMoveZ = false;
+    if (overY) {
+      if (Math.abs(proposedX - px) < halfWidth + 0.5 && Math.abs(player.position.z - pz) < halfDepth + 0.5) {
+        canMoveX = false;
+      }
+      if (Math.abs(player.position.x - px) < halfWidth + 0.5 && Math.abs(proposedZ - pz) < halfDepth + 0.5) {
+        canMoveZ = false;
+      }
     }
-  }
-
-  for (const p of bouncers) {
-    const px = Math.abs(player.position.x - p.position.x) < p.geometry.parameters.width / 2;
-    const pz = Math.abs(player.position.z - p.position.z) < p.geometry.parameters.depth / 2;
-    const py = Math.abs(player.position.y - p.position.y) < p.geometry.parameters.height * 2;
-    if (px && pz && py && velocityY < 0) velocityY = 10;
   }
 
   if (canMoveX) player.position.x = proposedX;
   if (canMoveZ) player.position.z = proposedZ;
 
-  // Kill bricks
-  killBricks.forEach(p => {
-    const px = Math.abs(player.position.x - p.position.x) < p.geometry.parameters.width / 2;
-    const pz = Math.abs(player.position.z - p.position.z) < p.geometry.parameters.depth / 2;
-    const py = Math.abs(player.position.y - p.position.y) < p.geometry.parameters.height * 2;
-    if (px && pz && py) {
-      velocityY = 0;
-      player.position.set(0, 0, 0);
-      onGround = true;
-    }
-  });
+  if (onGround && keys[' ']) { // jump with spacebar
+    velocityY = 0.25;
+    onGround = false;
+  }
 
-  if (keys[' '] && onGround) velocityY = 0.22;
+  // Update camera position based on yaw, pitch, and zoom
+  const cameraOffset = new THREE.Vector3(
+    Math.sin(yaw) * Math.cos(pitch),
+    Math.sin(pitch),
+    Math.cos(yaw) * Math.cos(pitch)
+  ).multiplyScalar(zoomDistance);
 
-const lookDirection = new THREE.Vector3(
-  Math.sin(yaw) * Math.cos(pitch),
-  Math.sin(pitch),
-  Math.cos(yaw) * Math.cos(pitch)
-);
+  camera.position.copy(player.position).add(cameraOffset);
+  camera.lookAt(player.position);
 
-// Player should face the same direction as camera
-player.rotation.y = yaw + Math.PI;
+  // Animate player limbs for walking
+  if (direction.length() > 0 && onGround) {
+    player.userData.walkTime += 0.1;
+    const walkAngle = Math.sin(player.userData.walkTime * 10) * 0.5;
 
+    player.userData.leftArm.rotation.x = walkAngle;
+    player.userData.rightArm.rotation.x = -walkAngle;
+    player.userData.leftLeg.rotation.x = -walkAngle;
+    player.userData.rightLeg.rotation.x = walkAngle;
+  } else {
+    player.userData.walkTime = 0;
+    player.userData.leftArm.rotation.x = 0;
+    player.userData.rightArm.rotation.x = 0;
+    player.userData.leftLeg.rotation.x = 0;
+    player.userData.rightLeg.rotation.x = 0;
+  }
 
-  const cameraPosition = player.position.clone().sub(lookDirection.clone().multiplyScalar(zoomDistance));
-  cameraPosition.y += 2;
-  camera.position.copy(cameraPosition);
-  camera.lookAt(player.position.clone().add(new THREE.Vector3(0, 1, 0)));
-
-  const isMoving = direction.lengthSq() > 0.0001;
-  if (isMoving) player.userData.walkTime += 0.2;
-  else player.userData.walkTime = 0;
-
-  const swing = Math.sin(player.userData.walkTime) * 0.5;
-  player.userData.leftArm.rotation.x = swing;
-  player.userData.rightArm.rotation.x = -swing;
-  player.userData.leftLeg.rotation.x = -swing;
-  player.userData.rightLeg.rotation.x = swing;
-
-  playerRef.set({
-    x: player.position.x,
-    y: player.position.y,
-    z: player.position.z
-  });
+  // Update player position in database
+  playerRef.set({ x: player.position.x, y: player.position.y, z: player.position.z });
 
   renderer.render(scene, camera);
 }
 
-
-
-
-
-
-    animate();
+animate();
   </script>
 </body>
 </html>
