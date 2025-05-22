@@ -242,7 +242,7 @@
       zoomDistance += event.deltaY * 0.01;
       zoomDistance = Math.max(2, Math.min(15, zoomDistance));
     });
-    let lastHealth = player.health;
+    // let lastHealth = player.health;
     function animate() {
         requestAnimationFrame(animate);
 
@@ -412,12 +412,13 @@
         playerRef.update({
             x: player.position.x,
             y: player.position.y,
-            z: player.position.z
+            z: player.position.z,
+            health: player.health
         });
-        if (player.health !== lastHealth) {
-            playerRef.update({ health: player.health });
-            lastHealth = player.health;
-        }
+        // if (player.health !== lastHealth) {
+        //     playerRef.update({ health: player.health });
+        //     lastHealth = player.health;
+        // }
 
     }
     animate();
