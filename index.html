@@ -231,9 +231,14 @@
         const pz = Math.abs(player.position.z - p.position.z) < p.geometry.parameters.depth/2;
         const py = Math.abs(player.position.y - p.position.y) < p.geometry.parameters.height*2;
         if (px && pz && py && velocityY <= 0) {
-          velocityY = 0;
-          player.position.y = p.position.y + p.geometry.parameters.height+0.25;
-          onGround = true;
+          if (velocityY<=0){
+            player.position.x-=direction.x*speed;
+            onGround=true;
+          } else {
+            velocityY = 0;
+            player.position.y = p.position.y + p.geometry.parameters.height;
+            onGround = true;
+          }
         }
       });
       killBricks.forEach(p => {
