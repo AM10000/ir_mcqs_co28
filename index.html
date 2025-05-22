@@ -37,12 +37,10 @@
       }
     });
 
-    playerRef.set({ x: 0, y: 0, z: 0, health: 100 });
+    playerRef.set({ x: 0, y: 0, z: 0 });
     playerRef.onDisconnect().remove();
 
     const otherPlayers = {};
-
-    // === Add Bullet class for shooting ===
     class Bullet {
         constructor(position, direction) {
             const geometry = new THREE.SphereGeometry(0.1, 8, 8);
@@ -58,7 +56,6 @@
         }
     }
 
-    // === Helper functions to create platforms, torus, circles unchanged ===
     function makePlatform(x, y, z, height, width, depth, scene, platformList, color=0x00ff00) {
         const platform = new THREE.Mesh(
             new THREE.BoxGeometry(width, depth, height),
@@ -88,7 +85,6 @@
       scene.add(shape);
       list.push(shape);
     }
-
     let zoomDistance = 6;
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0xa0d0ff);
@@ -107,7 +103,6 @@
     const killBricks = [];
     const rings = [];
     const bouncers=[];
-
     for (let i = 1; i < 5; i++) {
       makePlatform(0, i, i, 1, 3, 0.5, scene, platforms, color=0x000dff);
     }
@@ -133,27 +128,22 @@
 
     const bullets = [];
 
-    // === Add bullet shooting on mousedown ===
     document.addEventListener('mousedown', () => {
         const direction = new THREE.Vector3();
         camera.getWorldDirection(direction);
         const position = player.position.clone().add(new THREE.Vector3(0, 1.5, 0)); // Adjust as needed
         bullets.push(new Bullet(position, direction));
     });
-
-    // === Update bullets every frame ===
     function updateBullets() {
         bullets.forEach((bullet, index) => {
             bullet.update();
             // Remove bullets that are too far
             if (bullet.mesh.position.length() > 100) {
-                scene.remove(bullet.mesh);
-                bullets.splice(index, 1);
+            scene.remove(bullet.mesh);
+            bullets.splice(index, 1);
             }
         });
     }
-
-    // === Create a health bar as a Sprite attached to player ===
     function createHealthBar(player) {
         const canvas = document.createElement('canvas');
         canvas.width = 128;
@@ -169,8 +159,6 @@
         player.add(sprite);
         player.healthBar = { sprite, context, texture };
     }
-
-    // === Update health bar fill ===
     function updateHealthBar(player) {
         const { context, texture } = player.healthBar;
         context.clearRect(0, 0, 128, 16);
@@ -181,87 +169,76 @@
         texture.needsUpdate = true;
     }
 
-    // === Check bullet collisions with other players and self ===
-    function checkCollisions() {
-      bullets.forEach((bullet, bIndex) => {
-        // Check collision with other players
-        for (const id in otherPlayers) {
-          const other = otherPlayers[id];
-          const distance = bullet.mesh.position.distanceTo(other.position);
-          if (distance < 1) {
-            scene.remove(bullet.mesh);
-            bullets.splice(bIndex, 1);
-            other.health -= 10;
-            if (other.health < 0) other.health = 0;
-            if (!other.healthBar) createHealthBar(other);
-            updateHealthBar(other);
-            // Sync health to firebase
-            firebase.database().ref(`players/${id}`).update({ health: other.health });
-            break;
-          }
-        }
-        // Check collision with self
-        const distance = bullet.mesh.position.distanceTo(player.position);
-        if (distance < 1) {
-          scene.remove(bullet.mesh);
-          bullets.splice(bIndex, 1);
-          player.health -= 10;
-          if (player.health < 0) player.health = 0;
-          updateHealthBar(player);
-          playerRef.update({ health: player.health });
-        }
-      });
+    function createPlayer(color = 0x0077ff) {
+      const group = new THREE.Group();
+
+      const torso = new THREE.Mesh(new THREE.BoxGeometry(1, 1.5, 0.5), new THREE.MeshStandardMaterial({ color }));
+      torso.position.y = 1.5;
+      group.add(torso);
+
+      const head = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.6, 0.6), new THREE.MeshStandardMaterial({ color: 0xffffcc }));
+      head.position.y = 2.6;
+      group.add(head);
+
+      const leftArm = new THREE.Mesh(new THREE.BoxGeometry(0.3, 1, 0.3), new THREE.MeshStandardMaterial({ color }));
+      leftArm.position.set(-0.7, 1.5, 0);
+      group.add(leftArm);
+
+      const rightArm = new THREE.Mesh(new THREE.BoxGeometry(0.3, 1, 0.3), new THREE.MeshStandardMaterial({ color }));
+      rightArm.position.set(0.7, 1.5, 0);
+      group.add(rightArm);
+
+      const leftLeg = new THREE.Mesh(new THREE.BoxGeometry(0.4, 1, 0.4), new THREE.MeshStandardMaterial({ color }));
+      leftLeg.position.set(-0.3, 0, 0);
+      group.add(leftLeg);
+
+      const rightLeg = new THREE.Mesh(new THREE.BoxGeometry(0.4, 1, 0.4), new THREE.MeshStandardMaterial({ color }));
+      rightLeg.position.set(0.3, 0, 0);
+      group.add(rightLeg);
+
+      return group;
     }
 
-    function createPlayer() {
-      const playerGeometry = new THREE.CapsuleGeometry(0.5, 1, 4, 8);
-      const playerMaterial = new THREE.MeshStandardMaterial({ color: 0xff0000 });
-      const player = new THREE.Mesh(playerGeometry, playerMaterial);
-      player.position.set(0, 1, 0);
-      player.health = 100;  // Initialize health
-      scene.add(player);
-      createHealthBar(player);
-      updateHealthBar(player);
-      return player;
-    }
-
-    // === Your original player creation and movement code remains unchanged ===
     const player = createPlayer();
+    player.position.set(0, 0, 0);
+    scene.add(player);
 
-    const keys = {};
-    document.addEventListener('keydown', e => keys[e.key.toLowerCase()] = true);
-    document.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
+    // Initialize player health here (added fix)
+    player.health = 100;
+    createHealthBar(player);
+    updateHealthBar(player);
 
     let velocity = new THREE.Vector3();
-    const gravity = 0.03;
-    let onGround = false;
-    let jumpVelocity = 0;
+    const keys = {};
+    document.addEventListener('keydown', (e) => { keys[e.code] = true; });
+    document.addEventListener('keyup', (e) => { keys[e.code] = false; });
 
-    function updatePlayer() {
-      const speed = 0.1;
-      if (keys['w']) player.position.z -= speed;
-      if (keys['s']) player.position.z += speed;
-      if (keys['a']) player.position.x -= speed;
-      if (keys['d']) player.position.x += speed;
-
-      if (onGround && keys[' ']) {
-        jumpVelocity = 0.4;
-        onGround = false;
-      }
-
-      if (!onGround) {
-        player.position.y += jumpVelocity;
-        jumpVelocity -= gravity;
-        if (player.position.y <= 1) {
-          player.position.y = 1;
-          onGround = true;
-          jumpVelocity = 0;
+    function checkCollisionWithPlatforms(obj) {
+      for (const platform of platforms) {
+        const dx = Math.abs(obj.position.x - platform.position.x);
+        const dy = Math.abs(obj.position.y - platform.position.y);
+        const dz = Math.abs(obj.position.z - platform.position.z);
+        if (dx < 1.5 && dy < 1.5 && dz < 0.5) {
+          return true;
         }
       }
+      return false;
     }
 
-function animate() {
-  requestAnimationFrame(animate);
+    function checkCollisionWithKillBricks(obj) {
+      for (const brick of killBricks) {
+        const dx = Math.abs(obj.position.x - brick.position.x);
+        const dy = Math.abs(obj.position.y - brick.position.y);
+        const dz = Math.abs(obj.position.z - brick.position.z);
+        if (dx < 1.5 && dy < 1.5 && dz < 0.5) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
 
   const direction = new THREE.Vector3();
   const speed = 0.1;
@@ -367,14 +344,15 @@ function animate() {
 
   if (keys[' '] && onGround) velocityY = 0.22;
 
-  const lookDirection = new THREE.Vector3(
-    Math.sin(yaw) * Math.cos(pitch),
-    Math.sin(pitch),
-    Math.cos(yaw) * Math.cos(pitch)
-  );
+const lookDirection = new THREE.Vector3(
+  Math.sin(yaw) * Math.cos(pitch),
+  Math.sin(pitch),
+  Math.cos(yaw) * Math.cos(pitch)
+);
 
-  // Player should face the same direction as camera
-  player.rotation.y = yaw + Math.PI;
+// Player should face the same direction as camera
+player.rotation.y = yaw + Math.PI;
+
 
   const cameraPosition = player.position.clone().sub(lookDirection.clone().multiplyScalar(zoomDistance));
   cameraPosition.y += 2;
@@ -396,20 +374,77 @@ function animate() {
     y: player.position.y,
     z: player.position.z
   });
-  updateBullets();
-  checkCollisions();
-  renderer.render(scene, camera);
-}
+
+      // Update bullets positions
+      updateBullets();
+
+      // Collision between bullets and other players or self
+      bullets.forEach((bullet, bulletIndex) => {
+        // Check collision with other players
+        for (const id in otherPlayers) {
+          const other = otherPlayers[id];
+          if (bullet.mesh.position.distanceTo(other.position) < 1) {
+            // Decrease health of other player on hit
+            if (typeof other.health === 'undefined') other.health = 100; // safety check
+            other.health -= 10;
+            updateHealthBar(other);
+            // Remove bullet
+            scene.remove(bullet.mesh);
+            bullets.splice(bulletIndex, 1);
+            break;
+          }
+        }
+        // Check collision with local player (friendly fire possible)
+        if (bullet.mesh.position.distanceTo(player.position) < 1) {
+          player.health -= 10;
+          if (player.health < 0) player.health = 0;
+          updateHealthBar(player);
+          scene.remove(bullet.mesh);
+          bullets.splice(bulletIndex, 1);
+        }
+      });
 
 
+      renderer.render(scene, camera);
+
+      // Update local player position in Firebase
+      playerRef.set({
+        x: player.position.x,
+        y: player.position.y,
+        z: player.position.z,
+        health: player.health // send health to database
+      });
+    }
     animate();
 
-    window.addEventListener('resize', () => {
-      camera.aspect = window.innerWidth/window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
+    // Listen for other players updates
+    db.ref('players').on('value', snapshot => {
+      const data = snapshot.val() || {};
+      for (const id in data) {
+        if (id !== playerId) {
+          if (!otherPlayers[id]) {
+            const newPlayer = createPlayer(0xff0000);
+            newPlayer.health = data[id].health ?? 100; // added fix: initialize health from db or 100
+            createHealthBar(newPlayer);
+            updateHealthBar(newPlayer);
+            scene.add(newPlayer);
+            otherPlayers[id] = newPlayer;
+          } else {
+            // Update health from database to keep synced
+            otherPlayers[id].health = data[id].health ?? otherPlayers[id].health;
+          }
+          otherPlayers[id].position.set(data[id].x, data[id].y, data[id].z);
+          updateHealthBar(otherPlayers[id]);
+        }
+      }
+      // Remove players who left
+      for (const id in otherPlayers) {
+        if (!data[id]) {
+          scene.remove(otherPlayers[id]);
+          delete otherPlayers[id];
+        }
+      }
     });
-
   </script>
 </body>
 </html>
