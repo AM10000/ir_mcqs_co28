@@ -204,6 +204,8 @@
     scene.add(player);
 
     // Initialize player health here (added fix)
+    let velocityY = 0;
+    let onGround = false;
     player.health = 100;
     let yaw = 0;
     let pitch = 0;
