@@ -401,10 +401,11 @@
             // Check collision with local player (friendly fire possible)
             if (bullet.mesh.position.distanceTo(player.position) < 1) {
                 player.health -= 10;
-                if (player.health < 0){
+                if (player.health <= 0){
                   player.health=100;
                   player.position.set(0, 0, 0);
-                };
+                  onGround=True;
+                }
                 updateHealthBar(player);
                 scene.remove(bullet.mesh);
                 bullets.splice(bulletIndex, 1);
