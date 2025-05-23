@@ -374,10 +374,20 @@
         player.rotation.y = yaw + Math.PI;
 
 
-        const cameraPosition = player.position.clone().sub(lookDirection.clone().multiplyScalar(zoomDistance));
-        cameraPosition.y += 2;
-        camera.position.copy(cameraPosition);
-        camera.lookAt(player.position.clone().add(new THREE.Vector3(0, 1, 0)));
+        if (zoomDistance < 2) {
+            // First-person mode
+            const eyeOffset = new THREE.Vector3(0, 1.7, 0); // Approx. eye height
+            const cameraPosition = player.position.clone().add(eyeOffset);
+            camera.position.copy(cameraPosition);
+            camera.lookAt(cameraPosition.clone().add(lookDirection)); // Look forward
+        } else {
+            // Third-person mode
+            const cameraPosition = player.position.clone().sub(lookDirection.clone().multiplyScalar(zoomDistance));
+            cameraPosition.y += 2;
+            camera.position.copy(cameraPosition);
+            camera.lookAt(player.position.clone().add(new THREE.Vector3(0, 1, 0)));
+        }
+
 
         const isMoving = direction.lengthSq() > 0.0001;
         if (isMoving) player.userData.walkTime += 0.2;
