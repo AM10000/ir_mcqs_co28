@@ -242,7 +242,7 @@
 
     document.addEventListener('wheel', (event) => {
       zoomDistance += event.deltaY * 0.01;
-      zoomDistance = Math.max(2, Math.min(40, zoomDistance));
+      zoomDistance = Math.max(0, Math.min(25, zoomDistance));
     });
     let lastHealth = player.health;
     function animate() {
