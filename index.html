@@ -121,8 +121,8 @@
       }
     }
     makePlatform(-34, 6, 9, 7, 10, 0.5, scene, platforms, color=0x000dff);
-    makePlatform(-32, 6, 12, 7, 0.5, 10, scene, killBricks, color=0xff0000);
-    makePlatform(-36, 6, 12, 7, 0.5, 10, scene, killBricks, color=0xff0000);
+    makePlatform(-32, 6, 12, 7, 0.5, 10, scene, platforms, color=0x000dff);
+    makePlatform(-36, 6, 12, 7, 0.5, 10, scene, platforms, color=0x000dff);
     makeTorus(0, 0, 5, 1, 0.1, 30, 200, scene, rings);
     makeCircle(0, 0, 5, 1, scene, bouncers);
 
@@ -157,7 +157,7 @@
         sprite.scale.set(2, 0.25, 1);
         sprite.position.set(0, 2.5, 0); // Position above the player's head
         player.add(sprite);
-        // player.healthBar = { sprite, context, texture };
+        player.healthBar = { sprite, context, texture };
     }
     function updateHealthBar(player) {
         const { context, texture } = player.healthBar;
@@ -167,8 +167,7 @@
         context.fillStyle = 'green';
         context.fillRect(0, 0, (player.health / 100) * 128, 16);
         texture.needsUpdate = true;
-        playerRef.update({health:player.health});
-
+        // playerRef.update({health:player.health});
     }
 
 
@@ -437,10 +436,10 @@
     const pdata = data[id];
     if (id === playerId) {
       player.position.set(pdata.x, pdata.y, pdata.z);
-      // if (typeof pdata.health === 'number') {
-      //   player.health = pdata.health;
-      //   updateHealthBar(player);
-      // }
+      if (typeof pdata.health === 'number') {
+        player.health = pdata.health;
+        updateHealthBar(player);
+      }
       // Do NOT overwrite player.health here to avoid losing local health changes
     } else {
       // For other players, update position and health fully from Firebase
