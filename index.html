@@ -159,7 +159,7 @@
         player.add(sprite);
         player.healthBar = { sprite, context, texture };
     }
-    function updateHealthBar(player, jstd=false) {
+    function updateHealthBar(player) {
         const { context, texture } = player.healthBar;
         context.clearRect(0, 0, 128, 16);
         context.fillStyle = 'red';
@@ -167,9 +167,6 @@
         context.fillStyle = 'green';
         context.fillRect(0, 0, (player.health / 100) * 128, 16);
         texture.needsUpdate = true;
-        if (jstd==false){
-            db.ref(`players/${playerId}`).update({ health: player.health });   
-        }
     }
 
 
@@ -438,10 +435,6 @@
     const pdata = data[id];
     if (id === playerId) {
       player.position.set(pdata.x, pdata.y, pdata.z);
-      if (pdata.health!=player.health){
-        player.health=pdata.health;
-        updateHealthBar(player, jstd=true);
-      }
       // Do NOT overwrite player.health here to avoid losing local health changes
     } else {
       // For other players, update position and health fully from Firebase
