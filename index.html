@@ -159,7 +159,7 @@
         player.add(sprite);
         player.healthBar = { sprite, context, texture };
     }
-    let lastHealth = player.health;
+    let lastHealth = 100;
     function updateHealthBar(player) {
         const { context, texture } = player.healthBar;
         context.clearRect(0, 0, 128, 16);
