@@ -167,7 +167,7 @@
         context.fillStyle = 'green';
         context.fillRect(0, 0, (player.health / 100) * 128, 16);
         texture.needsUpdate = true;
-        playerRef.update({health:player.health})
+        // playerRef.update({health:player.health});
     }
 
 
@@ -386,7 +386,7 @@
             // Check collision with other players
             for (const id in otherPlayers) {
             const other = otherPlayers[id];
-            if (bullet.mesh.position.distanceTo(other.position) < 1) {
+              if (bullet.mesh.position.distanceTo(other.position) < 1) {
                 // Decrease health of other player on hit
                 if (typeof other.health === 'undefined') other.health = 100; // safety check
                 other.health -= 10;
@@ -395,7 +395,7 @@
                 scene.remove(bullet.mesh);
                 bullets.splice(bulletIndex, 1);
                 break;
-            }
+              }
             }
             // Check collision with local player (friendly fire possible)
             if (bullet.mesh.position.distanceTo(player.position) < 1) {
