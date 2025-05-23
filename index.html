@@ -255,7 +255,20 @@
         if (keys['s']) direction.z += 1;
         if (keys['a']) direction.x -= 1;
         if (keys['d']) direction.x += 1;
-
+        if (keys['ArrowLeft']) {
+          yaw -= 10 * 0.002;
+        }
+        if (keys['ArrowRight']) {
+          yaw+=10*0.002
+        }
+        if (keys['ArrowUp']) {
+          pitch -= 10 * 0.002;
+          pitch = Math.max(-Math.PI / 2 + 0.1, Math.min(Math.PI / 2 - 0.1, pitch));
+        }
+        if (keys['ArrowUp']) {
+          pitch += 10 * 0.002;
+          pitch = Math.max(-Math.PI / 2 + 0.1, Math.min(Math.PI / 2 - 0.1, pitch));
+        }
         direction.applyEuler(new THREE.Euler(0, yaw + Math.PI, 0));
         direction.normalize();
 
