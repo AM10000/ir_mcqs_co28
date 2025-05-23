@@ -399,11 +399,11 @@
             }
             // Check collision with local player (friendly fire possible)
             if (bullet.mesh.position.distanceTo(player.position) < 1) {
-            player.health -= 10;
-            if (player.health < 0) player.health = 0;
-            updateHealthBar(player);
-            scene.remove(bullet.mesh);
-            bullets.splice(bulletIndex, 1);
+                player.health -= 10;
+                if (player.health < 0) player.health = 0;
+                updateHealthBar(player);
+                scene.remove(bullet.mesh);
+                bullets.splice(bulletIndex, 1);
             }
         });
 
@@ -436,6 +436,8 @@
     const pdata = data[id];
     if (id === playerId) {
       player.position.set(pdata.x, pdata.y, pdata.z);
+      player.health=pdata.health;
+      updateHealthBar(player);
       // Do NOT overwrite player.health here to avoid losing local health changes
     } else {
       // For other players, update position and health fully from Firebase
