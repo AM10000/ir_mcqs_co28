@@ -255,17 +255,17 @@
         if (keys['s']) direction.z += 1;
         if (keys['a']) direction.x -= 1;
         if (keys['d']) direction.x += 1;
-        if (keys['ArrowLeft']) {
+        if (keys['arrowleft']) {
           yaw -= 10 * 0.002;
         }
-        if (keys['ArrowRight']) {
+        if (keys['arrowright']) {
           yaw+=10*0.002
         }
-        if (keys['ArrowUp']) {
+        if (keys['arrowup']) {
           pitch -= 10 * 0.002;
           pitch = Math.max(-Math.PI / 2 + 0.1, Math.min(Math.PI / 2 - 0.1, pitch));
         }
-        if (keys['ArrowUp']) {
+        if (keys['arrowdown']) {
           pitch += 10 * 0.002;
           pitch = Math.max(-Math.PI / 2 + 0.1, Math.min(Math.PI / 2 - 0.1, pitch));
         }
