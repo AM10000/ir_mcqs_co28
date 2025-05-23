@@ -374,19 +374,31 @@
         player.rotation.y = yaw + Math.PI;
 
 
-        if (zoomDistance < 2) {
-            // First-person mode
-            const eyeOffset = new THREE.Vector3(0, 1.6, 0); // Approx. eye height
+        const isFirstPerson = zoomDistance < 2;
+
+        if (isFirstPerson) {
+            const eyeOffset = new THREE.Vector3(0, 1.7, 0);
             const cameraPosition = player.position.clone().add(eyeOffset);
             camera.position.copy(cameraPosition);
-            camera.lookAt(cameraPosition.clone().add(lookDirection)); // Look forward
+            camera.lookAt(cameraPosition.clone().add(lookDirection));
+
+            // Hide body in first-person
+            player.traverse(child => {
+                if (child.isMesh) child.visible = false;
+            });
+
         } else {
-            // Third-person mode
             const cameraPosition = player.position.clone().sub(lookDirection.clone().multiplyScalar(zoomDistance));
             cameraPosition.y += 2;
             camera.position.copy(cameraPosition);
             camera.lookAt(player.position.clone().add(new THREE.Vector3(0, 1, 0)));
+
+            // Show body in third-person
+            player.traverse(child => {
+                if (child.isMesh) child.visible = true;
+            });
         }
+
 
 
         const isMoving = direction.lengthSq() > 0.0001;
