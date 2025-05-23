@@ -435,7 +435,10 @@
     const pdata = data[id];
     if (id === playerId) {
       player.position.set(pdata.x, pdata.y, pdata.z);
-      player.health=pdata.health;
+      if (typeof pdata.health === 'number') {
+        player.health = pdata.health;
+        updateHealthBar(player);
+      }
       // Do NOT overwrite player.health here to avoid losing local health changes
     } else {
       // For other players, update position and health fully from Firebase
