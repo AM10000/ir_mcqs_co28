@@ -159,7 +159,6 @@
         player.add(sprite);
         player.healthBar = { sprite, context, texture };
     }
-
     function updateHealthBar(player) {
         const { context, texture } = player.healthBar;
         context.clearRect(0, 0, 128, 16);
@@ -168,10 +167,7 @@
         context.fillStyle = 'green';
         context.fillRect(0, 0, (player.health / 100) * 128, 16);
         texture.needsUpdate = true;
-        // if (player.health!=player.lastHealth) {
-        //     db.ref(`players/${playerId}`).update({ health: player.health });
-        // }
-           
+        db.ref(`players/${playerId}`).update({ health: player.health });
     }
 
 
@@ -248,7 +244,7 @@
       zoomDistance += event.deltaY * 0.01;
       zoomDistance = Math.max(2, Math.min(15, zoomDistance));
     });
-    let lastHealth = 100;
+    let lastHealth = player.health;
     function animate() {
         requestAnimationFrame(animate);
 
@@ -435,20 +431,14 @@
     }
     animate();
  db.ref('players').on('value', snapshot => {
-  const playersData = snapshot.val() || {};
-
-  // For all players (including yourself)
-  for (const id in playersData) {
-    const pdata = playersData[id];
-
+  const data = snapshot.val() || {};
+  for (const id in data) {
+    const pdata = data[id];
     if (id === playerId) {
-      // This is YOUR player data from Firebase
-      // Update your local health and position with data from Firebase
-      player.health = pdata.health;
-      updateHealthBar(player);
       player.position.set(pdata.x, pdata.y, pdata.z);
+      // Do NOT overwrite player.health here to avoid losing local health changes
     } else {
-      // Other players
+      // For other players, update position and health fully from Firebase
       if (!otherPlayers[id]) {
         const newPlayer = createPlayer(0xff0000);
         newPlayer.health = pdata.health ?? 100;
@@ -458,14 +448,13 @@
         otherPlayers[id] = newPlayer;
       }
       const other = otherPlayers[id];
-      other.health = pdata.health;
-      updateHealthBar(other);
       other.position.set(pdata.x, pdata.y, pdata.z);
+      if (typeof pdata.health === 'number') {
+        other.health = pdata.health;
+        updateHealthBar(other);
+      }
     }
   }
-
-  // Remove disconnected players...
-
 
   // Remove disconnected players...
 
@@ -476,7 +465,7 @@
           delete otherPlayers[id];
         }
       }
-});
+    });
   </script>
 </body>
 </html>
