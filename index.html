@@ -411,7 +411,11 @@
                 bullets.splice(bulletIndex, 1);
             }
         });
-
+        if (player.health <= 0){
+          player.health=100;
+          player.position.set(0, 0, 0);
+          onGround=True;
+        }
 
         renderer.render(scene, camera);
 
