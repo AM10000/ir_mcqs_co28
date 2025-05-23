@@ -121,8 +121,8 @@
       }
     }
     makePlatform(-34, 6, 9, 7, 10, 0.5, scene, platforms, color=0x000dff);
-    makePlatform(-32, 6, 12, 7, 0.5, 10, scene, platforms, color=0x000dff);
-    makePlatform(-36, 6, 12, 7, 0.5, 10, scene, platforms, color=0x000dff);
+    makePlatform(-32, 6, 12, 7, 0.5, 10, scene, killBricks, color=0xff0000);
+    makePlatform(-36, 6, 12, 7, 0.5, 10, scene, killBricks, color=0xff0000);
     makeTorus(0, 0, 5, 1, 0.1, 30, 200, scene, rings);
     makeCircle(0, 0, 5, 1, scene, bouncers);
 
@@ -167,7 +167,8 @@
         context.fillStyle = 'green';
         context.fillRect(0, 0, (player.health / 100) * 128, 16);
         texture.needsUpdate = true;
-        // playerRef.update({health:player.health});
+        playerRef.update({health:player.health});
+
     }
 
 
