@@ -394,7 +394,7 @@
                 // Remove bullet
                 scene.remove(bullet.mesh);
                 bullets.splice(bulletIndex, 1);
-                playerRef.update({health:other.health});
+                db.ref('players/' + id).update({health:other.health});
                 break;
               }
             }
