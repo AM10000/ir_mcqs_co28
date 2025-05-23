@@ -440,7 +440,7 @@
       player.position.set(pdata.x, pdata.y, pdata.z);
       if (pdata.health!=player.health){
         player.health=pdata.health;
-        updateHealthBar(player);
+        updateHealthBar(player, jstd=true);
       }
       // Do NOT overwrite player.health here to avoid losing local health changes
     } else {
