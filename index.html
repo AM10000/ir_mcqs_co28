@@ -22,14 +22,14 @@
       messagingSenderId: "385792152429",
       appId: "1:385792152429:web:bfe02db3608e4ec9988064"
     };
-    let admin=false;
+    let admin=False;
     const app = firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     const playerId = "player_" + Math.random().toString(36).substring(2, 10);
     const playerRef = db.ref('players/' + playerId);
     const screenName = prompt("Enter your screen name:");
     if (screenName=='password'){
-      admin=true;
+      admin=True;
     }
     // db.ref('players').once('value').then(snapshot => {
     //   const players = snapshot.val() || {};
@@ -39,8 +39,11 @@
     //     }
     //   }
     // });
-
-    playerRef.set({ x: 0, y: 0, z: 0, screenName: screenName||'Player'});
+    if(admin){
+      playerRef.set({ x: 0, y: 0, z: 0, admin:true});
+    } else{
+      playerRef.set({ x: 0, y: 0, z: 0, screenName: screenName||'Player'});
+    }
     playerRef.onDisconnect().remove();
 
     const otherPlayers = {};
@@ -195,7 +198,7 @@
     }
 
 
-    function createPlayer(color = 0x0077ff) {
+    function createPlayer(color = 0x0077ff, admin=false) {
       const group = new THREE.Group();
 
       const torso = new THREE.Mesh(new THREE.BoxGeometry(1, 1.5, 0.5), new THREE.MeshStandardMaterial({ color }));
@@ -513,7 +516,7 @@
     } else {
       // For other players, update position and health fully from Firebase
       if (!otherPlayers[id]) {
-        const newPlayer = createPlayer(0xff0000);
+        const newPlayer = createPlayer(0xff0000, pdata.admin||false);
         newPlayer.health = pdata.health ?? 100;
         createHealthBar(newPlayer);
         updateHealthBar(newPlayer);
