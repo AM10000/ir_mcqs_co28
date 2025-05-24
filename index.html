@@ -513,20 +513,29 @@
         newPlayer.health = pdata.health ?? 100;
         createHealthBar(newPlayer);
         updateHealthBar(newPlayer);
-        const nameTag = createNameTag(pdata.screenName||'Player');
+
+        const nameTag = createNameTag(pdata.screenName || 'Player');
+        nameTag.name = 'nameTag'; // set identifiable name
         newPlayer.add(nameTag);
+
         scene.add(newPlayer);
         otherPlayers[id] = newPlayer;
-        
       }
+
       const other = otherPlayers[id];
       other.position.set(pdata.x, pdata.y, pdata.z);
-      const nameTag = createNameTag(pdata.screenName||'Player');
-      other.add(nameTag);
+
+      // Update name tag text only if it changed
+      const existingTag = other.getObjectByName('nameTag');
+      if (existingTag && existingTag.element && existingTag.element.innerText !== pdata.screenName) {
+        existingTag.element.innerText = pdata.screenName || 'Player';
+      }
+
       if (typeof pdata.health === 'number') {
         other.health = pdata.health;
         updateHealthBar(other);
       }
+
     }
   }
 
