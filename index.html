@@ -38,7 +38,7 @@
       }
     });
 
-    playerRef.set({ x: 0, y: 0, z: 0, screenName:screenName});
+    playerRef.set({ x: 0, y: 0, z: 0, screenName: screenName});
     playerRef.onDisconnect().remove();
 
     const otherPlayers = {};
@@ -513,7 +513,7 @@
         newPlayer.health = pdata.health ?? 100;
         createHealthBar(newPlayer);
         updateHealthBar(newPlayer);
-        const nameTag = createNameTag(pdata.screenName);
+        const nameTag = createNameTag(pdata.screenName||'Player');
         newPlayer.add(nameTag);
         scene.add(newPlayer);
         otherPlayers[id] = newPlayer;
@@ -521,7 +521,7 @@
       }
       const other = otherPlayers[id];
       other.position.set(pdata.x, pdata.y, pdata.z);
-      const nameTag = createNameTag(pdata.screenName);
+      const nameTag = createNameTag(pdata.screenName||'Player');
       other.add(nameTag);
       if (typeof pdata.health === 'number') {
         other.health = pdata.health;
