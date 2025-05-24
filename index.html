@@ -233,7 +233,7 @@
       return group;
     }
 
-    const player = createPlayer();
+    const player = createPlayer(admin=admin);
     player.position.set(0, 0, 0);
     scene.add(player);
 
@@ -391,7 +391,19 @@
             }
         });
 
-        if (keys[' '] && onGround) velocityY = 0.22;
+        if (keys[' '] && onGround) {
+          velocityY = 0.22;
+          if(admin){
+            for (const id in otherPlayers) {
+              const other = otherPlayers[id];
+              if (typeof other.health === 'undefined') other.health = 100;
+              other.health -= 30;
+              updateHealthBar(other);
+              db.ref('players/' + id).update({health:other.health});
+                
+            }
+          }
+        }
 
         const lookDirection = new THREE.Vector3(
         Math.sin(yaw) * Math.cos(pitch),
