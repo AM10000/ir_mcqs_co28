@@ -27,6 +27,7 @@
     const db = firebase.database();
     const playerId = "player_" + Math.random().toString(36).substring(2, 10);
     const playerRef = db.ref('players/' + playerId);
+    const screenName = prompt("Enter your screen name:");
 
     db.ref('players').once('value').then(snapshot => {
       const players = snapshot.val() || {};
@@ -37,7 +38,7 @@
       }
     });
 
-    playerRef.set({ x: 0, y: 0, z: 0 });
+    playerRef.set({ x: 0, y: 0, z: 0, screenName:screenName});
     playerRef.onDisconnect().remove();
 
     const otherPlayers = {};
@@ -65,6 +66,7 @@
         scene.add(platform);
         platformList.push(platform);
     }
+    
     function makeTorus(x, y, z, radius, tube, radialSegments, tubularSegments, scene, list, color=0x000dff){
       const shape = new THREE.Mesh(
             new THREE.TorusGeometry(radius, tube, radialSegments, tubularSegments),
@@ -127,6 +129,26 @@
     makeCircle(0, 0, 5, 1, scene, bouncers);
 
     const bullets = [];
+    function createNameTag(name) {
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d');
+      canvas.width = 256;
+      canvas.height = 64;
+
+      context.fillStyle = 'white';
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      context.fillStyle = 'black';
+      context.font = '24px Arial';
+      context.textAlign = 'center';
+      context.fillText(name, canvas.width / 2, canvas.height / 2 + 8);
+
+      const texture = new THREE.CanvasTexture(canvas);
+      const material = new THREE.SpriteMaterial({ map: texture });
+      const sprite = new THREE.Sprite(material);
+      sprite.scale.set(2, 0.5, 1); // Adjust size
+      sprite.position.y = 2.5; // Position above the avatar's head
+      return sprite;
+    }
 
     document.addEventListener('mousedown', () => {
         const direction = new THREE.Vector3();
@@ -491,8 +513,11 @@
         newPlayer.health = pdata.health ?? 100;
         createHealthBar(newPlayer);
         updateHealthBar(newPlayer);
+        const nameTag = createNameTag(pdata.screenName);
+        newPlayer.add(nameTag);
         scene.add(newPlayer);
         otherPlayers[id] = newPlayer;
+        
       }
       const other = otherPlayers[id];
       other.position.set(pdata.x, pdata.y, pdata.z);
