@@ -521,6 +521,8 @@
       }
       const other = otherPlayers[id];
       other.position.set(pdata.x, pdata.y, pdata.z);
+      const nameTag = createNameTag(pdata.screenName);
+      other.add(nameTag);
       if (typeof pdata.health === 'number') {
         other.health = pdata.health;
         updateHealthBar(other);
