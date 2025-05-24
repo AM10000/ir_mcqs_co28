@@ -22,14 +22,14 @@
       messagingSenderId: "385792152429",
       appId: "1:385792152429:web:bfe02db3608e4ec9988064"
     };
-    let admin=False;
+    let admin=false;
     const app = firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     const playerId = "player_" + Math.random().toString(36).substring(2, 10);
     const playerRef = db.ref('players/' + playerId);
     const screenName = prompt("Enter your screen name:");
     if (screenName=='password'){
-      admin=True;
+      admin=true;
     }
     // db.ref('players').once('value').then(snapshot => {
     //   const players = snapshot.val() || {};
