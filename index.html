@@ -38,7 +38,7 @@
       }
     });
 
-    playerRef.set({ x: 0, y: 0, z: 0, screenName: screenName});
+    playerRef.set({ x: 0, y: 0, z: 0, screenName: screenName||'Player'});
     playerRef.onDisconnect().remove();
 
     const otherPlayers = {};
