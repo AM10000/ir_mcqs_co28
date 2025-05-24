@@ -274,6 +274,7 @@
       zoomDistance = Math.max(0, Math.min(25, zoomDistance));
     });
     let lastHealth = player.health;
+    let alrTd=false;
     function animate() {
         requestAnimationFrame(animate);
 
@@ -296,14 +297,18 @@
         if (keys['arrowdown']) {
           direction.z += 1;
         }
-        if(keys['t']&&admin){
+        if(keys['t']&&admin&&alrTd==false){
+          alrTd=true;
           const movePlayer=prompt("Who would you like to teleport to?")
           for(const id in otherPlayers){
             other=otherPlayers[id];
             if (other.getObjectByName('nameTag').element.innerText==movePlayer){
               player.positon.set(other.position.x, other.position.y, other.position.z);
+              break;
             }
           }
+        } else {
+          alrTd=false;
         }
         direction.applyEuler(new THREE.Euler(0, yaw + Math.PI, 0));
         direction.normalize();
