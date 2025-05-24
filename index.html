@@ -29,14 +29,14 @@
     const playerRef = db.ref('players/' + playerId);
     const screenName = prompt("Enter your screen name:");
 
-    db.ref('players').once('value').then(snapshot => {
-      const players = snapshot.val() || {};
-      for (const id in players) {
-        if (id !== playerId) {
-          db.ref('players/' + id).remove();
-        }
-      }
-    });
+    // db.ref('players').once('value').then(snapshot => {
+    //   const players = snapshot.val() || {};
+    //   for (const id in players) {
+    //     if (id !== playerId) {
+    //       db.ref('players/' + id).remove();
+    //     }
+    //   }
+    // });
 
     playerRef.set({ x: 0, y: 0, z: 0, screenName: screenName||'Player'});
     playerRef.onDisconnect().remove();
