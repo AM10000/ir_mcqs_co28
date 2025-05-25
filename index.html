@@ -266,7 +266,7 @@
     function createPlayer(color = 0x0077ff, admin=false) {
       const group = new THREE.Group();
       const gun = createDetailedGun();
-      gun.position.set(0.5, 1, 0.6); // Adjust as needed
+      gun.position.set(0.5, 1, -0.6); // Adjust as needed
       group.add(gun);
       const torso = new THREE.Mesh(new THREE.BoxGeometry(1, 1.5, 0.5), new THREE.MeshStandardMaterial({ color }));
       torso.position.y = 1.5;
