@@ -326,8 +326,8 @@
       const movementY=nowY-startY;
       startX=nowX;
       startY=nowY;
-      yaw -= movementX * 0.0002;
-      pitch -= movementY * 0.0002;
+      yaw -= movementX * 0.002;
+      pitch -= movementY * 0.002;
       pitch = Math.max(-Math.PI / 2 + 0.1, Math.min(Math.PI / 2 - 0.1, pitch));
     }
     window.addEventListener('keydown', (event) => {
