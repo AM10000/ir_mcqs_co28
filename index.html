@@ -9,6 +9,21 @@
   </style>
 </head>
 <body>
+    <div id="crosshair" style="
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    width: 10px;
+    height: 10px;
+    margin-left: -5px;
+    margin-top: -5px;
+    background: white;
+    border-radius: 50%;
+    z-index: 1000;
+    pointer-events: none;
+    display: none;">
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
@@ -305,6 +320,7 @@
     });
     let lastHealth = player.health;
     let alrTd=false;
+    const crosshair = document.getElementById('crosshair');
     function animate() {
         requestAnimationFrame(animate);
 
@@ -448,26 +464,28 @@
         const isFirstPerson = zoomDistance < 2;
 
         if (isFirstPerson) {
-            const eyeOffset = new THREE.Vector3(0, 1.7, 0);
-            const cameraPosition = player.position.clone().add(eyeOffset);
-            camera.position.copy(cameraPosition);
-            camera.lookAt(cameraPosition.clone().add(lookDirection));
+          crosshair.style.display='block';
+          const eyeOffset = new THREE.Vector3(0, 1.7, 0);
+          const cameraPosition = player.position.clone().add(eyeOffset);
+          camera.position.copy(cameraPosition);
+          camera.lookAt(cameraPosition.clone().add(lookDirection));
 
-            // Hide body in first-person
-            player.traverse(child => {
-                if (child.isMesh) child.visible = false;
-            });
+          // Hide body in first-person
+          player.traverse(child => {
+              if (child.isMesh) child.visible = false;
+          });
 
         } else {
-            const cameraPosition = player.position.clone().sub(lookDirection.clone().multiplyScalar(zoomDistance));
-            cameraPosition.y += 2;
-            camera.position.copy(cameraPosition);
-            camera.lookAt(player.position.clone().add(new THREE.Vector3(0, 1, 0)));
+          crosshair.style.display='none';
+          const cameraPosition = player.position.clone().sub(lookDirection.clone().multiplyScalar(zoomDistance));
+          cameraPosition.y += 2;
+          camera.position.copy(cameraPosition);
+          camera.lookAt(player.position.clone().add(new THREE.Vector3(0, 1, 0)));
 
-            // Show body in third-person
-            player.traverse(child => {
-                if (child.isMesh) child.visible = true;
-            });
+          // Show body in third-person
+          player.traverse(child => {
+              if (child.isMesh) child.visible = true;
+          });
         }
 
 
