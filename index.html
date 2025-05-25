@@ -558,7 +558,7 @@
           });
 
           // Attach gun to camera
-          if (!camera.children.includes(players[socket.id].gun)) {
+          if (!camera.children.includes(player.gun)) {
             camera.add(player.gun);
             player.gun.position.set(0.2, -0.2, -0.5); // Adjust position as needed
           }
