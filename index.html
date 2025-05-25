@@ -549,19 +549,11 @@
           const cameraPosition = player.position.clone().add(eyeOffset);
           camera.position.copy(cameraPosition);
           camera.lookAt(cameraPosition.clone().add(lookDirection));
-          player.traverse(child => {
-            if (child !== player.gun) {
-              if (child.isMesh || child instanceof THREE.Group) {
-                child.visible = false;
-              }
-            }
-          });
 
-          // Attach gun to camera
-          if (!camera.children.includes(player.gun)) {
-            camera.add(player.gun);
-            player.gun.position.set(0.2, -0.2, -0.5); // Adjust position as needed
-          }
+          // Hide body in first-person
+          player.traverse(child => {
+              if (child.isMesh) child.visible = false;
+          });
 
         } else {
           crosshair.style.display='none';
