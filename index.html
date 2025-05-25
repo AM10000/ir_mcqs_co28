@@ -231,10 +231,43 @@
         // playerRef.update({health:player.health});
     }
 
+    function createDetailedGun() {
+      const gun = new THREE.Group();
 
+      const body = new THREE.Mesh(
+        new THREE.BoxGeometry(0.2, 0.2, 1),
+        new THREE.MeshStandardMaterial({ color: 0x333333 })
+      );
+      body.castShadow = true;
+      body.receiveShadow = true;
+      gun.add(body);
+
+      const grip = new THREE.Mesh(
+        new THREE.BoxGeometry(0.15, 0.4, 0.2),
+        new THREE.MeshStandardMaterial({ color: 0x222222 })
+      );
+      grip.position.set(0, -0.3, -0.3);
+      grip.castShadow = true;
+      grip.receiveShadow = true;
+      gun.add(grip);
+
+      const barrel = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.05, 0.05, 0.6, 16),
+        new THREE.MeshStandardMaterial({ color: 0x111111 })
+      );
+      barrel.rotation.x = Math.PI / 2;
+      barrel.position.set(0, 0.05, 0.5);
+      barrel.castShadow = true;
+      barrel.receiveShadow = true;
+      gun.add(barrel);
+
+      return gun;
+    }
     function createPlayer(color = 0x0077ff, admin=false) {
       const group = new THREE.Group();
-
+      const gun = createDetailedGun();
+      gun.position.set(0.5, 1, 0.6); // Adjust as needed
+      group.add(gun);
       const torso = new THREE.Mesh(new THREE.BoxGeometry(1, 1.5, 0.5), new THREE.MeshStandardMaterial({ color }));
       torso.position.y = 1.5;
       torso.castShadow=true;
