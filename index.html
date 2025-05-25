@@ -322,10 +322,10 @@
     function onTouchMove(event) {
       const nowX = event.touches[0].clientX || 0;
       const nowY = event.touches[0].clientY || 0;
-      const movementX=startX-nowX;
-      const movementY=startY-nowY;
-      yaw -= movementX * 0.002;
-      pitch -= movementY * 0.002;
+      const movementX=nowX-startX;
+      const movementY=nowY-startY;
+      yaw -= movementX * 0.0002;
+      pitch -= movementY * 0.0002;
       pitch = Math.max(-Math.PI / 2 + 0.1, Math.min(Math.PI / 2 - 0.1, pitch));
     }
     window.addEventListener('keydown', (event) => {
