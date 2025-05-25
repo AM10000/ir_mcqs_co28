@@ -305,6 +305,12 @@
         document.removeEventListener('mousemove', onMouseMove, false);
       }
     });
+    let startX, startY;
+    document.addEventListener('touchstart', (e)=>{
+      startX=e.touches[0].clientX;
+      startY=e.touches[0].clientY;
+    });
+
     document.addEventListener('touchmove', onTouchMove, false);
     function onMouseMove(event) {
       const movementX = event.movementX || 0;
@@ -314,8 +320,10 @@
       pitch = Math.max(-Math.PI / 2 + 0.1, Math.min(Math.PI / 2 - 0.1, pitch));
     }
     function onTouchMove(event) {
-      const movementX = event.touches[0].movementX || 0;
-      const movementY = event.touches[0].movementY || 0;
+      const nowX = event.touches[0].clientX || 0;
+      const nowY = event.touches[0].clientY || 0;
+      const movementX=startX-nowX;
+      const movementY=startY-nowY;
       yaw -= movementX * 0.002;
       pitch -= movementY * 0.002;
       pitch = Math.max(-Math.PI / 2 + 0.1, Math.min(Math.PI / 2 - 0.1, pitch));
