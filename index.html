@@ -553,8 +553,9 @@
           // Hide body in first-person
           player.traverse(child => {
               if (child.isMesh) child.visible = false;
+              
           });
-
+          player.gun.visible=true;
         } else {
           crosshair.style.display='none';
           const cameraPosition = player.position.clone().sub(lookDirection.clone().multiplyScalar(zoomDistance));
