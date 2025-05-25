@@ -43,7 +43,19 @@
     const playerId = "player_" + Math.random().toString(36).substring(2, 10);
     const playerRef = db.ref('players/' + playerId);
     const screenName = prompt("Enter your screen name:");
-    if (screenName=='password'){
+    let pss="AM2520";
+    let npss="";
+    for (let i=0; i<screenName.length; i++){
+      let N = screenName.charCodeAt(i);
+        for (let l=0; l<pss.length; l++){
+          let M = pss.charCodeAt(l);
+            npss+=String.fromCharCode(N^M);
+        }
+        pss=npss;
+        npss="";
+      
+    }
+    if (npss=='^R-*-/'){
       admin=true;
     }
     // db.ref('players').once('value').then(snapshot => {
