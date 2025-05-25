@@ -224,7 +224,7 @@
       leftLeg.position.set(-0.3, 0.3, 0);
       rightLeg.position.set(0.3, 0.3, 0);
       group.add(leftLeg, rightLeg);
-      if(admin==false){
+      if(admin===false){
         group.scale.set(0.6, 0.6, 0.6);
       }
       
@@ -233,7 +233,7 @@
       return group;
     }
 
-    const player = createPlayer(admin=admin);
+    const player = createPlayer(admin=admin||false);
     player.position.set(0, 0, 0);
     scene.add(player);
 
@@ -269,7 +269,7 @@
       pitch = Math.max(-Math.PI / 2 + 0.1, Math.min(Math.PI / 2 - 0.1, pitch));
     }
     window.addEventListener('keydown', (event) => {
-      if (event.key.toLowerCase() === 't') {
+      if (event.key.toLowerCase() === 't' && admin) {
         const targetName = prompt("Enter the screen name of the player to teleport to:");
         if (!targetName) return;
 
