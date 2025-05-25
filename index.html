@@ -305,7 +305,7 @@
         document.removeEventListener('mousemove', onMouseMove, false);
       }
     });
-    document.addEventListener('ontouchmove', onMouseMove, false);
+    document.addEventListener('touchmove', onMouseMove, false);
     function onMouseMove(event) {
       const movementX = event.movementX || 0;
       const movementY = event.movementY || 0;
