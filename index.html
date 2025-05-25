@@ -305,7 +305,7 @@
         document.removeEventListener('mousemove', onMouseMove, false);
       }
     });
-    document.addEventListener('ontouchmove', onmousemove, false);
+    document.addEventListener('ontouchmove', onMouseMove, false);
     function onMouseMove(event) {
       const movementX = event.movementX || 0;
       const movementY = event.movementY || 0;
@@ -313,6 +313,13 @@
       pitch -= movementY * 0.002;
       pitch = Math.max(-Math.PI / 2 + 0.1, Math.min(Math.PI / 2 - 0.1, pitch));
     }
+    // function onTouchMove(event) {
+    //   const movementX = event.clientX || 0;
+    //   const movementY = event.clientY || 0;
+    //   yaw -= movementX * 0.002;
+    //   pitch -= movementY * 0.002;
+    //   pitch = Math.max(-Math.PI / 2 + 0.1, Math.min(Math.PI / 2 - 0.1, pitch));
+    // }
     window.addEventListener('keydown', (event) => {
       if (event.key.toLowerCase() === 't' && admin) {
         const targetName = prompt("Enter the screen name of the player to teleport to:");
