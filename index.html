@@ -237,16 +237,23 @@
 
       const torso = new THREE.Mesh(new THREE.BoxGeometry(1, 1.5, 0.5), new THREE.MeshStandardMaterial({ color }));
       torso.position.y = 1.5;
+      toso.castShadow=true;
+      torso.receiveShadow=true;
       group.add(torso);
 
       const head = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.6, 0.6), new THREE.MeshStandardMaterial({ color: 0xffcc99 }));
       head.position.y = 2.4;
+      head.castShadow=true;
+      head.receiveShadow=true;
       group.add(head);
 
       const armMaterial = new THREE.MeshStandardMaterial({ color });
       const leftArm = new THREE.Mesh(new THREE.BoxGeometry(0.3, 1.2, 0.3), armMaterial);
       const rightArm = leftArm.clone();
-
+      leftArm.castShadow=true;
+      leftArm.receiveShadow=true;
+      rightArm.castShadow=true;
+      rightArm.receiveShadow=true;
       leftArm.position.set(-0.65, 1.5, 0);
       rightArm.position.set(0.65, 1.5, 0);
       group.add(leftArm, rightArm);
@@ -254,7 +261,10 @@
       const legMaterial = new THREE.MeshStandardMaterial({ color: 0x333333 });
       const leftLeg = new THREE.Mesh(new THREE.BoxGeometry(0.4, 2.3, 0.4), legMaterial);
       const rightLeg = leftLeg.clone();
-
+      leftLeg.castShadow=true;
+      leftLeg.receiveShadow=true;
+      rightLeg.castShadow=true;
+      rightLeg.receiveShadow=true;
       leftLeg.position.set(-0.3, 0.3, 0);
       rightLeg.position.set(0.3, 0.3, 0);
       group.add(leftLeg, rightLeg);
