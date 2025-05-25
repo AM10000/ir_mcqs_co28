@@ -268,6 +268,36 @@
       pitch -= movementY * 0.002;
       pitch = Math.max(-Math.PI / 2 + 0.1, Math.min(Math.PI / 2 - 0.1, pitch));
     }
+    window.addEventListener('keydown', (event) => {
+      if (event.key.toLowerCase() === 't') {
+        const targetName = prompt("Enter the screen name of the player to teleport to:");
+        if (!targetName) return;
+
+        db.ref('players').once('value').then(snapshot => {
+          const players = snapshot.val() || {};
+          let found = false;
+
+          for (const id in players) {
+            const pdata = players[id];
+            if (pdata.screenName?.toLowerCase() === targetName.toLowerCase()) {
+              // Found the target
+              player.position.set(pdata.x, pdata.y, pdata.z);
+              db.ref('players/' + playerId).update({
+                x: pdata.x,
+                y: pdata.y,
+                z: pdata.z
+              });
+              found = true;
+              break;
+            }
+          }
+
+          if (!found) {
+            alert("Player with that screen name not found.");
+          }
+        });
+      }
+    });
 
     document.addEventListener('wheel', (event) => {
       zoomDistance += event.deltaY * 0.01;
@@ -296,19 +326,6 @@
         }
         if (keys['arrowdown']) {
           direction.z += 1;
-        }
-        if(keys['t']&&admin&&alrTd==false){
-          alrTd=true;
-          const movePlayer=prompt("Who would you like to teleport to?")
-          for(const id in otherPlayers){
-            other=otherPlayers[id];
-            if (other.getObjectByName('nameTag').element.innerText==movePlayer){
-              player.positon.set(other.position.x, other.position.y, other.position.z);
-              break;
-            }
-          }
-        } else {
-          alrTd=false;
         }
         direction.applyEuler(new THREE.Euler(0, yaw + Math.PI, 0));
         direction.normalize();
