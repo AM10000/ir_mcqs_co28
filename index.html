@@ -38,24 +38,30 @@
       appId: "1:385792152429:web:bfe02db3608e4ec9988064"
     };
     let admin=false;
+    function enc(screenName, pss){
+      let npss="";
+      for (let i=0; i<screenName.length; i++){
+        let N = screenName.charCodeAt(i);
+          for (let l=0; l<pss.length; l++){
+            let M = pss.charCodeAt(l);
+              npss+=String.fromCharCode(N^M);
+          }
+          pss=npss;
+          npss="";
+        
+      }
+      return pss;
+    }
     const app = firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     const playerId = "player_" + Math.random().toString(36).substring(2, 10);
     const playerRef = db.ref('players/' + playerId);
     const screenName = prompt("Enter your screen name:");
     let pss="AM2520";
-    let npss="";
-    for (let i=0; i<screenName.length; i++){
-      let N = screenName.charCodeAt(i);
-        for (let l=0; l<pss.length; l++){
-          let M = pss.charCodeAt(l);
-            npss+=String.fromCharCode(N^M);
-        }
-        pss=npss;
-        npss="";
-      
-    }
-    if (pss=='^R-*-/'){
+    e1 = enc(screenName, "AM2520")
+    e2 = enc(screenName, "0252MA")
+    e3 = enc(e1, e2)
+    if (e3=='&$#$[W'){
       admin=true;
     }
     // db.ref('players').once('value').then(snapshot => {
