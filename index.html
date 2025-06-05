@@ -415,6 +415,7 @@
       }
       if (event.key.toLowerCase() === 'c'){
         for (const id in otherPlayers) {
+          otherPlayers[id].remove();
           scene.remove(otherPlayers[id]);
           delete otherPlayers[id];
         }
