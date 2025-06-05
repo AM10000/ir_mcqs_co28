@@ -413,6 +413,12 @@
           }
         });
       }
+      if (event.key.toLowerCase() === 'c'){
+        for (const id in otherPlayers) {
+          scene.remove(otherPlayers[id]);
+          delete otherPlayers[id];
+        }
+      }
     });
 
     document.addEventListener('wheel', (event) => {
