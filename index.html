@@ -104,8 +104,8 @@
             new THREE.MeshStandardMaterial({ color: color })
         );
         platform.position.set(x, z, y);
-        platform.castShadow=true;
-        platform.receiveShadow=true;
+        // platform.castShadow=true;
+        // platform.receiveShadow=true;
         scene.add(platform);
         platformList.push(platform);
     }
@@ -259,8 +259,8 @@
         new THREE.BoxGeometry(0.2, 0.2, 1),
         new THREE.MeshStandardMaterial({ color: 0x333333 })
       );
-      body.castShadow = true;
-      body.receiveShadow = true;
+      // body.castShadow = true;
+      // body.receiveShadow = true;
       gun.add(body);
 
       const grip = new THREE.Mesh(
@@ -268,8 +268,8 @@
         new THREE.MeshStandardMaterial({ color: 0x222222 })
       );
       grip.position.set(0, -0.3, -0.3);
-      grip.castShadow = true;
-      grip.receiveShadow = true;
+      // grip.castShadow = true;
+      // grip.receiveShadow = true;
       gun.add(grip);
 
       const barrel = new THREE.Mesh(
@@ -278,8 +278,8 @@
       );
       barrel.rotation.x = Math.PI / 2;
       barrel.position.set(0, 0.05, 0.5);
-      barrel.castShadow = true;
-      barrel.receiveShadow = true;
+      // barrel.castShadow = true;
+      // barrel.receiveShadow = true;
       gun.add(barrel);
       gun.rotation.y=Math.PI;
       return gun;
@@ -291,23 +291,23 @@
       group.add(gun);
       const torso = new THREE.Mesh(new THREE.BoxGeometry(1, 1.5, 0.5), new THREE.MeshStandardMaterial({ color }));
       torso.position.y = 1.5;
-      torso.castShadow=true;
-      torso.receiveShadow=true;
+      // torso.castShadow=true;
+      // torso.receiveShadow=true;
       group.add(torso);
 
       const head = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.6, 0.6), new THREE.MeshStandardMaterial({ color: 0xffcc99 }));
       head.position.y = 2.4;
-      head.castShadow=true;
-      head.receiveShadow=true;
+      // head.castShadow=true;
+      // head.receiveShadow=true;
       group.add(head);
 
       const armMaterial = new THREE.MeshStandardMaterial({ color });
       const leftArm = new THREE.Mesh(new THREE.BoxGeometry(0.3, 1.2, 0.3), armMaterial);
       const rightArm = leftArm.clone();
-      leftArm.castShadow=true;
-      leftArm.receiveShadow=true;
-      rightArm.castShadow=true;
-      rightArm.receiveShadow=true;
+      // leftArm.castShadow=true;
+      // leftArm.receiveShadow=true;
+      // rightArm.castShadow=true;
+      // rightArm.receiveShadow=true;
       leftArm.position.set(-0.65, 1.5, 0);
       rightArm.position.set(0.65, 1.5, 0);
       group.add(leftArm, rightArm);
@@ -315,10 +315,10 @@
       const legMaterial = new THREE.MeshStandardMaterial({ color: 0x333333 });
       const leftLeg = new THREE.Mesh(new THREE.BoxGeometry(0.4, 2.3, 0.4), legMaterial);
       const rightLeg = leftLeg.clone();
-      leftLeg.castShadow=true;
-      leftLeg.receiveShadow=true;
-      rightLeg.castShadow=true;
-      rightLeg.receiveShadow=true;
+      // leftLeg.castShadow=true;
+      // leftLeg.receiveShadow=true;
+      // rightLeg.castShadow=true;
+      // rightLeg.receiveShadow=true;
       leftLeg.position.set(-0.3, 0.3, 0);
       rightLeg.position.set(0.3, 0.3, 0);
       group.add(leftLeg, rightLeg);
