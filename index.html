@@ -282,16 +282,14 @@
         const dist = player.position.distanceTo(ladder.position);
         if (dist < 1.5) {
           if (keys['w']) {
-            player.position.y += 0.1;
-            climbing = true;
-          } else if (keys['s']) {
-            player.position.y -= 0.1;
+            velocityY = 0.05; // smooth upward climb
             climbing = true;
           }
-          break;
+          break; // Only climb one ladder at a time
         }
       }
     }
+
     function createDetailedGun() {
       const gun = new THREE.Group();
 
