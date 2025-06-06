@@ -274,22 +274,24 @@
         texture.needsUpdate = true;
         // playerRef.update({health:player.health});
     }
+    let climbing = false;
+
     function checkLadderClimb() {
+      climbing = false;
       for (const ladder of ladders) {
         const dist = player.position.distanceTo(ladder.position);
-        if (dist < 1.5 && keys['w']) {
-          // Climb up
-          player.position.y += 0.1;
-          break; // only climb the nearest ladder
-        }
-        if (dist < 1.5 && keys['s']) {
-          // Climb down
-          player.position.y -= 0.1;
+        if (dist < 1.5) {
+          if (keys['w']) {
+            player.position.y += 0.1;
+            climbing = true;
+          } else if (keys['s']) {
+            player.position.y -= 0.1;
+            climbing = true;
+          }
           break;
         }
       }
     }
-
     function createDetailedGun() {
       const gun = new THREE.Group();
 
@@ -492,8 +494,9 @@
         }
         direction.applyEuler(new THREE.Euler(0, yaw + Math.PI, 0));
         direction.normalize();
-
-        velocityY -= 0.01; // gravity always applies
+        if (!climbing){
+          velocityY -= 0.01; // gravity always applies
+        }
         player.position.y += velocityY;
 
         onGround = false;
