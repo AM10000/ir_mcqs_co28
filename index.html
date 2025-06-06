@@ -130,8 +130,9 @@
       scene.add(shape);
       list.push(shape);
     }
+    const ladders = [];
+    
     function makeLadder(x, y, z, height = 5, spacing = 0.5) {
-      const steps = [];
       const ladderGroup = new THREE.Group();
     
       for (let i = 0; i < height; i++) {
@@ -139,16 +140,18 @@
           new THREE.BoxGeometry(0.8, 0.1, 0.1),
           new THREE.MeshStandardMaterial({ color: 0x8b4513 })
         );
-        // step.castShadow = true;
-        // step.receiveShadow = true;
+        step.castShadow = true;
+        step.receiveShadow = true;
         step.position.set(x, y + i * spacing, z);
         ladderGroup.add(step);
-        steps.push(step);
       }
     
+      ladderGroup.userData.isLadder = true;
+      ladderGroup.position.set(x, y, z);
       scene.add(ladderGroup);
-      return ladderGroup;
+      ladders.push(ladderGroup);
     }
+
 
     let zoomDistance = 6;
     const scene = new THREE.Scene();
@@ -270,6 +273,21 @@
         context.fillRect(0, 0, (player.health / 100) * 128, 16);
         texture.needsUpdate = true;
         // playerRef.update({health:player.health});
+    }
+    function checkLadderClimb() {
+      for (const ladder of ladders) {
+        const dist = player.position.distanceTo(ladder.position);
+        if (dist < 1.5 && keys['w']) {
+          // Climb up
+          player.position.y += 0.1;
+          break; // only climb the nearest ladder
+        }
+        if (dist < 1.5 && keys['s']) {
+          // Climb down
+          player.position.y -= 0.1;
+          break;
+        }
+      }
     }
 
     function createDetailedGun() {
@@ -459,6 +477,7 @@
         if (keys['s']) direction.z += 1;
         if (keys['a']) direction.x -= 1;
         if (keys['d']) direction.x += 1;
+        checkLadderClimb();
         if (keys['arrowleft']) {
           yaw += 15 * 0.002;
         }
