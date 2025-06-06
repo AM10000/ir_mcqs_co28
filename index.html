@@ -130,6 +130,26 @@
       scene.add(shape);
       list.push(shape);
     }
+    function makeLadder(x, y, z, height = 5, spacing = 0.5) {
+      const steps = [];
+      const ladderGroup = new THREE.Group();
+    
+      for (let i = 0; i < height; i++) {
+        const step = new THREE.Mesh(
+          new THREE.BoxGeometry(0.8, 0.1, 0.1),
+          new THREE.MeshStandardMaterial({ color: 0x8b4513 })
+        );
+        // step.castShadow = true;
+        // step.receiveShadow = true;
+        step.position.set(x, y + i * spacing, z);
+        ladderGroup.add(step);
+        steps.push(step);
+      }
+    
+      scene.add(ladderGroup);
+      return ladderGroup;
+    }
+
     let zoomDistance = 6;
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0xa0d0ff);
@@ -187,7 +207,7 @@
     makePlatform(-36, 6, 14, 7, 1, 10, scene, killBricks, color=0xff0000);
     makeTorus(0, 0, 5, 1, 0.1, 30, 200, scene, rings);
     makeCircle(0, 0, 5, 1, scene, bouncers);
-
+    makeLadder(5, 1, 5, 10, 0.3);
     const bullets = [];
     function createNameTag(name) {
       const canvas = document.createElement('canvas');
