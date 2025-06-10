@@ -279,7 +279,7 @@
     function checkLadderClimb() {
       climbing = false;
       for (const ladder of ladders) {
-        const dist = player.position.distanceTo(ladder.position);
+        const dist = player.position.distanceTo((ladder.position)*2);
         if (dist < 1.5) {
           if (keys['w']) {
             velocityY = 0.05; // smooth upward climb
