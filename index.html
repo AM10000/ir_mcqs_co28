@@ -284,6 +284,8 @@
           if (keys['w']) {
             velocityY = 0.05; // smooth upward climb
             climbing = true;
+          } else {
+            velocityY=0;
           }
           break; // Only climb one ladder at a time
         }
@@ -473,7 +475,7 @@
         const direction = new THREE.Vector3();
         const speed = 0.1;
 
-        if (keys['w']) direction.z -= 1;
+        if (keys['w']&&!climbing) direction.z -= 1;
         if (keys['s']) direction.z += 1;
         if (keys['a']) direction.x -= 1;
         if (keys['d']) direction.x += 1;
