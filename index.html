@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Bugle Classroom - Realistic & Classic</title>
+  <title>Bugle Classroom - Classic Layout & Realistic Player</title>
   <style>
     body { margin: 0; overflow: hidden; }
     canvas { display: block; }
@@ -183,7 +183,7 @@ scene.add(player);
 const nameTag = createNameTag(screenName);
 player.add(nameTag);
 
-/* --- Platforms & Obstacles (Original Layout) --- */
+/* --- Platforms & Obstacles (Classic Layout) --- */
 const platforms = [];
 platforms.push(makePlatform(0, 0, 0, 20, 20, 1, 0x00bbff)); // Main ground
 platforms.push(makePlatform(0, 2, -6, 3, 3, 0.5, 0x00ff00));
@@ -205,7 +205,7 @@ obstacles.push(makeObstacle(-1.5, 11, -33, 1, 2, 1));
 obstacles.push(makeObstacle(1.5, 13, -39, 1, 2, 1));
 obstacles.push(makeObstacle(0, 15, -45, 2, 2, 2));
 
-// Add a finish flag
+// Finish flag
 const flagGeo = new THREE.CylinderGeometry(0.15, 0.15, 2, 16);
 const flagMat = new THREE.MeshStandardMaterial({ color: 0xff4444 });
 const flag = new THREE.Mesh(flagGeo, flagMat);
@@ -361,7 +361,7 @@ function animate() {
     }
   }
 
-  // Camera movement (original style: third-person, follows behind and above)
+  // Camera movement (classic: third-person, trailing/over-the-shoulder)
   const camOffset = new THREE.Vector3(0, 2.5, 5);
   camOffset.applyAxisAngle(new THREE.Vector3(0,1,0), yaw);
   camera.position.copy(player.position).add(camOffset);
