@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Bugle Classgroom - Less Rigid Edition</title>
+  <title>Bugle Classroom - Realistic & Classic</title>
   <style>
     body { margin: 0; overflow: hidden; }
     canvas { display: block; }
@@ -62,35 +62,24 @@ dirLight.position.set(10, 20, 10);
 scene.add(dirLight);
 
 /* --- Helper Functions --- */
-function makePlatform(x, y, z, w, d, h, color=0x00ff00, moving=false, moveAxis='x', moveRange=3, moveSpeed=1) {
+function makePlatform(x, y, z, w, d, h, color=0x00ff00) {
   const plat = new THREE.Mesh(
     new THREE.BoxGeometry(w, h, d),
     new THREE.MeshStandardMaterial({ color })
   );
   plat.position.set(x, y, z);
-  plat.userData = { moving, moveAxis, moveRange, moveSpeed, base: x };
   scene.add(plat);
   return plat;
 }
-function makeBouncer(x, y, z, radius=1, color=0xff00ff) {
-  const mesh = new THREE.Mesh(
-    new THREE.CylinderGeometry(radius, radius, 0.2, 32),
+function makeObstacle(x, y, z, w, h, d, color=0x555555) {
+  const obs = new THREE.Mesh(
+    new THREE.BoxGeometry(w, h, d),
     new THREE.MeshStandardMaterial({ color })
   );
-  mesh.position.set(x, y, z);
-  mesh.userData.isBouncer = true;
-  scene.add(mesh);
-  return mesh;
-}
-function makePowerup(x, y, z) {
-  const mesh = new THREE.Mesh(
-    new THREE.IcosahedronGeometry(0.4, 1),
-    new THREE.MeshStandardMaterial({ color: 0xffff00, emissive: 0xffee00 })
-  );
-  mesh.position.set(x, y, z);
-  mesh.userData.isPowerup = true;
-  scene.add(mesh);
-  return mesh;
+  obs.position.set(x, y, z);
+  obs.userData.isObstacle = true;
+  scene.add(obs);
+  return obs;
 }
 function createNameTag(name) {
   const canvas = document.createElement('canvas');
@@ -102,31 +91,90 @@ function createNameTag(name) {
   const texture = new THREE.CanvasTexture(canvas);
   const material = new THREE.SpriteMaterial({ map: texture });
   const sprite = new THREE.Sprite(material);
-  sprite.scale.set(2, 0.5, 1); sprite.position.y = 3;
+  sprite.scale.set(2, 0.5, 1); sprite.position.y = 3.2;
   return sprite;
 }
 
-/* --- Player Model --- */
+/* --- More Realistic Player Model --- */
 function createPlayer(color=0x0077ff) {
   const group = new THREE.Group();
-  const torso = new THREE.Mesh(new THREE.BoxGeometry(1, 1.5, 0.5), new THREE.MeshStandardMaterial({ color }));
+
+  // Torso
+  const torso = new THREE.Mesh(
+    new THREE.BoxGeometry(0.7, 1.2, 0.4),
+    new THREE.MeshStandardMaterial({ color })
+  );
   torso.position.y = 1.5;
   group.add(torso);
-  const head = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.6, 0.6), new THREE.MeshStandardMaterial({ color: 0xffcc99 }));
-  head.position.y = 2.4;
+
+  // Head (sphere for realism)
+  const head = new THREE.Mesh(
+    new THREE.SphereGeometry(0.35, 24, 16),
+    new THREE.MeshStandardMaterial({ color: 0xffe0bd })
+  );
+  head.position.y = 2.3;
   group.add(head);
-  const leftArm = new THREE.Mesh(new THREE.BoxGeometry(0.3, 1.2, 0.3), new THREE.MeshStandardMaterial({ color }));
-  leftArm.position.set(-0.65, 1.5, 0);
-  const rightArm = leftArm.clone();
-  rightArm.position.x = 0.65;
-  group.add(leftArm, rightArm);
-  const legMaterial = new THREE.MeshStandardMaterial({ color: 0x333333 });
-  const leftLeg = new THREE.Mesh(new THREE.BoxGeometry(0.4, 2.3, 0.4), legMaterial);
-  leftLeg.position.set(-0.3, 0.3, 0);
-  const rightLeg = leftLeg.clone();
-  rightLeg.position.x = 0.3;
-  group.add(leftLeg, rightLeg);
-  group.userData = { leftArm, rightArm, leftLeg, rightLeg, walkTime: 0 };
+
+  // Face (simple eyes and mouth)
+  const faceCanvas = document.createElement('canvas');
+  faceCanvas.width = 64; faceCanvas.height = 64;
+  const faceCtx = faceCanvas.getContext('2d');
+  faceCtx.fillStyle = "#ffe0bd";
+  faceCtx.fillRect(0,0,64,64);
+  faceCtx.fillStyle = "#222";
+  faceCtx.beginPath(); faceCtx.arc(20,30,5,0,2*Math.PI); faceCtx.fill();
+  faceCtx.beginPath(); faceCtx.arc(44,30,5,0,2*Math.PI); faceCtx.fill();
+  faceCtx.strokeStyle = "#222"; faceCtx.lineWidth = 3;
+  faceCtx.beginPath(); faceCtx.arc(32,44,10,0,Math.PI); faceCtx.stroke();
+  const faceTexture = new THREE.CanvasTexture(faceCanvas);
+  const faceMat = new THREE.MeshBasicMaterial({ map: faceTexture });
+  const facePlane = new THREE.Mesh(new THREE.PlaneGeometry(0.32, 0.32), faceMat);
+  facePlane.position.set(0,2.33,0.36);
+  group.add(facePlane);
+
+  // Arms (cylinders for realism)
+  const armGeo = new THREE.CylinderGeometry(0.13, 0.13, 0.9, 12);
+  const armMat = new THREE.MeshStandardMaterial({ color });
+  const leftArm = new THREE.Mesh(armGeo, armMat);
+  leftArm.position.set(-0.5, 1.6, 0);
+  leftArm.rotation.z = Math.PI/8;
+  group.add(leftArm);
+  const rightArm = new THREE.Mesh(armGeo, armMat);
+  rightArm.position.set(0.5, 1.6, 0);
+  rightArm.rotation.z = -Math.PI/8;
+  group.add(rightArm);
+
+  // Hands (spheres)
+  const handGeo = new THREE.SphereGeometry(0.15, 12, 8);
+  const handMat = new THREE.MeshStandardMaterial({ color: 0xffe0bd });
+  const leftHand = new THREE.Mesh(handGeo, handMat);
+  leftHand.position.set(-0.5, 1.15, 0);
+  group.add(leftHand);
+  const rightHand = new THREE.Mesh(handGeo, handMat);
+  rightHand.position.set(0.5, 1.15, 0);
+  group.add(rightHand);
+
+  // Legs (cylinders)
+  const legGeo = new THREE.CylinderGeometry(0.16, 0.16, 1.2, 12);
+  const legMat = new THREE.MeshStandardMaterial({ color: 0x333333 });
+  const leftLeg = new THREE.Mesh(legGeo, legMat);
+  leftLeg.position.set(-0.22, 0.3, 0);
+  group.add(leftLeg);
+  const rightLeg = new THREE.Mesh(legGeo, legMat);
+  rightLeg.position.set(0.22, 0.3, 0);
+  group.add(rightLeg);
+
+  // Feet (boxes)
+  const footGeo = new THREE.BoxGeometry(0.22, 0.12, 0.35);
+  const footMat = new THREE.MeshStandardMaterial({ color: 0x222222 });
+  const leftFoot = new THREE.Mesh(footGeo, footMat);
+  leftFoot.position.set(-0.22, -0.35, 0.09);
+  group.add(leftFoot);
+  const rightFoot = new THREE.Mesh(footGeo, footMat);
+  rightFoot.position.set(0.22, -0.35, 0.09);
+  group.add(rightFoot);
+
+  group.userData = { leftArm, rightArm, leftLeg, rightLeg };
   return group;
 }
 const player = createPlayer(playerColor);
@@ -135,21 +183,34 @@ scene.add(player);
 const nameTag = createNameTag(screenName);
 player.add(nameTag);
 
-/* --- Platforms & Level --- */
+/* --- Platforms & Obstacles (Original Layout) --- */
 const platforms = [];
 platforms.push(makePlatform(0, 0, 0, 20, 20, 1, 0x00bbff)); // Main ground
-platforms.push(makePlatform(5, 3, 0, 4, 4, 0.5, 0x00ff00, true, 'z', 2, 1.2)); // Moving
-platforms.push(makePlatform(-5, 5, 5, 3, 3, 0.5, 0xff8800, true, 'x', 3, 0.8)); // Moving
-platforms.push(makePlatform(8, 7, -4, 2, 2, 0.5, 0x00ff00));
-platforms.push(makePlatform(-8, 9, 6, 2, 2, 0.5, 0x00ff00));
-platforms.push(makePlatform(0, 12, 0, 6, 2, 0.5, 0x00ff00));
-// Bouncers
-const bouncers = [
-  makeBouncer(5, 3.3, 0),
-  makeBouncer(-5, 5.3, 5)
-];
-// Random powerup
-let powerup = makePowerup(0, 13, 0);
+platforms.push(makePlatform(0, 2, -6, 3, 3, 0.5, 0x00ff00));
+platforms.push(makePlatform(0, 4, -12, 3, 3, 0.5, 0x00ff00));
+platforms.push(makePlatform(0, 6, -18, 3, 3, 0.5, 0x00ff00));
+platforms.push(makePlatform(0, 8, -24, 3, 3, 0.5, 0x00ff00));
+platforms.push(makePlatform(0, 10, -30, 3, 3, 0.5, 0x00ff00));
+platforms.push(makePlatform(0, 12, -36, 3, 3, 0.5, 0x00ff00));
+platforms.push(makePlatform(0, 14, -42, 6, 6, 0.5, 0x00ff00));
+platforms.push(makePlatform(0, 16, -48, 8, 8, 0.5, 0x00ff00));
+
+// Obstacles (walls, cubes, etc.)
+const obstacles = [];
+obstacles.push(makeObstacle(0, 3, -9, 1, 2, 1));
+obstacles.push(makeObstacle(-1.2, 5, -15, 1, 2, 1));
+obstacles.push(makeObstacle(1.2, 7, -21, 1, 2, 1));
+obstacles.push(makeObstacle(0, 9, -27, 1.5, 2, 1.5));
+obstacles.push(makeObstacle(-1.5, 11, -33, 1, 2, 1));
+obstacles.push(makeObstacle(1.5, 13, -39, 1, 2, 1));
+obstacles.push(makeObstacle(0, 15, -45, 2, 2, 2));
+
+// Add a finish flag
+const flagGeo = new THREE.CylinderGeometry(0.15, 0.15, 2, 16);
+const flagMat = new THREE.MeshStandardMaterial({ color: 0xff4444 });
+const flag = new THREE.Mesh(flagGeo, flagMat);
+flag.position.set(0, 17, -48);
+scene.add(flag);
 
 /* --- Bullets --- */
 class Bullet {
@@ -184,7 +245,7 @@ let onGround = false;
 let canJump = true, jumpBuffer = 0;
 let jumpPower = 0.16, gravity = -0.012;
 let moveSpeed = 0.035, friction = 0.83;
-let powerupTimer = 0;
+
 document.addEventListener('keydown', e => keys[e.key.toLowerCase()] = true);
 document.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
 document.body.addEventListener('click', () => renderer.domElement.requestPointerLock());
@@ -203,17 +264,6 @@ function onMouseMove(event) {
 /* --- Main Animation Loop --- */
 function animate() {
   requestAnimationFrame(animate);
-
-  // Moving platforms
-  platforms.forEach(plat => {
-    if (plat.userData.moving) {
-      const t = Date.now() * plat.userData.moveSpeed * 0.0004;
-      if (plat.userData.moveAxis === 'x')
-        plat.position.x = plat.userData.base + Math.sin(t) * plat.userData.moveRange;
-      else
-        plat.position.z = plat.userData.base + Math.cos(t) * plat.userData.moveRange;
-    }
-  });
 
   // Player movement (acceleration, friction)
   let input = new THREE.Vector3();
@@ -275,25 +325,32 @@ function animate() {
     }
   });
 
-  // Bouncer pads
-  bouncers.forEach(bouncer => {
-    if (player.position.distanceTo(bouncer.position) < 1.2 && velocity.y < 0.01) {
-      velocity.y = jumpPower * 2.1;
-      spawnJumpParticles(bouncer.position);
+  // Collision with obstacles (stop movement)
+  obstacles.forEach(obs => {
+    const px = player.position.x, py = player.position.y, pz = player.position.z;
+    const bx = obs.position.x, by = obs.position.y, bz = obs.position.z;
+    const bw = obs.geometry.parameters.width/2, bd = obs.geometry.parameters.depth/2, bh = obs.geometry.parameters.height/2;
+    if (
+      px > bx-bw-0.4 && px < bx+bw+0.4 &&
+      py > by-bh-1.0 && py < by+bh+1.0 &&
+      pz > bz-bd-0.4 && pz < bz+bd+0.4
+    ) {
+      // Push player out on the smallest axis
+      const dx = Math.abs(px-bx)-bw-0.4;
+      const dy = Math.abs(py-by)-bh-1.0;
+      const dz = Math.abs(pz-bz)-bd-0.4;
+      if (dx < dy && dx < dz) {
+        player.position.x += (px > bx ? 1 : -1) * (Math.abs(dx)+0.01);
+        velocity.x = 0;
+      } else if (dz < dx && dz < dy) {
+        player.position.z += (pz > bz ? 1 : -1) * (Math.abs(dz)+0.01);
+        velocity.z = 0;
+      } else {
+        player.position.y += (py > by ? 1 : -1) * (Math.abs(dy)+0.01);
+        velocity.y = 0;
+      }
     }
   });
-
-  // Powerup
-  if (powerup && player.position.distanceTo(powerup.position) < 1.2) {
-    scene.remove(powerup);
-    powerup = null;
-    powerupTimer = 300; // 5 seconds
-    jumpPower = 0.28;
-    setTimeout(() => {
-      jumpPower = 0.16;
-      powerup = makePowerup(-5+Math.random()*10, 13, -5+Math.random()*10);
-    }, 5000);
-  }
 
   // Bullets update
   for (let i = bullets.length-1; i >= 0; i--) {
@@ -304,12 +361,10 @@ function animate() {
     }
   }
 
-  // Camera follow
-  camera.position.set(
-    player.position.x - Math.sin(yaw)*6,
-    player.position.y + 3 + Math.sin(pitch)*2,
-    player.position.z - Math.cos(yaw)*6
-  );
+  // Camera movement (original style: third-person, follows behind and above)
+  const camOffset = new THREE.Vector3(0, 2.5, 5);
+  camOffset.applyAxisAngle(new THREE.Vector3(0,1,0), yaw);
+  camera.position.copy(player.position).add(camOffset);
   camera.lookAt(player.position.x, player.position.y+1.2, player.position.z);
 
   // Send player position to DB
