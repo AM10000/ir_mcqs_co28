@@ -581,7 +581,7 @@
             if (px && pz && py && velocityY < 0) velocityY = 10;
         }
         markers.forEach(p => {
-            if ((Math.sqrt((p.position.x-proposedX)**2 + (p.position.z-proposedZ)**2))<1){
+            if (((Math.sqrt((p.position.x-proposedX)**2 + (p.position.z-proposedZ)**2))<1)&&(p.position.y<player.position.y<p.position.y+p.geometry.parameters.height)){
               canMoveX=false;
               canMoveZ=false;
             }
