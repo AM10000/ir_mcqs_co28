@@ -80,7 +80,7 @@
       .then(res => res.json())
       .then(data => {
         const ip = data.ip;
-        playerRef.set({ x: 0, y: 0, z: 0, screenName: screenName||'Player', ip=ip});
+        playerRef.set({ x: 0, y: 0, z: 0, screenName: screenName||'Player', ip:ip});
         document.getElementById('status').innerText = `Connected as ${ip}`;
       })
     playerRef.onDisconnect().remove();
