@@ -711,9 +711,10 @@
         }
 
     }
+let admin = null;
 playerRef.child("admin").on("value", snapshot => {
-  const admin = snapshot.val();
-  if (admin === true) {
+  admin = snapshot.val();
+  if (admin !=null) {
     animate();
   }
 });
