@@ -580,6 +580,12 @@
             const py = Math.abs(player.position.y - p.position.y) < p.geometry.parameters.height * 2;
             if (px && pz && py && velocityY < 0) velocityY = 10;
         }
+        markers.forEach(p => {
+            if ((Math.sqrt((p.position.x-proposedX)**2 + (p.position.z-proposedZ)**2))<1){
+              canMoveX=false;
+              canMoveZ=false;
+            }
+        });
 
         if (canMoveX) player.position.x = proposedX;
         if (canMoveZ) player.position.z = proposedZ;
