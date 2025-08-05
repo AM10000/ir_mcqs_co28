@@ -36,7 +36,6 @@
       messagingSenderId: "875933253854",
       appId: "1:875933253854:web:db7af0719c4cc7cb60824f"
     };
-    let admin=false;
     function enc(screenName, pss){
       let npss="";
       for (let i=0; i<screenName.length; i++){
@@ -371,7 +370,7 @@
       return group;
     }
 
-    const player = createPlayer(admin=admin||false);
+    const player = createPlayer(admin=false);
     player.position.set(0, 0, 0);
     scene.add(player);
 
