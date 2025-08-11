@@ -592,6 +592,7 @@
               } else {
                 alert("You found Obby Marker!");
                 markersFound.push("Obby Marker");
+                
               }
             }
             if (((Math.sqrt((p.position.x-proposedX)**2 + (p.position.z-proposedZ)**2))<1)&&(player.position.y < p.position.y+p.geometry.parameters.height*0.5)&&(standingPlatform!=p)){
@@ -736,14 +737,16 @@
                 x: player.position.x,
                 y: player.position.y,
                 z: player.position.z,
-                health: player.health
+                health: player.health,
+                Achievements: markersFound.join(', ')
             });
             lastHealth = player.health;
         } else {
             playerRef.update({
                 x: player.position.x,
                 y: player.position.y,
-                z: player.position.z
+                z: player.position.z,
+                Achievements: markersFound.join(', ')
                 // health: player.health
             });
         }
