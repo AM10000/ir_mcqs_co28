@@ -81,7 +81,7 @@
         const ip = data.ip;
         playerRef.set({ x: 0, y: 0, z: 0, screenName: screenName||'Player', ip:ip, uname:uname, pword:pword });
       })
-    playerRef.onDisconnect().remove();
+    playerRef.onDisconnect().update({ Achievements: markersFound.join(', ') });
 
     const otherPlayers = {};
     class Bullet {
@@ -738,7 +738,6 @@
                 y: player.position.y,
                 z: player.position.z,
                 health: player.health,
-                Achievements: markersFound.join(', ')
             });
             lastHealth = player.health;
         } else {
@@ -746,7 +745,6 @@
                 x: player.position.x,
                 y: player.position.y,
                 z: player.position.z,
-                Achievements: markersFound.join(', ')
                 // health: player.health
             });
         }
