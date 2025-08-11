@@ -753,14 +753,12 @@ let admin = null;
 let auth = null;
 playerRef.child("admin").on("value", snapshot => {
   admin = snapshot.val();
-  playerRef.child("auth").on("value", t => {
-    auth = t.val();
+  playerRef.child("auth").on("value", snapshottwo => {
+    auth = snapshottwo.val();
     if ((admin !=null)&&(auth==true)) {
       animate();
     } else if (auth == false){
       alert("Incorrect username or password.");
-    } else {
-      console.log(auth);
     }
   });
   
