@@ -751,17 +751,23 @@
     }
 let admin = null;
 let auth = null;
+// playerRef.child("admin").on("value", snapshot => {
+//   admin = snapshot.val();
+//   playerRef.child("auth").on("value", snapshottwo => {
+//     auth = snapshottwo.val();
+//     if ((admin !=null)&&(auth==true)) {
+//       animate();
+//     } else if (auth == false){
+//       alert("Incorrect username or password.");
+//     }
+//   });
+  
+// });
 playerRef.child("admin").on("value", snapshot => {
   admin = snapshot.val();
-  playerRef.child("auth").on("value", snapshottwo => {
-    auth = snapshottwo.val();
-    if ((admin !=null)&&(auth==true)) {
-      animate();
-    } else if (auth == false){
-      alert("Incorrect username or password.");
-    }
-  });
-  
+  if (admin !=null) {
+    animate();
+  }
 });
 
  db.ref('players').on('value', snapshot => {
