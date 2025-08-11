@@ -755,7 +755,9 @@
 let admin = null;
 let auth = null;
 let started = false;
-
+playerRef.child("Achievements").on("value", snapshot => {
+  markersFound = snapshot.val().split(', ');
+});
 playerRef.child("admin").on("value", snapshot => {
   admin = snapshot.val();
   checkStart();
