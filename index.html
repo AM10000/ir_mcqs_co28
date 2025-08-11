@@ -509,8 +509,6 @@
         }
         player.position.y += velocityY;
 
-        onGround = false;
-
         for (const p of platforms) {
             const halfWidth = p.geometry.parameters.width / 2;
             const halfDepth = p.geometry.parameters.depth / 2;
