@@ -589,11 +589,18 @@
                 
               } else {
                 alert("You found Blue Marker!");
+                markersFound.push("Blue Marker");
               }
             }
             if (((Math.sqrt((p.position.x-proposedX)**2 + (p.position.z-proposedZ)**2))<1)&&(Math.abs(player.position.y - p.position.y) < p.geometry.parameters.height)&&(standingPlatform!=p)){
               canMoveX=false;
               canMoveZ=false;
+              if (markersFound.includes("Blue Marker")){
+                
+              } else {
+                alert("You found Blue Marker!");
+                markersFound.push("Blue Marker");
+              }
             }
 
         });
