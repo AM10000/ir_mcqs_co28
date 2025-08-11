@@ -609,6 +609,7 @@
 
         if (keys[' '] && onGround) {
           velocityY = 0.22;
+          onGround = false;
           if(admin){
             for (const id in otherPlayers) {
               const other = otherPlayers[id];
