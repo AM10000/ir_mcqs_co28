@@ -750,12 +750,18 @@
 
     }
 let admin = null;
+let auth = null;
 playerRef.child("admin").on("value", snapshot => {
   admin = snapshot.val();
-  if (admin !=null) {
-    animate();
-  }
 });
+playerRef.child("auth").on("value", snapshot => {
+  auth = snapshot.val();
+});
+if ((admin !=null)&&(auth==true)) {
+  animate();
+} else if (auth == false){
+  alert("Incorrect username or password.");
+}
  db.ref('players').on('value', snapshot => {
   const data = snapshot.val() || {};
   for (const id in data) {
