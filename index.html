@@ -478,6 +478,7 @@
     let lastHealth = player.health;
     let alrTd=false;
     const crosshair = document.getElementById('crosshair');
+    var standingPlatform = null;
     function animate() {
         requestAnimationFrame(animate);
 
@@ -509,7 +510,6 @@
         player.position.y += velocityY;
 
         onGround = false;
-        let standingPlatform = null;
 
         for (const p of platforms) {
             const halfWidth = p.geometry.parameters.width / 2;
