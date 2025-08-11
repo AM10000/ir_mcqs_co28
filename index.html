@@ -622,17 +622,19 @@
 
         if (keys[' '] && onGround) {
           velocityY = 0.22;
-          onGround = false;
-          if(admin){
-            for (const id in otherPlayers) {
-              const other = otherPlayers[id];
-              if (typeof other.health === 'undefined') other.health = 100;
-              other.health -= 30;
-              updateHealthBar(other);
-              db.ref('players/' + id).update({health:other.health});
-                
-            }
+          if (admin!=true){
+            onGround = false;
           }
+          // if(admin){
+          //   for (const id in otherPlayers) {
+          //     const other = otherPlayers[id];
+          //     if (typeof other.health === 'undefined') other.health = 100;
+          //     other.health -= 30;
+          //     updateHealthBar(other);
+          //     db.ref('players/' + id).update({health:other.health});
+                
+          //   }
+          // }
         }
 
         const lookDirection = new THREE.Vector3(
