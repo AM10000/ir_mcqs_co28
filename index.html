@@ -520,6 +520,7 @@
           const bboxobj = new THREE.Box3().setFromObject(p);
           if (bboxplayer.intersectsBox(bboxobj)) {
             player.position.copy(oldPosition);
+            player.position.y+=2;
           }
         }
             // for (const p of platforms) {
