@@ -759,11 +759,6 @@ playerRef.child("Achievements").on("value", snapshot => {
   markersFound = snapshot.val().split(', ');
   playerRef.onDisconnect().update({ Achievements: markersFound.join(', ') });
 });
-playerRef.child("achievementsRecieved").on("value", snapshot => {
-  if (snapshot.value()==true){
-    playerRef.remove();
-  }
-});
 playerRef.child("admin").on("value", snapshot => {
   admin = snapshot.val();
   checkStart();
