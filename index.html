@@ -513,6 +513,9 @@
           velocityY -= 0.01; // gravity always applies
         }
         player.position.y += velocityY;
+        if (player.position.y < 0.5) {
+          player.position.y = 0.5;
+        }
         player.position.x = player.position.x + direction.x * speed;
         player.position.z = player.position.z + direction.z * speed;
         for (const p of platforms) {
