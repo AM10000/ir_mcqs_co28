@@ -524,7 +524,9 @@
           if (bboxplayer.intersectsBox(bboxobj)) {
             player.position.copy(oldPosition);
             // player.position.y+=0.5;
-            onGround = true;
+            if (player.position.y>p.position.y+p.geometry.parameters.height){
+                onGround = true;
+            }
             velocityY=0;
           }
         }
