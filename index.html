@@ -731,7 +731,7 @@
                 player.health -= 10;
                 if (player.health <= 0){
                   player.health=100;
-                  player.position.set(0, 0, 0);
+                  player.position.set(0, 3, 0);
                   onGround=True;
                 }
                 updateHealthBar(player);
@@ -741,7 +741,7 @@
         });
         if (player.health <= 0){
           player.health=100;
-          player.position.set(0, 0, 0);
+          player.position.set(0, 3, 0);
           onGround=True;
         }
 
