@@ -519,15 +519,18 @@
         player.position.x = player.position.x + direction.x * speed;
         player.position.z = player.position.z + direction.z * speed;
         for (const p of platforms) {
-          const bboxplayer = new THREE.Box3().setFromObject(player);
-          const bboxobj = new THREE.Box3().setFromObject(p);
-          if (bboxplayer.intersectsBox(bboxobj)) {
-            player.position.copy(oldPosition);
-            // player.position.y+=0.5;
-            if (player.position.y>p.position.y+p.geometry.parameters.height){
-                onGround = true;
+          if (standingPlatform != p || !onGround) {
+            const bboxplayer = new THREE.Box3().setFromObject(player);
+            const bboxobj = new THREE.Box3().setFromObject(p);
+            if (bboxplayer.intersectsBox(bboxobj)) {
+              player.position.copy(oldPosition);
+              // player.position.y+=0.5;
+              if (player.position.y>p.position.y+p.geometry.parameters.height){
+                  onGround = true;
+                  standingPlatform=p;
+              }
+              velocityY=0;
             }
-            velocityY=0;
           }
         }
             // for (const p of platforms) {
