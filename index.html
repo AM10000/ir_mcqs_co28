@@ -493,7 +493,7 @@
         if (keys['s']) direction.z += 1;
         if (keys['a']) direction.x -= 1;
         if (keys['d']) direction.x += 1;
-
+        onGround = false;
         checkLadderClimb();
         if (keys['arrowleft']) {
           yaw += 15 * 0.002;
