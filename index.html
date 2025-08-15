@@ -493,7 +493,6 @@
         if (keys['s']) direction.z += 1;
         if (keys['a']) direction.x -= 1;
         if (keys['d']) direction.x += 1;
-        onGround = false;
         checkLadderClimb();
         if (keys['arrowleft']) {
           yaw += 15 * 0.002;
@@ -512,6 +511,7 @@
         if (!onGround){
           velocityY -= 0.01; // gravity always applies
         }
+        onGround = false;
         player.position.y += velocityY;
         if (player.position.y < 0.5) {
           player.position.y = 0.5;
