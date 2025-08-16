@@ -533,9 +533,9 @@
           var bboxobj = new THREE.Box3().setFromObject(p);
           if (bboxplayer.intersectsBox(bboxobj)) {
             if (standingPlatform != p || !onGround) {
-             player.position.x = oldPosition.x; 
+              player.position.x = oldPosition.x; 
+              break;
             }
-            break;
           }
         }
         player.position.z = player.position.z + direction.z * speed;
@@ -544,9 +544,9 @@
           var bboxobj = new THREE.Box3().setFromObject(p);
           if (bboxplayer.intersectsBox(bboxobj)) {
             if (standingPlatform != p || !onGround) {
-             player.position.z = oldPosition.z; 
+              player.position.z = oldPosition.z; 
+              break;
             }
-            break;
           }
         }
         
