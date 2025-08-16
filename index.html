@@ -551,7 +551,7 @@
         }
         bboxplayer = new THREE.Box3().setFromObject(player);
         for (const k of killBricks) {
-          var bboxobj = new THREE.Box3().setFromObject(p);
+          var bboxobj = new THREE.Box3().setFromObject(k);
           if (bboxplayer.intersectsBox(bboxobj)) {
             player.position.set(0, 5, 0);
           }
