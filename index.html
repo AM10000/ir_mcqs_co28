@@ -520,9 +520,12 @@
         for (const p of platforms) {
           bboxobj = new THREE.Box3().setFromObject(p);
           if (bboxplayer.intersectsBox(bboxobj)) {
-            player.position.y = oldPosition.y;
             velocityY=0;
             onGround=true;
+            standingPlatform=p;
+            if (standingPlatform!=p || !onGround) {
+              player.position.y=oldPosition.y;
+            }
             break;
           }
         }
