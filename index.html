@@ -488,7 +488,7 @@
 
         const direction = new THREE.Vector3();
         const speed = 0.1;
-        const oldPosition = player.position.clone();
+        var oldPosition = player.position.clone();
         if (keys['w']&&!climbing) direction.z -= 1;
         if (keys['s']) direction.z += 1;
         if (keys['a']) direction.x -= 1;
@@ -527,6 +527,7 @@
             break;
           }
         }
+        oldPosition=player.position.clone();
         player.position.x = player.position.x + direction.x * speed;
         bboxplayer = new THREE.Box3().setFromObject(player);
         for (const p of platforms) {
@@ -537,6 +538,7 @@
             }
           }
         }
+        oldPosition = player.position.clone();
         player.position.z = player.position.z + direction.z * speed;
         bboxplayer = new THREE.Box3().setFromObject(player);
         for (const p of platforms) {
