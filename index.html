@@ -581,7 +581,7 @@
             }
           }
         }
-        for (const m of platforms) {
+        for (const m of markers) {
           var bboxobj = new THREE.Box3().setFromObject(m);
           if (bboxplayer.intersectsBox(bboxobj)) {
             if (standingPlatform != m || !onGround) {
