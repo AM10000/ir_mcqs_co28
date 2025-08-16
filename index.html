@@ -523,9 +523,7 @@
             velocityY=0;
             onGround=true;
             standingPlatform=p;
-            if (standingPlatform==p && onGround) {
-              player.position.y=oldPosition.y;
-            }
+            player.position.y=oldPosition.y;
             break;
           }
         }
@@ -534,7 +532,9 @@
         for (const p of platforms) {
           var bboxobj = new THREE.Box3().setFromObject(p);
           if (bboxplayer.intersectsBox(bboxobj)) {
-            player.position.x = oldPosition.x;
+            if (standingPlatform != p || !onGround) {
+             player.position.x = oldPosition.x; 
+            }
             break;
           }
         }
@@ -543,7 +543,9 @@
         for (const p of platforms) {
           var bboxobj = new THREE.Box3().setFromObject(p);
           if (bboxplayer.intersectsBox(bboxobj)) {
-            player.position.z = oldPosition.z;
+            if (standingPlatform != p || !onGround) {
+             player.position.z = oldPosition.z; 
+            }
             break;
           }
         }
