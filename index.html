@@ -508,7 +508,9 @@
         }
         direction.applyEuler(new THREE.Euler(0, yaw + Math.PI, 0));
         direction.normalize();
-        velocityY -= 0.01;
+        if (!onGround){
+          velocityY -= 0.01;
+        }
         onGround = false;
         if (player.position.y < 0.5) {
           player.position.y = 0.5;
@@ -532,6 +534,8 @@
           bboxobj = new THREE.Box3().setFromObject(p);
           if (bboxplayer.intersectsBox(bboxobj)) {
             player.position.y = oldPosition.y;
+            velocityY=0;
+            onGround=true;
           }
         }
             // for (const p of platforms) {
