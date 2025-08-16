@@ -508,32 +508,31 @@
         }
         direction.applyEuler(new THREE.Euler(0, yaw + Math.PI, 0));
         direction.normalize();
-        if (!onGround){
-          velocityY -= 0.01; // gravity always applies
-        }
+        velocityY -= 0.01;
         onGround = false;
-        player.position.y += velocityY;
         if (player.position.y < 0.5) {
           player.position.y = 0.5;
         }
-        player.position.x = player.position.x + direction.x * speed;
-        player.position.z = player.position.z + direction.z * speed;
+        
         for (const p of platforms) {
+          player.position.x = player.position.x + direction.x * speed;
           const bboxplayer = new THREE.Box3().setFromObject(player);
           const bboxobj = new THREE.Box3().setFromObject(p);
           if (bboxplayer.intersectsBox(bboxobj)) {
-
-            // player.position.y+=0.5;
-            if (player.position.y>p.position.y+p.geometry.parameters.height){
-                onGround = true;
-                standingPlatform=p;
-            }
-            velocityY=0;
-            if (standingPlatform != p || !onGround) {
-              player.position.copy(oldPosition);
-            }
+            player.position.x = oldPosition.x;
           }
-          
+          player.position.z = player.position.z + direction.z * speed;
+          bboxplayer = new THREE.Box3().setFromObject(player);
+          bboxobj = new THREE.Box3().setFromObject(p);
+          if (bboxplayer.intersectsBox(bboxobj)) {
+            player.position.z = oldPosition.z;
+          }
+          player.position.y += velocityY;
+          bboxplayer = new THREE.Box3().setFromObject(player);
+          bboxobj = new THREE.Box3().setFromObject(p);
+          if (bboxplayer.intersectsBox(bboxobj)) {
+            player.position.y = oldPosition.y;
+          }
         }
             // for (const p of platforms) {
         //     const halfWidth = p.geometry.parameters.width / 2;
