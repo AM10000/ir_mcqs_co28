@@ -523,7 +523,7 @@
             velocityY=0;
             onGround=true;
             standingPlatform=p;
-            if (standingPlatform!=p || !onGround) {
+            if (standingPlatform==p && onGround) {
               player.position.y=oldPosition.y;
             }
             break;
