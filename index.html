@@ -516,8 +516,8 @@
         
         for (const p of platforms) {
           player.position.x = player.position.x + direction.x * speed;
-          const bboxplayer = new THREE.Box3().setFromObject(player);
-          const bboxobj = new THREE.Box3().setFromObject(p);
+          var bboxplayer = new THREE.Box3().setFromObject(player);
+          var bboxobj = new THREE.Box3().setFromObject(p);
           if (bboxplayer.intersectsBox(bboxobj)) {
             player.position.x = oldPosition.x;
           }
