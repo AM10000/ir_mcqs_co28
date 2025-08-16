@@ -160,7 +160,15 @@
       scene.add(ladderGroup);
       ladders.push(ladderGroup);
     }
-
+    function makeRoad(x, y, z, width, height, scene){
+      const road = new THREE.Mesh(
+        new THREE.PlaneGeometry(width, height),
+        new THREE.MeshStandardMaterial({ color: 0x545252})
+      );
+      road.position.set(x, y, z);
+      road.rotation.x=-Math.PI/2;
+      scene.add(road);
+    }
 
     let zoomDistance = 6;
     const scene = new THREE.Scene();
@@ -224,10 +232,18 @@
     // makeCircle(0, 0, 5, 1, scene, bouncers);
     // makeLadder(-3, 0, 0);
     makeCylinder(-38, 10, 6, 0.5, 2, scene, markers, color=0x00f2ff);
-    makePlatform(-19, -10, 5, 0.5, 48, 10, scene, platforms, color=0x737373);
+    // makePlatform(-19, -10, 5, 0.5, 48, 10, scene, platforms, color=0x737373);
+    makePlatform(-6.25, -10, 2.5, 0.5, 22.5, 5, scene, platforms, color=0x737373);
+    makePlatform(-31.75, -10, 2.5, 0.5, 22.5, 5, scene, platforms, color=0x737373);
+    // width = 22.5
+    // dist from ends = 11.25
+    // end 1 = 5
+    // end 2 = -43
+    makePlatform(-19, -10, 7.5, 0.5, 48, 5, scene, platforms, color=0x737373);
     makePlatform(-42.75, 1.5, 5, 23, 0.5, 10, scene, platforms, color=0x737373);
     makePlatform(-19, 13.25, 5, 0.5, 48, 10, scene, platforms, color=0x737373);
     makePlatform(4.75, 1.5, 5, 23, 0.5, 10, scene, platforms, color=0x737373);
+    makeRoad(-19, 0.3, -24.75, 3, 30, scene);
     const bullets = [];
     function createNameTag(name) {
       const canvas = document.createElement('canvas');
@@ -524,7 +540,7 @@
         for (const p of platforms) {
           bboxobj = new THREE.Box3().setFromObject(p);
           if (bboxplayer.intersectsBox(bboxobj)) {
-            if (player.position.y>p.position.y+p.geometry.parameters.height){
+            if (player.position.y>p.position.y+p.geometry.parameters.height/2){
                 onGround = true;
                 standingPlatform=p;
             }
