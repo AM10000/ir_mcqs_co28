@@ -534,7 +534,7 @@
           if (bboxplayer.intersectsBox(bboxobj)) {
             if (player.position.y>m.position.y+m.geometry.parameters.height){
                 onGround = true;
-                standingPlatform=p;
+                standingPlatform=m;
             }
             velocityY=0;
             player.position.y=oldPosition.y;
