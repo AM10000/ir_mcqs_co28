@@ -529,7 +529,6 @@
             break;
           }
         }
-        oldPosition=player.position.clone();
         player.position.x = player.position.x + direction.x * speed;
         bboxplayer = new THREE.Box3().setFromObject(player);
         for (const p of platforms) {
@@ -540,7 +539,6 @@
             }
           }
         }
-        oldPosition = player.position.clone();
         player.position.z = player.position.z + direction.z * speed;
         bboxplayer = new THREE.Box3().setFromObject(player);
         for (const p of platforms) {
@@ -551,7 +549,13 @@
             }
           }
         }
-        
+        bboxplayer = new THREE.Box3().setFromObject(player);
+        for (const k of killBricks) {
+          var bboxobj = new THREE.Box3().setFromObject(p);
+          if (bboxplayer.intersectsBox(bboxobj)) {
+            player.position.set(0, 5, 0);
+          }
+        }
         
             // for (const p of platforms) {
         //     const halfWidth = p.geometry.parameters.width / 2;
