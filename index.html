@@ -529,6 +529,24 @@
             break;
           }
         }
+        for (const m of markers) {
+          bboxobj = new THREE.Box3().setFromObject(m);
+          if (bboxplayer.intersectsBox(bboxobj)) {
+            if (player.position.y>m.position.y+m.geometry.parameters.height){
+                onGround = true;
+                standingPlatform=p;
+            }
+            velocityY=0;
+            player.position.y=oldPosition.y;
+            if (markersFound.includes("Obby Marker")){
+            } else {
+              alert("You found Obby Marker!");
+              markersFound.push("Obby Marker");
+              playerRef.onDisconnect().update({ Achievements: markersFound.join(', ') });
+            }
+            break;
+          }
+        }
         player.position.x = player.position.x + direction.x * speed;
         bboxplayer = new THREE.Box3().setFromObject(player);
         for (const p of platforms) {
@@ -539,6 +557,20 @@
             }
           }
         }
+        for (const m of markers) {
+          var bboxobj = new THREE.Box3().setFromObject(m);
+          if (bboxplayer.intersectsBox(bboxobj)) {
+            if (standingPlatform != m || !onGround) {
+              player.position.x = oldPosition.x;
+              if (markersFound.includes("Obby Marker")){
+              } else {
+                alert("You found Obby Marker!");
+                markersFound.push("Obby Marker");
+                playerRef.onDisconnect().update({ Achievements: markersFound.join(', ') });
+              }
+            }
+          }
+        }
         player.position.z = player.position.z + direction.z * speed;
         bboxplayer = new THREE.Box3().setFromObject(player);
         for (const p of platforms) {
@@ -546,6 +578,20 @@
           if (bboxplayer.intersectsBox(bboxobj)) {
             if (standingPlatform != p || !onGround) {
               player.position.z = oldPosition.z; 
+            }
+          }
+        }
+        for (const m of platforms) {
+          var bboxobj = new THREE.Box3().setFromObject(m);
+          if (bboxplayer.intersectsBox(bboxobj)) {
+            if (standingPlatform != m || !onGround) {
+              player.position.z = oldPosition.z; 
+              if (markersFound.includes("Obby Marker")){
+              } else {
+                alert("You found Obby Marker!");
+                markersFound.push("Obby Marker");
+                playerRef.onDisconnect().update({ Achievements: markersFound.join(', ') });
+              }
             }
           }
         }
