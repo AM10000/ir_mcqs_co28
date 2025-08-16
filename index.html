@@ -534,7 +534,6 @@
           if (bboxplayer.intersectsBox(bboxobj)) {
             if (standingPlatform != p || !onGround) {
               player.position.x = oldPosition.x; 
-              break;
             }
           }
         }
@@ -545,7 +544,6 @@
           if (bboxplayer.intersectsBox(bboxobj)) {
             if (standingPlatform != p || !onGround) {
               player.position.z = oldPosition.z; 
-              break;
             }
           }
         }
