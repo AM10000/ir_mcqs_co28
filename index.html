@@ -515,9 +515,19 @@
         if (player.position.y < 0.5) {
           player.position.y = 0.5;
         }
-      
-        player.position.x = player.position.x + direction.x * speed;
+        player.position.y += velocityY;
         var bboxplayer = new THREE.Box3().setFromObject(player);
+        for (const p of platforms) {
+          bboxobj = new THREE.Box3().setFromObject(p);
+          if (bboxplayer.intersectsBox(bboxobj)) {
+            player.position.y = oldPosition.y;
+            velocityY=0;
+            onGround=true;
+            break;
+          }
+        }
+        player.position.x = player.position.x + direction.x * speed;
+        bboxplayer = new THREE.Box3().setFromObject(player);
         for (const p of platforms) {
           var bboxobj = new THREE.Box3().setFromObject(p);
           if (bboxplayer.intersectsBox(bboxobj)) {
@@ -534,17 +544,7 @@
             break;
           }
         }
-        player.position.y += velocityY;
-        bboxplayer = new THREE.Box3().setFromObject(player);
-        for (const p of platforms) {
-          bboxobj = new THREE.Box3().setFromObject(p);
-          if (bboxplayer.intersectsBox(bboxobj)) {
-            player.position.y = oldPosition.y;
-            velocityY=0;
-            onGround=true;
-            break;
-          }
-        }
+        
         
             // for (const p of platforms) {
         //     const halfWidth = p.geometry.parameters.width / 2;
