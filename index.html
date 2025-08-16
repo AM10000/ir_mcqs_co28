@@ -532,7 +532,7 @@
         for (const m of markers) {
           bboxobj = new THREE.Box3().setFromObject(m);
           if (bboxplayer.intersectsBox(bboxobj)) {
-            if (player.position.y>m.position.y+m.geometry.parameters.height){
+            if (player.position.y>m.position.y+m.geometry.parameters.height/2){
                 onGround = true;
                 standingPlatform=m;
             }
