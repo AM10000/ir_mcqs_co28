@@ -4,7 +4,76 @@
   <meta charset="UTF-8" />
   <title>Bugle Classgroom</title>
   <style>
-    body { margin: 0; overflow: hidden; }
+    body, html {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden; /* prevents page scrolling */
+      font-family: Arial, sans-serif; /* add nice font */
+      background: linear-gradient(135deg, #74ebd5, #9face6); /* gradient background */
+    }
+
+    #loginContainer {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 300px; /* fixed width prevents horizontal shifts */
+      background: white; /* container background */
+      padding: 2rem; /* spacing inside */
+      border-radius: 12px; /* rounded corners */
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2); /* subtle shadow */
+      text-align: center; /* center text inside */
+    }
+
+    #loginContainer h2 {
+      margin-bottom: 1rem;
+      color: #333;
+    }
+
+    #loginContainer input {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 14px;
+      box-sizing: border-box;
+    }
+
+    #loginContainer button {
+      width: 100%;
+      padding: 10px;
+      background: #4CAF50;
+      border: none;
+      border-radius: 6px;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    #createAccountBtn {
+      width: 100%;
+      padding: 8px;
+      background: #2196F3;
+      border: none;
+      border-radius: 6px;
+      color: white;
+      font-size: 14px;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+
+    #createAccountBtn:hover {
+      background: #1976D2;
+    }
+
+
+    #loginContainer button:hover {
+      background: #45a049;
+    }
+
     canvas { display: block; }
   </style>
 </head>
@@ -22,6 +91,16 @@
     z-index: 1000;
     pointer-events: none;
     display: none;">
+  </div>
+  <div id="loginContainer">
+    <h2>Login</h2>
+    <form id="loginForm">
+      <input type="text" id="username" placeholder="Username" required>
+      <input type="password" id="password" placeholder="Password" required>
+      <input type="text" id ='screenName' placeholder="Screen Name">
+      <button onclick="sendInfo(event)">Enter Game</button>
+      <button type="button" onclick="createAccount(event)" id="createAccountBtn">Create Account</button>
+    </form>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
@@ -54,9 +133,9 @@
     const db = firebase.database();
     const playerId = "player_" + Math.random().toString(36).substring(2, 10);
     const playerRef = db.ref('players/' + playerId);
-    const uname = prompt("Enter your username");
-    const pword = prompt("Enter your password");
-    const screenName = prompt("Enter your screen name:");
+    // const uname = prompt("Enter your username");
+    // const pword = prompt("Enter your password");
+    // const screenName = prompt("Enter your screen name:");
     // if (screenName.length>=8){
     //   let pss="AM2520";
     //     e1 = enc(screenName, "AM2520")
@@ -75,14 +154,38 @@
     //     }
     //   }
     // });
+    function sendInfo(event){
+      event.preventDefault();
       fetch('https://api.ipify.org?format=json')
       .then(res => res.json())
       .then(data => {
         const ip = data.ip;
-        playerRef.set({ x: 0, y: 0, z: 0, screenName: screenName||'Player', ip:ip, uname:uname, pword:pword });
-      })
-
-
+        let screenName = document.getElementById('screenName').value.trim();
+        let uname = document.getElementById('username').value.trim();
+        let pword = document.getElementById('password').value.trim();
+        if (uname && pword){
+          playerRef.set({ x: 0, y: 0, z: 0, screenName: screenName||'Player', ip:ip, uname:uname, pword:pword });
+        } else {
+          alert("Please enter the username and password fields to authenticate yourself.");
+        }
+      });
+    }
+    function createAccount(event){
+      event.preventDefault();
+      fetch('https://api.ipify.org?format=json')
+      .then(res => res.json())
+      .then(data => {
+        const ip = data.ip;
+        let screenName = document.getElementById('screenName').value.trim();
+        let uname = document.getElementById('username').value.trim();
+        let pword = document.getElementById('password').value.trim();
+        if (uname && pword){
+          playerRef.set({ x: 0, y: 0, z: 0, screenName: screenName||'Player', ip:ip, uname:uname, pword:pword, new: true });
+        } else {
+          alert("Please enter the username and password fields with your new account info to create it.");
+        }
+      });
+    }
     const otherPlayers = {};
     class Bullet {
         constructor(position, direction) {
@@ -610,13 +713,15 @@
     let pitch = 0;
     createHealthBar(player);
     updateHealthBar(player);
-
+    let started = false;
     let velocity = new THREE.Vector3();
     const keys = {};
     document.addEventListener('keydown', e => keys[e.key.toLowerCase()] = true);
     document.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
     document.body.addEventListener('click', () => {
-      renderer.domElement.requestPointerLock();
+      if (started){
+        renderer.domElement.requestPointerLock();
+      }
     });
 
     document.addEventListener('pointerlockchange', () => {
@@ -698,6 +803,7 @@
     const crosshair = document.getElementById('crosshair');
     var standingPlatform = null;
     function animate() {
+        let phasing = false;
         requestAnimationFrame(animate);
 
         const direction = new THREE.Vector3();
@@ -707,6 +813,7 @@
         if (keys['s']) direction.z += 1;
         if (keys['a']) direction.x -= 1;
         if (keys['d']) direction.x += 1;
+        if (keys['p']) phasing=true;
         checkLadderClimb();
         if (keys['arrowleft']) {
           yaw += 15 * 0.002;
@@ -764,7 +871,7 @@
           var bboxobj = new THREE.Box3().setFromObject(p);
           if (bboxplayer.intersectsBox(bboxobj)) {
             if (standingPlatform != p || !onGround) {
-              if (admin!=true){
+              if (admin!=true || !phasing){
                 player.position.x = oldPosition.x; 
               }
             }
@@ -790,7 +897,7 @@
           var bboxobj = new THREE.Box3().setFromObject(p);
           if (bboxplayer.intersectsBox(bboxobj)) {
             if (standingPlatform != p || !onGround) {
-              if (admin != true){
+              if (admin != true || !phasing){
                 player.position.z = oldPosition.z; 
               }
               
@@ -1073,7 +1180,6 @@
     }
 let admin = null;
 let auth = null;
-let started = false;
 playerRef.child("Achievements").on("value", snapshot => {
   markersFound = snapshot.val().split(', ');
   playerRef.onDisconnect().update({ Achievements: markersFound.join(', ') });
@@ -1092,9 +1198,10 @@ playerRef.child("auth").on("value", snapshot => {
 function checkStart() {
   if (!started && admin != null && auth === true) {
     started = true;
+    document.getElementById('loginContainer').style.display='none';
     animate();
   } else if (auth === false && !started) {
-    alert("Incorrect username or password.");
+    alert("Incorrect username or password. If you created an account, your username is already taken.");
   }
 }
 
