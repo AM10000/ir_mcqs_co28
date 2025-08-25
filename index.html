@@ -164,7 +164,7 @@
         let uname = document.getElementById('username').value.trim();
         let pword = document.getElementById('password').value.trim();
         if (uname && pword){
-          playerRef.set({ x: 0, y: 0, z: 0, screenName: screenName||'Player', ip:ip, uname:uname, pword:pword });
+          playerRef.set({ x: 0, y: 5, z: 0, screenName: screenName||'Player', ip:ip, uname:uname, pword:pword });
         } else {
           alert("Please enter the username and password fields to authenticate yourself.");
         }
@@ -180,7 +180,7 @@
         let uname = document.getElementById('username').value.trim();
         let pword = document.getElementById('password').value.trim();
         if (uname && pword){
-          playerRef.set({ x: 0, y: 0, z: 0, screenName: screenName||'Player', ip:ip, uname:uname, pword:pword, new: true });
+          playerRef.set({ x: 0, y: 5, z: 0, screenName: screenName||'Player', ip:ip, uname:uname, pword:pword, new: true });
         } else {
           alert("Please enter the username and password fields with your new account info to create it.");
         }
@@ -839,12 +839,13 @@
           bboxobj = new THREE.Box3().setFromObject(p);
           if (bboxplayer.intersectsBox(bboxobj)) {
             if (player.position.y>p.position.y+p.geometry.parameters.height/2){
-                onGround = true;
-                standingPlatform=p;
+              onGround = true;
+              standingPlatform=p;
+              velocityY=0;
+              
+              break;
             }
-            velocityY=0;
             player.position.y=oldPosition.y;
-            break;
           }
         }
         for (const m of markers) {
@@ -865,40 +866,58 @@
             break;
           }
         }
-        player.position.x = player.position.x + direction.x * speed;
-        bboxplayer = new THREE.Box3().setFromObject(player);
+        let testPosition = player.position.clone();
+
+        testPosition.x += direction.x * speed;
+        let testBox = new THREE.Box3().setFromObject(player);
+        let offset = testPosition.clone().sub(player.position); 
+        testBox.translate(offset);
+        let blocked = false;
         for (const p of platforms) {
           var bboxobj = new THREE.Box3().setFromObject(p);
-          if (bboxplayer.intersectsBox(bboxobj)) {
+          if (testBox.intersectsBox(bboxobj)) {
             if (standingPlatform != p || !onGround) {
               if (admin!=true || !phasing){
-                player.position.x = oldPosition.x; 
+                blocked=true;
+                break;
+                // player.position.x = oldPosition.x; 
               }
             }
           }
         }
         for (const m of markers) {
           var bboxobj = new THREE.Box3().setFromObject(m);
-          if (bboxplayer.intersectsBox(bboxobj)) {
+          if (testBox.intersectsBox(bboxobj)) {
             if (standingPlatform != m || !onGround) {
-              player.position.x = oldPosition.x;
+              // player.position.x = oldPosition.x;
+              blocked=true;
               if (markersFound.includes("Obby Marker")){
               } else {
                 alert("You found Obby Marker!");
                 markersFound.push("Obby Marker");
                 playerRef.onDisconnect().update({ Achievements: markersFound.join(', ') });
               }
+              break;
             }
           }
         }
-        player.position.z = player.position.z + direction.z * speed;
-        bboxplayer = new THREE.Box3().setFromObject(player);
+        if (!blocked) {
+          player.position.x = testPosition.x;
+        }
+        testPosition = player.position.clone();
+
+        testPosition.z += direction.z * speed;
+        testBox = new THREE.Box3().setFromObject(player);
+        offset = testPosition.clone().sub(player.position); 
+        testBox.translate(offset);
+        blocked = false;
         for (const p of platforms) {
           var bboxobj = new THREE.Box3().setFromObject(p);
-          if (bboxplayer.intersectsBox(bboxobj)) {
+          if (testBox.intersectsBox(bboxobj)) {
             if (standingPlatform != p || !onGround) {
               if (admin != true || !phasing){
-                player.position.z = oldPosition.z; 
+                blocked=true;
+                break;
               }
               
             }
@@ -906,17 +925,22 @@
         }
         for (const m of markers) {
           var bboxobj = new THREE.Box3().setFromObject(m);
-          if (bboxplayer.intersectsBox(bboxobj)) {
+          if (testBox.intersectsBox(bboxobj)) {
             if (standingPlatform != m || !onGround) {
-              player.position.z = oldPosition.z; 
+              // player.position.z = oldPosition.z; 
+              blocked=true;
               if (markersFound.includes("Obby Marker")){
               } else {
                 alert("You found Obby Marker!");
                 markersFound.push("Obby Marker");
                 playerRef.onDisconnect().update({ Achievements: markersFound.join(', ') });
               }
+              break;
             }
           }
+        }
+        if (!blocked){
+          player.position.z = testPosition.z;
         }
         bboxplayer = new THREE.Box3().setFromObject(player);
         for (const k of killBricks) {
@@ -1124,6 +1148,7 @@
         // Collision between bullets and other players or self
         bullets.forEach((bullet, bulletIndex) => {
             // Check collision with other players
+            let bboxBullet = new THREE.Box3().setFromObject(bullet.mesh);
             for (const id in otherPlayers) {
             const other = otherPlayers[id];
               if (bullet.mesh.position.distanceTo(other.position) < 1) {
@@ -1149,6 +1174,15 @@
                 updateHealthBar(player);
                 scene.remove(bullet.mesh);
                 bullets.splice(bulletIndex, 1);
+            }
+
+            for (const p of platforms){
+              let bboxplat = new THREE.Box3().setFromObject(p);
+              if (bboxBullet.intersectsBox(bboxplat)){
+                scene.remove(bullet.mesh);
+                bullets.splice(bulletIndex, 1);
+                break;
+              }
             }
         });
         if (player.health <= 0){
