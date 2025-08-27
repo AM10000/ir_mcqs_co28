@@ -115,7 +115,1512 @@
   <!-- <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/utils/BufferGeometryUtils.js"></script> -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
-  <script type="module" src="/main.js">
+  <script type="module">
+    
+import * as THREE from 'three';
+    import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
+    const firebaseConfig = {
+      apiKey: "AIzaSyDpjt4ZKm1jWeLMH9jbLeM-y2E9Vl58k4Y",
+      authDomain: "irmcqs-ca2af.firebaseapp.com",
+      projectId: "irmcqs-ca2af",
+      storageBucket: "irmcqs-ca2af.firebasestorage.app",
+      messagingSenderId: "875933253854",
+      appId: "1:875933253854:web:db7af0719c4cc7cb60824f"
+    };
+    function enc(screenName, pss){
+      let npss="";
+      for (let i=0; i<screenName.length; i++){
+        let N = screenName.charCodeAt(i);
+          for (let l=0; l<pss.length; l++){
+            let M = pss.charCodeAt(l);
+              npss+=String.fromCharCode(N^M);
+          }
+          pss=npss;
+          npss="";
+        
+      }
+      return pss;
+    }
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const playerId = "player_" + Math.random().toString(36).substring(2, 10);
+    const playerRef = db.ref('players/' + playerId);
+    // const uname = prompt("Enter your username");
+    // const pword = prompt("Enter your password");
+    // const screenName = prompt("Enter your screen name:");
+    // if (screenName.length>=8){
+    //   let pss="AM2520";
+    //     e1 = enc(screenName, "AM2520")
+    //     e2 = enc(screenName, "0252MA")
+    //     e3 = enc(e1, e2)
+    //     if (e3=='&$#$[W'){
+    //       admin=true;
+    //     }
+    // }
+    
+    // db.ref('players').once('value').then(snapshot => {
+    //   const players = snapshot.val() || {};
+    //   for (const id in players) {
+    //     if (id !== playerId) {
+    //       db.ref('players/' + id).remove();
+    //     }
+    //   }
+    // });
+    function sendInfo(event){
+      event.preventDefault();
+      fetch('https://api.ipify.org?format=json')
+      .then(res => res.json())
+      .then(data => {
+        const ip = data.ip;
+        let screenName = document.getElementById('screenName').value.trim();
+        let uname = document.getElementById('username').value.trim();
+        let pword = document.getElementById('password').value.trim();
+        if (uname && pword){
+          playerRef.set({ x: 0, y: 5, z: 0, screenName: screenName||'Player', ip:ip, uname:uname, pword:pword });
+        } else {
+          alert("Please enter the username and password fields to authenticate yourself.");
+        }
+      });
+    }
+    function createAccount(event){
+      event.preventDefault();
+      fetch('https://api.ipify.org?format=json')
+      .then(res => res.json())
+      .then(data => {
+        const ip = data.ip;
+        let screenName = document.getElementById('screenName').value.trim();
+        let uname = document.getElementById('username').value.trim();
+        let pword = document.getElementById('password').value.trim();
+        if (uname && pword){
+          playerRef.set({ x: 0, y: 5, z: 0, screenName: screenName||'Player', ip:ip, uname:uname, pword:pword, new: true });
+        } else {
+          alert("Please enter the username and password fields with your new account info to create it.");
+        }
+      });
+    }
+    const otherPlayers = {};
+    const lightnings = {};
+    class Bullet {
+        constructor(position, direction) {
+            const geometry = new THREE.SphereGeometry(0.1, 8, 8);
+            const material = new THREE.MeshStandardMaterial({ color: 0xffff00 });
+            this.mesh = new THREE.Mesh(geometry, material);
+            this.mesh.position.copy(position);
+            this.velocity = direction.clone().multiplyScalar(0.5);
+            scene.add(this.mesh);
+        }
+
+        update() {
+            this.mesh.position.add(this.velocity);
+        }
+    }
+
+    function makePlatform(x, y, z, height, width, depth, scene, platformList, color=0x00ff00, opacity=1.0, rotx=0, roty=0, rotz=0) {
+        const platform = new THREE.Mesh(
+            new THREE.BoxGeometry(width, depth, height),
+            new THREE.MeshStandardMaterial({ color: color, transparent: true, opacity: opacity })
+        );
+        platform.position.set(x, z, y);
+        // platform.castShadow=true;
+        // platform.receiveShadow=true;
+        platform.rotation.x=rotx;
+        platform.rotation.y=rotz;
+        platform.rotation.z=roty;
+        scene.add(platform);
+        platformList.push(platform);
+    }
+    
+    function makeTorus(x, y, z, radius, tube, radialSegments, tubularSegments, scene, list, color=0x000dff){
+      const shape = new THREE.Mesh(
+            new THREE.TorusGeometry(radius, tube, radialSegments, tubularSegments),
+            new THREE.MeshStandardMaterial({ color: color })
+        );
+      shape.position.set(x, z, y);
+      shape.rotation.x=Math.PI/2;
+      scene.add(shape);
+      list.push(shape);
+    }
+    function makeCircle(x, y, z, radius, scene, list, color=0x000dff) {
+      const shape = new THREE.Mesh(
+            new THREE.CylinderGeometry(radius, radius, 0.1),
+            new THREE.MeshStandardMaterial({ color: color })
+        );
+      shape.position.set(x, z, y);
+      // shape.rotation.x=Math.PI/2;
+      scene.add(shape);
+      list.push(shape);
+    }
+    const ladders = [];
+    function makeCylinder(x, y, z, radius, height, scene, list, color=0x000dff) {
+      const shape = new THREE.Mesh(
+        new THREE.CylinderGeometry(radius, radius, height),
+        new THREE.MeshStandardMaterial({ color:color })
+      );
+      shape.position.set(x, y, z);
+      scene.add(shape);
+      list.push(shape);
+    }
+    function makeLadder(x, y, z, height = 5, spacing = 0.5) {
+      const ladderGroup = new THREE.Group();
+    
+      for (let i = 0; i < height; i++) {
+        const step = new THREE.Mesh(
+          new THREE.BoxGeometry(0.8, 0.1, 0.1),
+          new THREE.MeshStandardMaterial({ color: 0x8b4513 })
+        );
+        step.castShadow = true;
+        step.receiveShadow = true;
+        step.position.set(x, y + i * spacing, z);
+        ladderGroup.add(step);
+      }
+    
+      ladderGroup.userData.isLadder = true;
+      ladderGroup.position.set(x, y, z);
+      scene.add(ladderGroup);
+      ladders.push(ladderGroup);
+    }
+    function makeRoad(x, y, z, width, height, scene){
+      const road = new THREE.Mesh(
+        new THREE.PlaneGeometry(width, height),
+        new THREE.MeshStandardMaterial({ color: 0x545252})
+      );
+      road.position.set(x, y, z);
+      road.rotation.x=-Math.PI/2;
+      scene.add(road);
+    }
+    // function makeFloor(x, z, floorNum, scene, list){
+    //   makePlatform(x, z, floorNum*5 + 2.5, 9, 9, 5, scene, list, color=0x466078); //Main Block
+    //   makePlatform(x, z+4.75, floorNum*5 + 0.5, 0.5, 10, 1, scene, list, color=0xfaf398); //A back
+    //   makePlatform(x, z-4.75, floorNum*5 + 0.5, 0.5, 10, 1, scene, list, color=0xfaf398); //A front
+    //   makePlatform(x, z-4.75, floorNum*5 + 4.5, 0.5, 10, 1, scene, list, color=0xfaf398); //B front
+    //   makePlatform(x, z+4.75, floorNum*5 + 4.5, 0.5, 10, 1, scene, list, color=0xfaf398); //B back
+    //   makePlatform(x + 4.5, z-4.75, floorNum*5 + 2.5, 0.5, 1, 3, scene, list, color=0xfaf398); //C front
+    //   makePlatform(x + 4.5, z+4.75, floorNum*5 + 2.5, 0.5, 1, 3, scene, list, color=0xfaf398); //C back
+    //   makePlatform(x - 4.5, z-4.75, floorNum*5 + 2.5, 0.5, 1, 3, scene, list, color=0xfaf398); //F front
+    //   makePlatform(x - 4.5, z+4.75, floorNum*5 + 2.5, 0.5, 1, 3, scene, list, color=0xfaf398); //F back
+    //   makePlatform(x + 1.5, z-4.75, floorNum*5 + 2.5, 0.5, 1, 3, scene, list, color=0xfaf398); //D front
+    //   makePlatform(x + 1.5, z+4.75, floorNum*5 + 2.5, 0.5, 1, 3, scene, list, color=0xfaf398); //D back
+    //   makePlatform(x - 1.5, z-4.75, floorNum*5 + 2.5, 0.5, 1, 3, scene, list, color=0xfaf398); //E front
+    //   makePlatform(x - 1.5, z+4.75, floorNum*5 + 2.5, 0.5, 1, 3, scene, list, color=0xfaf398); //E back
+    //   makePlatform(x-4.75, z, floorNum*5 + 0.5, 10, 0.5, 1, scene, list, color=0xfaf398); //A right
+    //   makePlatform(x+4.75, z, floorNum*5 + 0.5, 10, 0.5, 1, scene, list, color=0xfaf398); //A left
+    //   makePlatform(x-4.75, z, floorNum*5 + 4.5, 10, 0.5, 1, scene, list, color=0xfaf398); //B right
+    //   makePlatform(x+4.75, z, floorNum*5 + 4.5, 10, 0.5, 1, scene, list, color=0xfaf398); //B left
+    //   makePlatform(x-4.75, z+4.5, floorNum*5 + 2.5, 1, 0.5, 3, scene, list, color=0xfaf398); //C right
+    //   makePlatform(x+4.75, z+4.5, floorNum*5 + 2.5, 1, 0.5, 3, scene, list, color=0xfaf398); //C left
+    //   makePlatform(x-4.75, z-4.5, floorNum*5 + 2.5, 1, 0.5, 3, scene, list, color=0xfaf398); //F right
+    //   makePlatform(x+4.75, z-4.5, floorNum*5 + 2.5, 1, 0.5, 3, scene, list, color=0xfaf398); //F left
+    //   makePlatform(x-4.75, z+1.5, floorNum*5 + 2.5, 1, 0.5, 3, scene, list, color=0xfaf398); //D right
+    //   makePlatform(x+4.75, z+1.5, floorNum*5 + 2.5, 1, 0.5, 3, scene, list, color=0xfaf398); //D left
+    //   makePlatform(x-4.75, z-1.5, floorNum*5 + 2.5, 1, 0.5, 3, scene, list, color=0xfaf398); //E right
+    //   makePlatform(x+4.75, z-1.5, floorNum*5 + 2.5, 1, 0.5, 3, scene, list, color=0xfaf398); //E left
+    // }
+    // function makeSkyscraper(x, z, floors, scene, list){
+    //   for (let i=0; i<floors; i++){
+    //     makeFloor(x, z, i, scene, list);
+    //   }
+    // }
+
+    function makeFloorGeometry(x, z, floorNum) {
+      const parts = [];
+
+      // NOTE: args: (x, z, y, sx, sz, sy, color)
+      function addBox(px, pz, py, sx, sz, sy, color) {
+        // map your convention -> Three.js convention
+        const geom = new THREE.BoxGeometry(sz, sy, sx);
+        geom.translate(px, py, pz); // (x, y, z) in Three.js
+        geom.userData = { color };
+        parts.push(geom);
+      }
+
+      // === converted layout ===
+      addBox(x, floorNum*5 + 2.5, z, 9, 9, 5, 0x466078); // Main Block
+      addBox(x, floorNum*5 + 0.5, z+4.75, 0.5, 10, 1, 0xfaf398); // A back
+      addBox(x, floorNum*5 + 0.5, z-4.75, 0.5, 10, 1, 0xfaf398); // A front
+      addBox(x, floorNum*5 + 4.5, z-4.75, 0.5, 10, 1, 0xfaf398); // B front
+      addBox(x, floorNum*5 + 4.5, z+4.75, 0.5, 10, 1, 0xfaf398); // B back
+
+      addBox(x+4.5, floorNum*5 + 2.5, z-4.75, 0.5, 1, 3, 0xfaf398); // C front
+      addBox(x+4.5, floorNum*5 + 2.5, z+4.75, 0.5, 1, 3, 0xfaf398); // C back
+      addBox(x-4.5, floorNum*5 + 2.5, z-4.75, 0.5, 1, 3, 0xfaf398); // F front
+      addBox(x-4.5, floorNum*5 + 2.5, z+4.75, 0.5, 1, 3, 0xfaf398); // F back
+
+      addBox(x+1.5, floorNum*5 + 2.5, z-4.75, 0.5, 1, 3, 0xfaf398); // D front
+      addBox(x+1.5, floorNum*5 + 2.5, z+4.75, 0.5, 1, 3, 0xfaf398); // D back
+      addBox(x-1.5, floorNum*5 + 2.5, z-4.75, 0.5, 1, 3, 0xfaf398); // E front
+      addBox(x-1.5, floorNum*5 + 2.5, z+4.75, 0.5, 1, 3, 0xfaf398); // E back
+
+      addBox(x-4.75, floorNum*5 + 0.5, z, 10, 0.5, 1, 0xfaf398); // A right
+      addBox(x+4.75, floorNum*5 + 0.5, z, 10, 0.5, 1, 0xfaf398); // A left
+      addBox(x-4.75, floorNum*5 + 4.5, z, 10, 0.5, 1, 0xfaf398); // B right
+      addBox(x+4.75, floorNum*5 + 4.5, z, 10, 0.5, 1, 0xfaf398); // B left
+
+      addBox(x-4.75, floorNum*5 + 2.5, z+4.5, 1, 0.5, 3, 0xfaf398); // C right
+      addBox(x+4.75, floorNum*5 + 2.5, z+4.5, 1, 0.5, 3, 0xfaf398); // C left
+      addBox(x-4.75, floorNum*5 + 2.5, z-4.5, 1, 0.5, 3, 0xfaf398); // F right
+      addBox(x+4.75, floorNum*5 + 2.5, z-4.5, 1, 0.5, 3, 0xfaf398); // F left
+
+      addBox(x-4.75, floorNum*5 + 2.5, z+1.5, 1, 0.5, 3, 0xfaf398); // D right
+      addBox(x+4.75, floorNum*5 + 2.5, z+1.5, 1, 0.5, 3, 0xfaf398); // D left
+      addBox(x-4.75, floorNum*5 + 2.5, z-1.5, 1, 0.5, 3, 0xfaf398); // E right
+      addBox(x+4.75, floorNum*5 + 2.5, z-1.5, 1, 0.5, 3, 0xfaf398); // E left
+
+      return parts;
+    }
+
+    function makeSkyscraper(x, z, floors, scene, list) {
+      const geometries = [];
+
+      for (let i=0; i<floors; i++) {
+        geometries.push(...makeFloorGeometry(x, z, i));
+      }
+
+      const mergedGeometry = THREE.BufferGeometryUtils.mergeBufferGeometries(geometries);
+      const material = new THREE.MeshStandardMaterial({ color: 0x888888 });
+      const skyscraper = new THREE.Mesh(mergedGeometry, material);
+
+      scene.add(skyscraper);
+      list.push(skyscraper);
+    }
+
+    let zoomDistance = 6;
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xa0d0ff);
+
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+    // renderer.shadowMap.enabled = true;
+    // renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    // const light = new THREE.DirectionalLight(0xffffff, 1);
+    // light.position.set(5, 10, 5);
+    // light.castShadow = true;
+    // scene.add(light);
+
+    // Optional: improve shadow quality
+    // light.shadow.mapSize.width = 8;
+    // light.shadow.mapSize.height = 8;
+    // light.shadow.camera.near = 0.5;
+    // light.shadow.camera.far = 50;
+    // light.shadow.camera.left = -50;
+    // light.shadow.camera.right = 50;
+    // light.shadow.camera.top = 50;
+    // light.shadow.camera.bottom = -50;
+    // light.shadow.camera.updateProjectionMatrix();
+
+
+    // Optional: ambient light
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    scene.add(ambientLight);
+
+    const platforms = [];
+    const killBricks = [];
+    const rings = [];
+    const bouncers=[];
+    const markers=[];
+    const tp=[];
+    const bots=[];
+    let lightning=[]
+    let markersFound=[];
+    playerRef.onDisconnect().update({ Achievements: markersFound.join(', ') });
+    for (let i = 1; i < 5; i++) {
+      makePlatform(0, i, i, 1, 3, 0.5, scene, platforms, color=0x000dff);
+    }
+    makePlatform(-2475, 2460, 0, 5080, 5050, 0.5, scene, platforms);
+    makePlatform(2525, 2460, 0, 5080, 4950, 0.5, scene, platforms, color=0xf2b65c);
+    makePlatform(0, 6, 5, 3, 3, 0.5, scene, platforms, color=0x000dff);
+    for (let i=1; i<5; i++) {
+      makePlatform(-i-1, 6, i+5, 3, 1, 0.5, scene, platforms, color=0x000dff);
+    }
+    for(let i=1; i<5; i++) {
+      if (i%2==1){
+        makePlatform(-i*5-5, 6, 9, 3, 3, 0.5, scene, platforms, color=0x000dff);
+        makePlatform(-i*5-5, 5, 9.5, 1, 3, 0.5, scene, killBricks, color=0xff0000);
+      } else {
+        makePlatform(-i*5-5, 6, 9, 3, 3, 0.5, scene, platforms, color=0x000dff);
+        makePlatform(-i*5-5, 7, 9.5, 1, 3, 0.5, scene, killBricks, color=0xff0000);
+      }
+    }
+    makePlatform(-34, 6, 9, 7, 10, 0.5, scene, platforms, color=0x000dff);
+    makePlatform(-32, 6, 14, 7, 1, 10, scene, platforms, color=0x000dff);
+    makePlatform(-36, 6, 14, 7, 1, 10, scene, platforms, color=0x000dff);
+    makeCylinder(-38, 10, 6, 0.5, 2, scene, markers, color=0x00f2ff);
+    // makePlatform(-19, -10, 5, 0.5, 48, 10, scene, platforms, color=0x737373);
+    makePlatform(-6.25, -10, 2.5, 0.5, 22.5, 5, scene, platforms, color=0x737373);
+    makePlatform(-31.75, -10, 2.5, 0.5, 22.5, 5, scene, platforms, color=0x737373);
+    // width = 22.5
+    // dist from ends = 11.25
+    // end 1 = 5
+    // end 2 = -43
+    makePlatform(-19, -10, 7.5, 0.5, 48, 5, scene, platforms, color=0x737373);
+    makePlatform(-42.75, 1.5, 5, 23, 0.5, 10, scene, platforms, color=0x737373);
+    makePlatform(-19, 13.25, 5, 0.5, 48, 10, scene, platforms, color=0x737373);
+    makePlatform(4.75, 1.5, 5, 23, 0.5, 10, scene, platforms, color=0x737373);
+    makeRoad(-19, 0.3, -24.75, 3, 30, scene);
+
+    makePlatform(-15, -20, 2.5, 0.5, 30, 5, scene, platforms, color=0x737373);
+    makePlatform(16.5, -20, 2.5, 0.5, 27, 5, scene, platforms, color=0x737373);
+    makePlatform(30, -50, 2.5, 60, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(15, -80, 2.5, 0.5, 30, 5, scene, platforms, color=0x737373);
+    makePlatform(-16.5, -80, 2.5, 0.5, 27, 5, scene, platforms, color=0x737373);
+    makePlatform(-30, -50, 2.5, 60, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(3, -21.5, 2.5, 3, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(1.5, -23, 2.5, 0.5, 3, 5, scene, platforms, color=0x737373);
+    makePlatform(0, -27.5, 2.5, 9, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(1.5, -26, 2.5, 0.5, 3, 5, scene, platforms, color=0x737373);
+    makePlatform(-7.5, -29, 2.5, 0.5, 15, 5, scene, platforms, color=0x737373);
+    makePlatform(-3, -23, 2.5, 6, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(-6, -26, 2.5, 0.5, 6, 5, scene, platforms, color=0x737373);
+    makePlatform(-9, -24.5, 2.5, 3, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(-7.5, -23, 2.5, 0.5, 3, 5, scene, platforms, color=0x737373);
+    makePlatform(-12, -26, 2.5, 6, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(-15, -21.5, 2.5, 3, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(-15, -26, 2.5, 0.5, 6, 5, scene, platforms, color=0x737373);
+    makePlatform(-18, -26, 2.5, 6, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(-19.5, -23, 2.5, 0.5, 3, 5, scene, platforms, color=0x737373);
+    makePlatform(-21, -32, 2.5, 18, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(-24, -23, 2.5, 6, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(-27, -26, 2.5, 6, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(-24, -29, 2.5, 0.5, 6, 5, scene, platforms, color=0x737373);
+    makePlatform(-27, -32, 2.5, 0.5, 6, 5, scene, platforms, color=0x737373);
+    makePlatform(-24, -35, 2.5, 6, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(-15, -32, 2.5, 0.5, 12, 5, scene, platforms, color=0x737373);
+
+    makePlatform(-13.5, -35, 2.5, 0.5, 3, 5, scene, platforms, color=0x737373);
+    makePlatform(-7.5, -35, 2.5, 0.5, 3, 5, scene, platforms, color=0x737373);
+    makePlatform(-4.5, -32, 2.5, 0.5, 3, 5, scene, platforms, color=0x737373);
+    makePlatform(-3, -38, 2.5, 0.5, 6, 5, scene, platforms, color=0x737373);
+    makePlatform(-13.5, -38, 2.5, 0.5, 9, 5, scene, platforms, color=0x737373);
+    makePlatform(-21, -41, 2.5, 0.5, 12, 5, scene, platforms, color=0x737373);
+    makePlatform(-22.5, -44, 2.5, 0.5, 3, 5, scene, platforms, color=0x737373);
+    makePlatform(-19.5, -47, 2.5, 0.5, 15, 5, scene, platforms, color=0x737373);
+    makePlatform(-28.5, -44, 2.5, 0.5, 3, 5, scene, platforms, color=0x737373);
+    makePlatform(-10.5, -50, 2.5, 0.5, 3, 5, scene, platforms, color=0x737373);
+    makePlatform(-21, -50, 2.5, 0.5, 6, 5, scene, platforms, color=0x737373);
+    makePlatform(-28.5, -50, 2.5, 0.5, 3, 5, scene, platforms, color=0x737373);
+    makePlatform(-9, -53, 2.5, 0.5, 6, 5, scene, platforms, color=0x737373);
+    makePlatform(-27, -38, 2.5, 6, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(-15, -33.5, 2.5, 3, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(-6, -35, 2.5, 12, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(-18, -36.5, 2.5, 3, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(-15, -41, 2.5, 6, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(-24, -42.5, 2.5, 3, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(-9, -44, 2.5, 12, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(-12, -44, 2.5, 6, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(-27, -45.5, 2.5, 3, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(-18, -45.5, 2.5, 3, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(-15, -51.5, 2.5, 9, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(-6, -48.5, 2.5, 9, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(-12, -51.5, 2.5, 3, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(-27, -53, 2.5, 6, 0.5, 5, scene, platforms, color=0x737373);
+
+    makePlatform(-19.5, -53, 2.5, 0.5, 3, 5, scene, platforms, color=0x737373);
+    makePlatform(0, -35, 2.5, 0.5, 6, 5, scene, platforms, color=0x737373);
+    makePlatform(0, -41, 2.5, 0.5, 6, 5, scene, platforms, color=0x737373);
+    makePlatform(-1.5, -44, 2.5, 0.5, 3, 5, scene, platforms, color=0x737373);
+    makePlatform(-7.5, -56, 2.5, 0.5, 15, 5, scene, platforms, color=0x737373);
+    makePlatform(4.5, -29, 2.5, 0.5, 3, 5, scene, platforms, color=0x737373);
+    makePlatform(4.5, -38, 2.5, 0.5, 3, 5, scene, platforms, color=0x737373);
+    makePlatform(4.5, -44, 2.5, 0.5, 3, 5, scene, platforms, color=0x737373);
+    makePlatform(1.5, -47, 2.5, 0.5, 3, 5, scene, platforms, color=0x737373);
+    makePlatform(-25.5, -59, 2.5, 0.5, 3, 5, scene, platforms, color=0x737373);
+    makePlatform(-25.5, -65, 2.5, 0.5, 3, 5, scene, platforms, color=0x737373);
+    makePlatform(-25.5, -68, 2.5, 0.5, 9, 5, scene, platforms, color=0x737373);
+    makePlatform(-22.5, -62, 2.5, 0.5, 3, 5, scene, platforms, color=0x737373);
+    makePlatform(-19.5, -65, 2.5, 0.5, 3, 5, scene, platforms, color=0x737373);
+    makePlatform(-13.5, -71, 2.5, 0.5, 15, 5, scene, platforms, color=0x737373);
+    makePlatform(-15, -59, 2.5, 0.5, 6, 5, scene, platforms, color=0x737373);
+    makePlatform(-12, -62, 2.5, 0.5, 6, 5, scene, platforms, color=0x737373);
+    makePlatform(-12, -68, 2.5, 0.5, 6, 5, scene, platforms, color=0x737373);
+    makePlatform(-24, -77, 2.5, 0.5, 6, 5, scene, platforms, color=0x737373);
+    makePlatform(-28.5, -74, 2.5, 0.5, 3, 5, scene, platforms, color=0x737373);
+    makePlatform(-19.5, -74, 2.5, 0.5, 3, 5, scene, platforms, color=0x737373);
+    makePlatform(-7.5, -65, 2.5, 0.5, 9, 5, scene, platforms, color=0x737373);
+    makePlatform(-7.5, -59, 2.5, 0.5, 3, 5, scene, platforms, color=0x737373);
+    makePlatform(-12, -77, 2.5, 0.5, 6, 5, scene, platforms, color=0x737373);
+    makePlatform(-7.5, -74, 2.5, 0.5, 9, 5, scene, platforms, color=0x737373);
+    makePlatform(-3, -77, 2.5, 0.5, 6, 5, scene, platforms, color=0x737373);
+    makePlatform(-1.5, -71, 2.5, 0.5, 3, 5, scene, platforms, color=0x737373);
+    makePlatform(10.5, -68, 2.5, 0.5, 27, 5, scene, platforms, color=0x737373);
+    makePlatform(1.5, -53, 2.5, 0.5, 3, 5, scene, platforms, color=0x737373);
+    makePlatform(4.5, -50, 2.5, 0.5, 3, 5, scene, platforms, color=0x737373);
+    makePlatform(-24, -54.5, 2.5, 9, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(-18, -54.5, 2.5, 9, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(-3, -48.5, 2.5, 15, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(3, -36.5, 2.5, 15, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(6, -39.5, 2.5, 3, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(0, -50, 2.5, 6, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(-27, -62, 2.5, 6, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(-24, -71, 2.5, 12, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(-21, -60.5, 2.5, 9, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(-18, -66.5, 2.5, 9, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(-12, -60.5, 2.5, 3, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(-15, -65, 2.5, 6, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(-27, -72.5, 2.5, 3, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(-18, -77, 2.5, 6, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(-6, -65, 2.5, 12, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(-9, -57.5, 2.5, 3, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(-15, -74, 2.5, 6, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(-9, -75.5, 2.5, 3, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(0, -77, 2.5, 6, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(-3, -72.5, 2.5, 3, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(-3, -62, 2.5, 6, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(0, -65, 2.5, 12, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(3, -54.5, 2.5, 3, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(3, -48.5, 2.5, 3, 0.5, 5, scene, platforms, color=0x737373);
+
+    makePlatform(1.5, -62, 2.5, 0.5, 3, 5, scene, platforms, color=0x737373);
+    makePlatform(4.5, -71, 2.5, 0.5, 3, 5, scene, platforms, color=0x737373);
+    makePlatform(4.5, -59, 2.5, 0.5, 3, 5, scene, platforms, color=0x737373);
+    makePlatform(7.5, -77, 2.5, 0.5, 9, 5, scene, platforms, color=0x737373);
+    makePlatform(7.5, -47, 2.5, 0.5, 3, 5, scene, platforms, color=0x737373);
+    makePlatform(7.5, -35, 2.5, 0.5, 3, 5, scene, platforms, color=0x737373);
+    makePlatform(7.5, -23, 2.5, 0.5, 3, 5, scene, platforms, color=0x737373);
+    makePlatform(9, -32, 2.5, 0.5, 6, 5, scene, platforms, color=0x737373);
+    makePlatform(10.5, -26, 2.5, 0.5, 3, 5, scene, platforms, color=0x737373);
+    makePlatform(10.5, -38, 2.5, 0.5, 3, 5, scene, platforms, color=0x737373);
+    makePlatform(10.5, -65, 2.5, 0.5, 3, 5, scene, platforms, color=0x737373);
+    makePlatform(10.5, -71, 2.5, 0.5, 3, 5, scene, platforms, color=0x737373);
+    makePlatform(12, -44, 2.5, 0.5, 6, 5, scene, platforms, color=0x737373);
+    makePlatform(12, -53, 2.5, 0.5, 12, 5, scene, platforms, color=0x737373);
+    makePlatform(13.5, -59, 2.5, 0.5, 9, 5, scene, platforms, color=0x737373);
+    makePlatform(13.5, -62, 2.5, 0.5, 3, 5, scene, platforms, color=0x737373);
+    makePlatform(13.5, -74, 2.5, 0.5, 3, 5, scene, platforms, color=0x737373);
+    makePlatform(15, -35, 2.5, 0.5, 6, 5, scene, platforms, color=0x737373);
+    makePlatform(15, -23, 2.5, 0.5, 6, 5, scene, platforms, color=0x737373);
+    makePlatform(16.5, -41, 2.5, 0.5, 9, 5, scene, platforms, color=0x737373);
+    makePlatform(16.5, -47, 2.5, 0.5, 3, 5, scene, platforms, color=0x737373);
+    makePlatform(16.5, -71, 2.5, 0.5, 3, 5, scene, platforms, color=0x737373);
+    makePlatform(16.5, -77, 2.5, 0.5, 3, 5, scene, platforms, color=0x737373);
+    makePlatform(18, -50, 2.5, 0.5, 18, 5, scene, platforms, color=0x737373);
+    makePlatform(19.5, -26, 2.5, 0.5, 3, 5, scene, platforms, color=0x737373);
+    makePlatform(19.5, -29, 2.5, 0.5, 9, 5, scene, platforms, color=0x737373);
+    makePlatform(19.5, -38, 2.5, 0.5, 9, 5, scene, platforms, color=0x737373);
+    makePlatform(22.5, -62, 2.5, 0.5, 3, 5, scene, platforms, color=0x737373);
+    makePlatform(22.5, -65, 2.5, 0.5, 15, 5, scene, platforms, color=0x737373);
+    makePlatform(22.5, -74, 2.5, 0.5, 9, 5, scene, platforms, color=0x737373);
+    makePlatform(25.5, -26, 2.5, 0.5, 3, 5, scene, platforms, color=0x737373);
+    makePlatform(25.5, -35, 2.5, 0.5, 3, 5, scene, platforms, color=0x737373);
+    makePlatform(25.5, -47, 2.5, 0.5, 3, 5, scene, platforms, color=0x737373);
+    makePlatform(25.5, -56, 2.5, 0.5, 3, 5, scene, platforms, color=0x737373);
+    makePlatform(27, -59, 2.5, 0.5, 6, 5, scene, platforms, color=0x737373);
+    makePlatform(28.5, -29, 2.5, 0.5, 3, 5, scene, platforms, color=0x737373);
+    makePlatform(28.5, -44, 2.5, 0.5, 3, 5, scene, platforms, color=0x737373);
+    makePlatform(28.5, -53, 2.5, 0.5, 3, 5, scene, platforms, color=0x737373);
+    makePlatform(28.5, -77, 2.5, 0.5, 3, 5, scene, platforms, color=0x737373); //width
+    makePlatform(3, -63.5, 2.5, 3, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(3, -74, 2.5, 6, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(6, -26, 2.5, 6, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(6, -59, 2.5, 18, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(6, -72.5, 2.5, 3, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(9, -29, 2.5, 6, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(9, -36.5, 2.5, 3, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(9, -42.5, 2.5, 3, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(9, -48.5, 2.5, 3, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(9, -60.5, 2.5, 9, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(9, -74, 2.5, 6, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(12, -24.5, 2.5, 9, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(12, -36.5, 2.5, 9, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(12, -45.5, 2.5, 3, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(12, -57.5, 2.5, 3, 0.5, 5, scene, platforms, color=0x737373);
+
+    makePlatform(12, -69.5, 2.5, 3, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(15, -29, 2.5, 6, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(15, -45.5, 2.5, 3, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(15, -54.5, 2.5, 3, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(15, -63.5, 2.5, 3, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(15, -75.5, 2.5, 9, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(18, -24.5, 2.5, 3, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(18, -32, 2.5, 6, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(18, -42.5, 2.5, 3, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(18, -48.5, 2.5, 3, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(18, -57.5, 2.5, 9, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(21, -24.5, 2.5, 3, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(21, -35, 2.5, 6, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(21, -44, 2.5, 6, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(21, -59, 2.5, 12, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(21, -74, 2.5, 6, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(24, -21.5, 2.5, 3, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(24, -30.5, 2.5, 9, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(24, -48.5, 2.5, 21, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(24, -69.5, 2.5, 3, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(24, -77, 2.5, 6, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(27, -24.5, 2.5, 3, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(27, -30.5, 2.5, 3, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(27, -38, 2.5, 6, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(27, -60.5, 2.5, 3, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(27, -71, 2.5, 6, 0.5, 5, scene, platforms, color=0x737373);
+    makePlatform(0, -50, 5, 60, 60, 0.5, scene, platforms, color=0x737373);
+
+    makePlatform(-1.5, -86, 0, 4.5, 1.5, 0.5, scene, platforms, color=0xff0000, opacity=0.0);
+    makePlatform(-7.5, -87.5, 0, 1.5, 1.5, 0.5, scene, tp, color=0xff0000, opacity=0.0);
+
+    makePlatform(50, 2460, 50, 5090, 0.5, 100, scene, platforms, color=0x737373);
+    makePlatform(40, -50, 0.25, 1, 0.5, 1, scene, tp, color=0x737373); //temp tp
+    window.onload = function() {
+      makeSkyscraper(205, 135, 16, scene, platforms);
+      makeSkyscraper(155, 135, 7, scene, platforms);
+      makeSkyscraper(125, 135, 11, scene, platforms);
+      makeSkyscraper(95, 135, 12, scene, platforms);
+      makeSkyscraper(85, 135, 17, scene, platforms);
+      makeSkyscraper(185, 125, 6, scene, platforms);
+      makeSkyscraper(175, 125, 8, scene, platforms);
+      makeSkyscraper(135, 125, 11, scene, platforms);
+      makeSkyscraper(175, 115, 8, scene, platforms);
+      makeSkyscraper(125, 115, 5, scene, platforms);
+      makeSkyscraper(115, 115, 10, scene, platforms);
+      makeSkyscraper(95, 115, 15, scene, platforms);
+      makeSkyscraper(65, 115, 18, scene, platforms);
+      makeSkyscraper(55, 115, 19, scene, platforms);
+      makeSkyscraper(195, 105, 8, scene, platforms);
+      makeSkyscraper(145, 105, 14, scene, platforms);
+      makeSkyscraper(105, 105, 16, scene, platforms);
+      makeSkyscraper(85, 105, 6, scene, platforms);
+      makeSkyscraper(165, 95, 5, scene, platforms);
+      makeSkyscraper(125, 95, 8, scene, platforms);
+      makeSkyscraper(65, 95, 7, scene, platforms);
+      makeSkyscraper(195, 85, 18, scene, platforms);
+      makeSkyscraper(185, 85, 10, scene, platforms);
+      makeSkyscraper(165, 85, 5, scene, platforms);
+      makeSkyscraper(145, 85, 8, scene, platforms);
+      makeSkyscraper(105, 85, 8, scene, platforms);
+      makeSkyscraper(85, 85, 19, scene, platforms);
+      makeSkyscraper(205, 75, 19, scene, platforms);
+      makeSkyscraper(135, 75, 13, scene, platforms);
+      makeSkyscraper(75, 75, 5, scene, platforms);
+      makeSkyscraper(65, 75, 10, scene, platforms);
+      makeSkyscraper(55, 75, 13, scene, platforms);
+      makeSkyscraper(195, 65, 12, scene, platforms);
+      makeSkyscraper(175, 65, 9, scene, platforms);
+      makeSkyscraper(145, 65, 8, scene, platforms);
+      makeSkyscraper(115, 65, 10, scene, platforms);
+      makeSkyscraper(55, 65, 9, scene, platforms);
+      makeSkyscraper(155, 55, 10, scene, platforms);
+      makeSkyscraper(125, 55, 18, scene, platforms);
+      makeSkyscraper(105, 55, 15, scene, platforms);
+      makeSkyscraper(95, 55, 14, scene, platforms);
+      makeSkyscraper(75, 55, 18, scene, platforms);
+      makeSkyscraper(185, 45, 12, scene, platforms);
+      makeSkyscraper(165, 45, 11, scene, platforms);
+      makeSkyscraper(145, 45, 10, scene, platforms);
+      makeSkyscraper(135, 45, 14, scene, platforms);
+      makeSkyscraper(205, 35, 15, scene, platforms);
+      makeSkyscraper(195, 35, 11, scene, platforms);
+      makeSkyscraper(165, 35, 9, scene, platforms);
+      makeSkyscraper(105, 35, 20, scene, platforms);
+      makeSkyscraper(85, 35, 14, scene, platforms);
+      makeSkyscraper(75, 35, 20, scene, platforms);
+      makeSkyscraper(65, 35, 20, scene, platforms);
+      makeSkyscraper(165, 25, 6, scene, platforms);
+      makeSkyscraper(135, 25, 17, scene, platforms);
+      makeSkyscraper(85, 25, 17, scene, platforms);
+      makeSkyscraper(75, 25, 18, scene, platforms);
+      makeSkyscraper(185, 15, 13, scene, platforms);
+      makeSkyscraper(105, 15, 12, scene, platforms);
+      makeSkyscraper(65, 15, 18, scene, platforms);
+      makeSkyscraper(55, 15, 5, scene, platforms);
+      makeSkyscraper(205, 5, 8, scene, platforms);
+      makeSkyscraper(175, 5, 11, scene, platforms);
+      makeSkyscraper(155, 5, 20, scene, platforms);
+      makeSkyscraper(125, 5, 16, scene, platforms);
+      makeSkyscraper(195, -5, 6, scene, platforms);
+      makeSkyscraper(125, -5, 7, scene, platforms);
+      makeSkyscraper(95, -5, 18, scene, platforms);
+      makeSkyscraper(85, -5, 16, scene, platforms);
+      makeSkyscraper(55, -5, 9, scene, platforms);
+      makeSkyscraper(185, -15, 18, scene, platforms);
+      makeSkyscraper(145, -15, 19, scene, platforms);
+      makeSkyscraper(135, -15, 7, scene, platforms);
+      makeSkyscraper(55, -15, 13, scene, platforms);
+      makeSkyscraper(205, -25, 10, scene, platforms);
+      makeSkyscraper(185, -25, 19, scene, platforms);
+      makeSkyscraper(165, -25, 20, scene, platforms);
+      makeSkyscraper(105, -25, 17, scene, platforms);
+      makeSkyscraper(95, -25, 5, scene, platforms);
+      makeSkyscraper(205, -35, 5, scene, platforms);
+      makeSkyscraper(165, -35, 17, scene, platforms);
+      makeSkyscraper(135, -35, 18, scene, platforms);
+      makeSkyscraper(105, -35, 17, scene, platforms);
+      makeSkyscraper(65, -35, 10, scene, platforms);
+    }
+    
+
+    const bullets = [];
+    function createNameTag(name) {
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d');
+      canvas.width = 256;
+      canvas.height = 64;
+
+      context.fillStyle = 'white';
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      context.fillStyle = 'black';
+      context.font = '24px Arial';
+      context.textAlign = 'center';
+      context.fillText(name, canvas.width / 2, canvas.height / 2 + 8);
+
+      const texture = new THREE.CanvasTexture(canvas);
+      const material = new THREE.SpriteMaterial({ map: texture });
+      const sprite = new THREE.Sprite(material);
+      sprite.scale.set(2, 0.5, 1); // Adjust size
+      sprite.position.y = 3; // Position above the avatar's head
+      return sprite;
+    }
+
+    document.addEventListener('mousedown', () => {
+        const direction = new THREE.Vector3();
+        camera.getWorldDirection(direction);
+        const position = player.position.clone().add(new THREE.Vector3(0, 1.5, 0)); // Adjust as needed
+        bullets.push(new Bullet(position, direction));
+    });
+    function updateBullets() {
+        bullets.forEach((bullet, index) => {
+            bullet.update();
+            // Remove bullets that are too far
+            if (bullet.mesh.position.length() > 100) {
+            scene.remove(bullet.mesh);
+            bullets.splice(index, 1);
+            }
+        });
+    }
+    function createHealthBar(player) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 128;
+        canvas.height = 16;
+        const context = canvas.getContext('2d');
+        context.fillStyle = 'green';
+        context.fillRect(0, 0, 128, 16);
+        const texture = new THREE.CanvasTexture(canvas);
+        const material = new THREE.SpriteMaterial({ map: texture });
+        const sprite = new THREE.Sprite(material);
+        sprite.scale.set(2, 0.25, 1);
+        sprite.position.set(0, 2.5, 0); // Position above the player's head
+        player.add(sprite);
+        player.healthBar = { sprite, context, texture };
+    }
+    function updateHealthBar(player) {
+        const { context, texture } = player.healthBar;
+        context.clearRect(0, 0, 128, 16);
+        context.fillStyle = 'red';
+        context.fillRect(0, 0, 128, 16);
+        context.fillStyle = 'green';
+        context.fillRect(0, 0, (player.health / 100) * 128, 16);
+        texture.needsUpdate = true;
+        // playerRef.update({health:player.health});
+    }
+    let climbing = false;
+
+    function checkLadderClimb() {
+      climbing = false;
+      for (const ladder of ladders) {
+        const dist = player.position.distanceTo((ladder.position)*2);
+        if (dist < 1.5) {
+          if (keys['w']) {
+            velocityY = 0.05; // smooth upward climb
+            climbing = true;
+          } else {
+            velocityY=0;
+          }
+          break; // Only climb one ladder at a time
+        }
+      }
+    }
+
+    function createDetailedGun() {
+      const gun = new THREE.Group();
+
+      const body = new THREE.Mesh(
+        new THREE.BoxGeometry(0.2, 0.2, 1),
+        new THREE.MeshStandardMaterial({ color: 0x333333 })
+      );
+      // body.castShadow = true;
+      // body.receiveShadow = true;
+      gun.add(body);
+
+      const grip = new THREE.Mesh(
+        new THREE.BoxGeometry(0.15, 0.4, 0.2),
+        new THREE.MeshStandardMaterial({ color: 0x222222 })
+      );
+      grip.position.set(0, -0.3, -0.3);
+      // grip.castShadow = true;
+      // grip.receiveShadow = true;
+      gun.add(grip);
+
+      const barrel = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.05, 0.05, 0.6, 16),
+        new THREE.MeshStandardMaterial({ color: 0x111111 })
+      );
+      barrel.rotation.x = Math.PI / 2;
+      barrel.position.set(0, 0.05, 0.5);
+      // barrel.castShadow = true;
+      // barrel.receiveShadow = true;
+      gun.add(barrel);
+      gun.rotation.y=Math.PI;
+      return gun;
+    }
+    function createPlayer(color = 0x0077ff, admin=false) {
+      const group = new THREE.Group();
+      const gun = createDetailedGun();
+      gun.position.set(0.5, 1, -0.6); // Adjust as needed
+      group.add(gun);
+      const torso = new THREE.Mesh(new THREE.BoxGeometry(1, 1.5, 0.5), new THREE.MeshStandardMaterial({ color }));
+      torso.position.y = 1.5;
+      // torso.castShadow=true;
+      // torso.receiveShadow=true;
+      group.add(torso);
+
+      const head = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.6, 0.6), new THREE.MeshStandardMaterial({ color: 0xffcc99 }));
+      head.position.y = 2.4;
+      // head.castShadow=true;
+      // head.receiveShadow=true;
+      group.add(head);
+
+      const armMaterial = new THREE.MeshStandardMaterial({ color });
+      const leftArm = new THREE.Mesh(new THREE.BoxGeometry(0.3, 1.2, 0.3), armMaterial);
+      const rightArm = leftArm.clone();
+      // leftArm.castShadow=true;
+      // leftArm.receiveShadow=true;
+      // rightArm.castShadow=true;
+      // rightArm.receiveShadow=true;
+      leftArm.position.set(-0.65, 1.5, 0);
+      rightArm.position.set(0.65, 1.5, 0);
+      group.add(leftArm, rightArm);
+
+      const legMaterial = new THREE.MeshStandardMaterial({ color: 0x333333 });
+      const leftLeg = new THREE.Mesh(new THREE.BoxGeometry(0.4, 2.3, 0.4), legMaterial);
+      const rightLeg = leftLeg.clone();
+      // leftLeg.castShadow=true;
+      // leftLeg.receiveShadow=true;
+      // rightLeg.castShadow=true;
+      // rightLeg.receiveShadow=true;
+      leftLeg.position.set(-0.3, 0.3, 0);
+      rightLeg.position.set(0.3, 0.3, 0);
+      group.add(leftLeg, rightLeg);
+      if(admin===false){
+        group.scale.set(0.6, 0.6, 0.6);
+      }
+      
+      group.userData = { leftArm, rightArm, leftLeg, rightLeg, walkTime: 0 };
+
+      return group;
+    }
+    function updateBotX(bot, player, speed) {
+      // Vector from bot → player
+      const toPlayer = new THREE.Vector3().subVectors(player.position, bot.position);
+
+      // Flatten to XZ plane (ignore vertical difference if you want ground movement only)
+      toPlayer.y = 0;
+      toPlayer.normalize();
+
+      // Move bot toward player
+      // bot.position.add(toPlayer.multiplyScalar(speed));
+      bot.position.x+=toPlayer.x*speed;
+
+      // Make bot face player (rotate toward player)
+      bot.lookAt(player.position.x, bot.position.y, player.position.z);
+    }
+    function updateBotZ(bot, player, speed) {
+      // Vector from bot → player
+      const toPlayer = new THREE.Vector3().subVectors(player.position, bot.position);
+
+      // Flatten to XZ plane (ignore vertical difference if you want ground movement only)
+      toPlayer.y = 0;
+      toPlayer.normalize();
+
+      // Move bot toward player
+      // bot.position.add(toPlayer.multiplyScalar(speed));
+      bot.position.z+=toPlayer.z*speed;
+
+      // Make bot face player (rotate toward player)
+      bot.lookAt(player.position.x, bot.position.y, player.position.z);
+    }
+
+    const player = createPlayer();
+    player.position.set(0, 5, 0);
+    scene.add(player);
+
+    // Initialize player health here (added fix)
+    let velocityY = 0;
+    let onGround = false;
+    player.health = 100;
+    let yaw = 0;
+    let pitch = 0;
+    createHealthBar(player);
+    updateHealthBar(player);
+    let started = false;
+    let velocity = new THREE.Vector3();
+    const keys = {};
+    document.addEventListener('keydown', e => keys[e.key.toLowerCase()] = true);
+    document.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
+    document.body.addEventListener('click', () => {
+      if (started){
+        renderer.domElement.requestPointerLock();
+      }
+    });
+
+    document.addEventListener('pointerlockchange', () => {
+      if (document.pointerLockElement === renderer.domElement) {
+        document.addEventListener('mousemove', onMouseMove, false);
+      } else {
+        document.removeEventListener('mousemove', onMouseMove, false);
+      }
+    });
+    let startX, startY;
+    document.addEventListener('touchstart', (e)=>{
+      startX=e.touches[0].clientX;
+      startY=e.touches[0].clientY;
+    });
+
+    document.addEventListener('touchmove', onTouchMove, false);
+    function onMouseMove(event) {
+      const movementX = event.movementX || 0;
+      const movementY = event.movementY || 0;
+      yaw -= movementX * 0.002;
+      pitch -= movementY * 0.002;
+      pitch = Math.max(-Math.PI / 2 + 0.1, Math.min(Math.PI / 2 - 0.1, pitch));
+    }
+    function onTouchMove(event) {
+      const nowX = event.touches[0].clientX || 0;
+      const nowY = event.touches[0].clientY || 0;
+      const movementX=nowX-startX;
+      const movementY=nowY-startY;
+      startX=nowX;
+      startY=nowY;
+      yaw -= movementX * 0.002;
+      pitch -= movementY * 0.002;
+      pitch = Math.max(-Math.PI / 2 + 0.1, Math.min(Math.PI / 2 - 0.1, pitch));
+    }
+    window.addEventListener('keydown', (event) => {
+      if (event.key.toLowerCase() === 't' && admin) {
+        const targetName = prompt("Enter the screen name of the player to teleport to:");
+        if (!targetName) return;
+
+        db.ref('players').once('value').then(snapshot => {
+          const players = snapshot.val() || {};
+          let found = false;
+
+          for (const id in players) {
+            const pdata = players[id];
+            if (pdata.screenName?.toLowerCase() === targetName.toLowerCase()) {
+              // Found the target
+              player.position.set(pdata.x, pdata.y, pdata.z);
+              db.ref('players/' + playerId).update({
+                x: pdata.x,
+                y: pdata.y,
+                z: pdata.z
+              });
+              found = true;
+              break;
+            }
+          }
+
+          if (!found) {
+            alert("Player with that screen name not found.");
+          }
+        });
+      }
+      if (event.key.toLowerCase() === 'c'){
+        for (const id in otherPlayers) {
+          db.ref('players').remove();
+          scene.remove(otherPlayers[id]);
+          delete otherPlayers[id];
+        }
+      }
+    });
+
+    document.addEventListener('wheel', (event) => {
+      zoomDistance += event.deltaY * 0.01;
+      zoomDistance = Math.max(0, Math.min(25, zoomDistance));
+    });
+    let lastHealth = player.health;
+    let alrTd=false;
+    const crosshair = document.getElementById('crosshair');
+    var standingPlatform = null;
+    let gameTicks = 0;
+    let lightningTicks=0;
+    let lightningID = null;
+    let lightningRef = null;
+    let toStrikeX=null;
+    let toStrikeZ=null;
+    function animate() {
+        gameTicks++;
+        let phasing = false;
+        let callLightning=false;
+        requestAnimationFrame(animate);
+
+        const direction = new THREE.Vector3();
+        const speed = 0.1;
+        var oldPosition = player.position.clone();
+        if (keys['w']&&!climbing) direction.z -= 1;
+        if (keys['s']) direction.z += 1;
+        if (keys['a']) direction.x -= 1;
+        if (keys['d']) direction.x += 1;
+        if (keys['p']) phasing=true;
+        if (keys['l'] && admin) callLightning=true;
+        checkLadderClimb();
+        if (keys['arrowleft']) {
+          yaw += 15 * 0.002;
+        }
+        if (keys['arrowright']) {
+          yaw-=15*0.002
+        }
+        if (keys['arrowup']) {
+          direction.z -= 1;
+        }
+        if (keys['arrowdown']) {
+          direction.z += 1;
+        }
+        direction.applyEuler(new THREE.Euler(0, yaw + Math.PI, 0));
+        direction.normalize();
+        if (!onGround){
+          velocityY -= 0.01;
+        }
+        onGround = false;
+        player.position.y += velocityY;
+        var bboxplayer = new THREE.Box3().setFromObject(player);
+        for (const p of platforms) {
+          bboxobj = new THREE.Box3().setFromObject(p);
+          if (bboxplayer.intersectsBox(bboxobj)) {
+            if (player.position.y>p.position.y+p.geometry.parameters.height/2){
+              onGround = true;
+              standingPlatform=p;
+              velocityY=0;
+              
+              break;
+            }
+            player.position.y=oldPosition.y;
+          }
+        }
+        for (const m of markers) {
+          bboxobj = new THREE.Box3().setFromObject(m);
+          if (bboxplayer.intersectsBox(bboxobj)) {
+            if (player.position.y>m.position.y+m.geometry.parameters.height/2){
+                onGround = true;
+                standingPlatform=m;
+            }
+            velocityY=0;
+            player.position.y=oldPosition.y;
+            if (markersFound.includes("Obby Marker")){
+            } else {
+              alert("You found Obby Marker!");
+              markersFound.push("Obby Marker");
+              playerRef.onDisconnect().update({ Achievements: markersFound.join(', ') });
+            }
+            break;
+          }
+        }
+        let testPosition = player.position.clone();
+
+        testPosition.x += direction.x * speed;
+        let testBox = new THREE.Box3().setFromObject(player);
+        let offset = testPosition.clone().sub(player.position); 
+        testBox.translate(offset);
+        let blocked = false;
+        for (const p of platforms) {
+          var bboxobj = new THREE.Box3().setFromObject(p);
+          if (testBox.intersectsBox(bboxobj)) {
+            if (standingPlatform != p || !onGround) {
+              if (admin!=true || !phasing){
+                blocked=true;
+                break;
+                // player.position.x = oldPosition.x; 
+              }
+            }
+          }
+        }
+        for (const m of markers) {
+          var bboxobj = new THREE.Box3().setFromObject(m);
+          if (testBox.intersectsBox(bboxobj)) {
+            if (standingPlatform != m || !onGround) {
+              // player.position.x = oldPosition.x;
+              blocked=true;
+              if (markersFound.includes("Obby Marker")){
+              } else {
+                alert("You found Obby Marker!");
+                markersFound.push("Obby Marker");
+                playerRef.onDisconnect().update({ Achievements: markersFound.join(', ') });
+              }
+              break;
+            }
+          }
+        }
+        if (!blocked) {
+          player.position.x = testPosition.x;
+        }
+        testPosition = player.position.clone();
+
+        testPosition.z += direction.z * speed;
+        testBox = new THREE.Box3().setFromObject(player);
+        offset = testPosition.clone().sub(player.position); 
+        testBox.translate(offset);
+        blocked = false;
+        for (const p of platforms) {
+          var bboxobj = new THREE.Box3().setFromObject(p);
+          if (testBox.intersectsBox(bboxobj)) {
+            if (standingPlatform != p || !onGround) {
+              if (admin != true || !phasing){
+                blocked=true;
+                break;
+              }
+              
+            }
+          }
+        }
+        for (const m of markers) {
+          var bboxobj = new THREE.Box3().setFromObject(m);
+          if (testBox.intersectsBox(bboxobj)) {
+            if (standingPlatform != m || !onGround) {
+              // player.position.z = oldPosition.z; 
+              blocked=true;
+              if (markersFound.includes("Obby Marker")){
+              } else {
+                alert("You found Obby Marker!");
+                markersFound.push("Obby Marker");
+                playerRef.onDisconnect().update({ Achievements: markersFound.join(', ') });
+              }
+              break;
+            }
+          }
+        }
+        if (!blocked){
+          player.position.z = testPosition.z;
+        }
+        bboxplayer = new THREE.Box3().setFromObject(player);
+        for (const k of killBricks) {
+          var bboxobj = new THREE.Box3().setFromObject(k);
+          if (bboxplayer.intersectsBox(bboxobj)) {
+            player.position.set(0, 5, 0);
+          }
+        }
+        bboxplayer = new THREE.Box3().setFromObject(player);
+        for (const p of tp) {
+          var bboxobj = new THREE.Box3().setFromObject(p);
+          if (bboxplayer.intersectsBox(bboxobj)) {
+            player.position.set(100, 5, -50);
+            if (markersFound.includes("Maze Completed")){
+            } else {
+              alert("You have completed the Maze");
+              markersFound.push("Maze Completed");
+              playerRef.onDisconnect().update({ Achievements: markersFound.join(', ') });
+            }
+          }
+        }
+        bboxplayer = new THREE.Box3().setFromObject(player);
+        for (const l in lightnings){
+          for (const m of lightnings[l]) {
+            var bboxobj = new THREE.Box3().setFromObject(m);
+            if (bboxplayer.intersectsBox(bboxobj)) {
+              if (!callLightning){
+                // player.position.set(0, 5, 0);
+              }
+            }
+          }
+        }
+            // for (const p of platforms) {
+        //     const halfWidth = p.geometry.parameters.width / 2;
+        //     const halfDepth = p.geometry.parameters.depth / 2;
+        //     const halfHeight = p.geometry.parameters.height / 2;
+        //     const px = p.position.x, pz = p.position.z, py = p.position.y;
+
+        //     const overX = Math.abs(player.position.x - px) < halfWidth;
+        //     const overZ = Math.abs(player.position.z - pz) < halfDepth;
+        //     const overY = Math.abs(player.position.y - p.position.y) < p.geometry.parameters.height * 2;
+        //     const platformTopY = py + halfHeight;
+        //     const platformBottomY = py - halfHeight;
+        //     const playerTop = player.position.y + 1.0;
+        //     const playerBottom = player.position.y;
+
+        //     // Falling: check landing on top
+        //     if (velocityY <= 0 && overX && overZ && overY) {
+        //     player.position.y = p.position.y+0.75;
+        //     velocityY = 0;
+        //     onGround = true;
+        //     standingPlatform = p;
+        //     break;
+        //     }
+
+        //     // Jumping up: check hitting bottom
+        //     if (velocityY > 0 && overX && overZ && playerTop > platformBottomY - 0.2 && playerTop < platformBottomY + 0.2) {
+        //     player.position.y = platformBottomY - 1.0;
+        //     velocityY = -0.01; // start falling
+        //     }
+        // }
+
+        // // Horizontal collision
+        // const proposedX = player.position.x + direction.x * speed;
+        // const proposedZ = player.position.z + direction.z * speed;
+        // const playerY = player.position.y;
+
+        // let canMoveX = true;
+        // let canMoveZ = true;
+
+        // for (const p of platforms) {
+        //     if (p === standingPlatform) continue;
+
+        //     const halfWidth = p.geometry.parameters.width / 2;
+        //     const halfDepth = p.geometry.parameters.depth / 2;
+        //     const halfHeight = p.geometry.parameters.height / 2;
+        //     const px = p.position.x;
+        //     const pz = p.position.z;
+        //     const py = p.position.y;
+
+        //     const verticalOverlap = playerY + 0.9 > py - halfHeight && playerY < py + halfHeight + 0.9;
+
+        //     if (verticalOverlap) {
+        //     if (
+        //         Math.abs(proposedX - px) < halfWidth + 0.3 &&
+        //         Math.abs(player.position.z - pz) < halfDepth + 0.3
+        //     ) canMoveX = false;
+
+        //     if (
+        //         Math.abs(player.position.x - px) < halfWidth + 0.3 &&
+        //         Math.abs(proposedZ - pz) < halfDepth + 0.3
+        //     ) canMoveZ = false;
+        //     }
+        // }
+
+        // for (const p of bouncers) {
+        //     const px = Math.abs(player.position.x - p.position.x) < p.geometry.parameters.width / 2;
+        //     const pz = Math.abs(player.position.z - p.position.z) < p.geometry.parameters.depth / 2;
+        //     const py = Math.abs(player.position.y - p.position.y) < p.geometry.parameters.height * 2;
+        //     if (px && pz && py && velocityY < 0) velocityY = 10;
+        // }
+        // markers.forEach(p => {
+        //     if (((Math.sqrt((p.position.x-proposedX)**2 + (p.position.z-proposedZ)**2))<1)&&(player.position.y > p.position.y+p.geometry.parameters.height*0.5)&&(velocityY<=0)&&((standingPlatform!=p)||(onGround==true))) {
+        //       player.position.y = p.position.y+p.geometry.parameters.height*0.5+0.5;
+        //       velocityY = 0;
+        //       onGround = true;
+        //       standingPlatform = p;
+        //       if (markersFound.includes("Obby Marker")){
+                
+        //       } else {
+        //         alert("You found Obby Marker!");
+        //         markersFound.push("Obby Marker");
+        //         playerRef.onDisconnect().update({ Achievements: markersFound.join(', ') });
+        //       }
+        //     }
+        //     if (((Math.sqrt((p.position.x-proposedX)**2 + (p.position.z-proposedZ)**2))<1)&&(player.position.y < p.position.y+p.geometry.parameters.height*0.5)&&(standingPlatform!=p)){
+        //       canMoveX=false;
+        //       canMoveZ=false;
+        //       if (markersFound.includes("Obby Marker")){
+                
+        //       } else {
+        //         alert("You found Obby Marker!");
+        //         markersFound.push("Obby Marker");
+        //         playerRef.onDisconnect().update({ Achievements: markersFound.join(', ') });
+        //       }
+        //     }
+
+        // });
+
+        // if (canMoveX) player.position.x = proposedX;
+        // if (canMoveZ) player.position.z = proposedZ;
+
+        // // Kill bricks
+        // killBricks.forEach(p => {
+        //     const px = Math.abs(player.position.x - p.position.x) < p.geometry.parameters.width / 2;
+        //     const pz = Math.abs(player.position.z - p.position.z) < p.geometry.parameters.depth / 2;
+        //     const py = Math.abs(player.position.y - p.position.y) < p.geometry.parameters.height * 2;
+        //     if (px && pz && py) {
+        //     velocityY = 0;
+        //     player.position.set(0, 0, 0);
+        //     onGround = true;
+        //     }
+        // });
+
+        if (keys[' '] && onGround) {
+          velocityY = 0.22;
+          if (admin!=true){
+            onGround = false;
+          }
+          // if(admin){
+          //   for (const id in otherPlayers) {
+          //     const other = otherPlayers[id];
+          //     if (typeof other.health === 'undefined') other.health = 100;
+          //     other.health -= 30;
+          //     updateHealthBar(other);
+          //     db.ref('players/' + id).update({health:other.health});
+                
+          //   }
+          // }
+        }
+        if (gameTicks%5 === 0) {
+          lightningTicks+=1;
+          if (lightningTicks%5===0 && lightningTicks%10 != 0 && (player.position.x > 50 || callLightning)){
+            lightningID = "lightning_" + Math.random().toString(36).substring(2, 10);
+            lightningRef = db.ref('lightning/' + lightningID);
+            lightningRef.set({ x: toStrikeX, z: toStrikeZ });
+          } else if (lightningTicks%10 === 0) {
+            lightningRef.remove();
+          }
+          else if (lightningTicks%10 == 2){
+            toStrikeX=player.position.x;
+            toStrikeZ=player.position.z;
+          }
+          for (l in lightnings) {
+            for (m of lightnings[l]){
+              m.rotation.x = -m.rotation.x;
+            }
+          }
+        }
+        if (gameTicks%500 === 0){
+          let bot = createPlayer();
+          bot.position.set(70, 1, 20);
+          scene.add(bot);
+          bots.push({ mesh: bot, age: 0 })
+        }   
+        for (let i = bots.length - 1; i >= 0; i--) {
+          let b = bots[i];
+          let bOldPosition = b.mesh.position.clone();
+          updateBotX(b.mesh, player, 0.1);
+          let botBoxObj = new THREE.Box3().setFromObject(b.mesh);
+          for (const p of platforms) {
+            var bboxobj = new THREE.Box3().setFromObject(p);
+            if (botBoxObj.intersectsBox(bboxobj)) {
+              b.mesh.position.x=bOldPosition.x;
+              break;
+            }
+          }
+          updateBotZ(b.mesh, player, 0.1);
+          botBoxObj = new THREE.Box3().setFromObject(b.mesh);
+          for (const p of platforms) {
+            var bboxobj = new THREE.Box3().setFromObject(p);
+            if (botBoxObj.intersectsBox(bboxobj)) {
+              b.mesh.position.z=bOldPosition.z;
+              break;
+            }
+          }
+          b.age++;
+          if (b.age >= 500) {
+            scene.remove(b.mesh);
+            bots.splice(i, 1);
+          }
+        }
+
+        const lookDirection = new THREE.Vector3(
+        Math.sin(yaw) * Math.cos(pitch),
+        Math.sin(pitch),
+        Math.cos(yaw) * Math.cos(pitch)
+        );
+
+        // Player should face the same direction as camera
+        player.rotation.y = yaw + Math.PI;
+
+
+        const isFirstPerson = zoomDistance < 2;
+
+        if (isFirstPerson) {
+          crosshair.style.display='block';
+          const eyeOffset = new THREE.Vector3(0, 1.7, 0);
+          const cameraPosition = player.position.clone().add(eyeOffset);
+          camera.position.copy(cameraPosition);
+          camera.lookAt(cameraPosition.clone().add(lookDirection));
+
+          // Hide body in first-person
+          player.traverse(child => {
+              if (child.isMesh) child.visible = false;
+          });
+
+        } else {
+          crosshair.style.display='none';
+          const cameraPosition = player.position.clone().sub(lookDirection.clone().multiplyScalar(zoomDistance));
+          cameraPosition.y += 2;
+          camera.position.copy(cameraPosition);
+          camera.lookAt(player.position.clone().add(new THREE.Vector3(0, 1, 0)));
+
+          // Show body in third-person
+          player.traverse(child => {
+              if (child.isMesh) child.visible = true;
+          });
+        }
+
+
+
+        const isMoving = direction.lengthSq() > 0.0001;
+        if (isMoving) player.userData.walkTime += 0.2;
+        else player.userData.walkTime = 0;
+
+        const swing = Math.sin(player.userData.walkTime) * 0.5;
+        player.userData.leftArm.rotation.x = swing;
+        player.userData.rightArm.rotation.x = -swing;
+        player.userData.leftLeg.rotation.x = -swing;
+        player.userData.rightLeg.rotation.x = swing;
+
+
+        // Update bullets positions
+        updateBullets();
+
+        // Collision between bullets and other players or self
+        bullets.forEach((bullet, bulletIndex) => {
+            // Check collision with other players
+            let bboxBullet = new THREE.Box3().setFromObject(bullet.mesh);
+            for (const id in otherPlayers) {
+            const other = otherPlayers[id];
+              if (bullet.mesh.position.distanceTo(other.position) < 1) {
+                // Decrease health of other player on hit
+                if (typeof other.health === 'undefined') other.health = 100; // safety check
+                other.health -= 10;
+                updateHealthBar(other);
+                // Remove bullet
+                scene.remove(bullet.mesh);
+                bullets.splice(bulletIndex, 1);
+                db.ref('players/' + id).update({health:other.health});
+                break;
+              }
+            }
+            // Check collision with local player (friendly fire possible)
+            if (bullet.mesh.position.distanceTo(player.position) < 1) {
+                player.health -= 10;
+                if (player.health <= 0){
+                  player.health=100;
+                  player.position.set(0, 3, 0);
+                  onGround=True;
+                }
+                updateHealthBar(player);
+                scene.remove(bullet.mesh);
+                bullets.splice(bulletIndex, 1);
+            }
+
+            for (const p of platforms){
+              let bboxplat = new THREE.Box3().setFromObject(p);
+              if (bboxBullet.intersectsBox(bboxplat)){
+                scene.remove(bullet.mesh);
+                bullets.splice(bulletIndex, 1);
+                break;
+              }
+            }
+        });
+        if (player.health <= 0){
+          player.health=100;
+          player.position.set(0, 3, 0);
+          onGround=True;
+        }
+
+        renderer.render(scene, camera);
+
+        // Update local player position in Firebase
+        if (player.health !== lastHealth) {
+            playerRef.update({
+                x: player.position.x,
+                y: player.position.y,
+                z: player.position.z,
+                health: player.health,
+            });
+            lastHealth = player.health;
+        } else {
+            playerRef.update({
+                x: player.position.x,
+                y: player.position.y,
+                z: player.position.z,
+                // health: player.health
+            });
+        }
+
+    }
+let admin = null;
+let auth = null;
+playerRef.child("Achievements").on("value", snapshot => {
+  markersFound = snapshot.val().split(', ');
+  playerRef.onDisconnect().update({ Achievements: markersFound.join(', ') });
+  playerRef.child("Achievements").remove();
+});
+playerRef.child("admin").on("value", snapshot => {
+  admin = snapshot.val();
+  checkStart();
+});
+
+playerRef.child("auth").on("value", snapshot => {
+  auth = snapshot.val();
+  checkStart();
+});
+
+db.ref('lightning').on('value', snapshot => {
+  const data = snapshot.val() || {};
+  for (const id in data) {
+    if (!lightnings[id]) {
+      lightnings[id]=[];
+      for (let i = 0; i < 10; i+=2){
+        makePlatform(data[id].x, data[id].z, 3+(2.598076211*i), 0.5, 0.5, 3, scene, lightnings[id], color=0xfcfc03, opacity=1.0, rotx=-Math.PI/6);
+        makePlatform(data[id].x, data[id].z, 3+(2.598076211*(i+1)), 0.5, 0.5, 3, scene, lightnings[id], color=0xfcfc03, opacity=1.0, rotx=Math.PI/6);
+      }
+    }
+  }
+
+  for (const id in lightnings) {
+    if (!data[id]){
+      for (lin of lightnings[id]) {
+        scene.remove(lin);
+      }
+      delete lightnings[id];
+    }
+  }
+});
+
+function checkStart() {
+  if (!started && admin != null && auth === true) {
+    started = true;
+    document.getElementById('loginContainer').style.display='none';
+    animate();
+  } else if (auth === false && !started) {
+    alert("Incorrect username or password. If you created an account, your username is already taken.");
+  }
+}
+
+ db.ref('players').on('value', snapshot => {
+  const data = snapshot.val() || {};
+  for (const id in data) {
+    const pdata = data[id];
+    if (id === playerId) {
+      player.position.set(pdata.x, pdata.y, pdata.z);
+      if (typeof pdata.health === 'number') {
+        player.health = pdata.health;
+        updateHealthBar(player);
+      }
+      // Do NOT overwrite player.health here to avoid losing local health changes
+    } else {
+      // For other players, update position and health fully from Firebase
+      if (!otherPlayers[id]) {
+        const newPlayer = createPlayer(0xff0000, pdata.admin||false);
+        newPlayer.health = pdata.health ?? 100;
+        createHealthBar(newPlayer);
+        updateHealthBar(newPlayer);
+
+        const nameTag = createNameTag(pdata.screenName || 'Player');
+        nameTag.name = 'nameTag'; // set identifiable name
+        newPlayer.add(nameTag);
+
+        scene.add(newPlayer);
+        otherPlayers[id] = newPlayer;
+      }
+
+      const other = otherPlayers[id];
+      other.position.set(pdata.x, pdata.y, pdata.z);
+
+      // Update name tag text only if it changed
+      const existingTag = other.getObjectByName('nameTag');
+      if (existingTag && existingTag.element && existingTag.element.innerText !== pdata.screenName) {
+        existingTag.element.innerText = pdata.screenName || 'Player';
+      }
+
+      if (typeof pdata.health === 'number') {
+        other.health = pdata.health;
+        updateHealthBar(other);
+      }
+
+    }
+  }
+
+  // Remove disconnected players...
+
+      // Remove players who left
+      for (const id in otherPlayers) {
+        if (!data[id]) {
+          scene.remove(otherPlayers[id]);
+          delete otherPlayers[id];
+        }
+      }
+    });
   </script>
 </body>
 </html>
