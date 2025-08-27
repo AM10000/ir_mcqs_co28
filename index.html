@@ -103,14 +103,7 @@
     </form>
   </div>
 
-  <script type="importmap">
-{
-  "imports": {
-    "three": "https://cdn.jsdelivr.net/npm/three@<version>/build/three.module.js",
-    "three/addons/": "https://cdn.jsdelivr.net/npm/three@<version>/examples/jsm/utils/BufferGeometryUtils.js"
-  }
-}
-</script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
   <script>
@@ -194,7 +187,6 @@
       });
     }
     const otherPlayers = {};
-    const lightnings = {};
     class Bullet {
         constructor(position, direction) {
             const geometry = new THREE.SphereGeometry(0.1, 8, 8);
@@ -210,7 +202,7 @@
         }
     }
 
-    function makePlatform(x, y, z, height, width, depth, scene, platformList, color=0x00ff00, opacity=1.0, rotx=0, roty=0, rotz=0) {
+    function makePlatform(x, y, z, height, width, depth, scene, platformList, color=0x00ff00, opacity=1.0) {
         const platform = new THREE.Mesh(
             new THREE.BoxGeometry(width, depth, height),
             new THREE.MeshStandardMaterial({ color: color, transparent: true, opacity: opacity })
@@ -218,9 +210,6 @@
         platform.position.set(x, z, y);
         // platform.castShadow=true;
         // platform.receiveShadow=true;
-        platform.rotation.x=rotx;
-        platform.rotation.y=rotz;
-        platform.rotation.z=roty;
         scene.add(platform);
         platformList.push(platform);
     }
@@ -283,100 +272,6 @@
       road.rotation.x=-Math.PI/2;
       scene.add(road);
     }
-    // function makeFloor(x, z, floorNum, scene, list){
-    //   makePlatform(x, z, floorNum*5 + 2.5, 9, 9, 5, scene, list, color=0x466078); //Main Block
-    //   makePlatform(x, z+4.75, floorNum*5 + 0.5, 0.5, 10, 1, scene, list, color=0xfaf398); //A back
-    //   makePlatform(x, z-4.75, floorNum*5 + 0.5, 0.5, 10, 1, scene, list, color=0xfaf398); //A front
-    //   makePlatform(x, z-4.75, floorNum*5 + 4.5, 0.5, 10, 1, scene, list, color=0xfaf398); //B front
-    //   makePlatform(x, z+4.75, floorNum*5 + 4.5, 0.5, 10, 1, scene, list, color=0xfaf398); //B back
-    //   makePlatform(x + 4.5, z-4.75, floorNum*5 + 2.5, 0.5, 1, 3, scene, list, color=0xfaf398); //C front
-    //   makePlatform(x + 4.5, z+4.75, floorNum*5 + 2.5, 0.5, 1, 3, scene, list, color=0xfaf398); //C back
-    //   makePlatform(x - 4.5, z-4.75, floorNum*5 + 2.5, 0.5, 1, 3, scene, list, color=0xfaf398); //F front
-    //   makePlatform(x - 4.5, z+4.75, floorNum*5 + 2.5, 0.5, 1, 3, scene, list, color=0xfaf398); //F back
-    //   makePlatform(x + 1.5, z-4.75, floorNum*5 + 2.5, 0.5, 1, 3, scene, list, color=0xfaf398); //D front
-    //   makePlatform(x + 1.5, z+4.75, floorNum*5 + 2.5, 0.5, 1, 3, scene, list, color=0xfaf398); //D back
-    //   makePlatform(x - 1.5, z-4.75, floorNum*5 + 2.5, 0.5, 1, 3, scene, list, color=0xfaf398); //E front
-    //   makePlatform(x - 1.5, z+4.75, floorNum*5 + 2.5, 0.5, 1, 3, scene, list, color=0xfaf398); //E back
-    //   makePlatform(x-4.75, z, floorNum*5 + 0.5, 10, 0.5, 1, scene, list, color=0xfaf398); //A right
-    //   makePlatform(x+4.75, z, floorNum*5 + 0.5, 10, 0.5, 1, scene, list, color=0xfaf398); //A left
-    //   makePlatform(x-4.75, z, floorNum*5 + 4.5, 10, 0.5, 1, scene, list, color=0xfaf398); //B right
-    //   makePlatform(x+4.75, z, floorNum*5 + 4.5, 10, 0.5, 1, scene, list, color=0xfaf398); //B left
-    //   makePlatform(x-4.75, z+4.5, floorNum*5 + 2.5, 1, 0.5, 3, scene, list, color=0xfaf398); //C right
-    //   makePlatform(x+4.75, z+4.5, floorNum*5 + 2.5, 1, 0.5, 3, scene, list, color=0xfaf398); //C left
-    //   makePlatform(x-4.75, z-4.5, floorNum*5 + 2.5, 1, 0.5, 3, scene, list, color=0xfaf398); //F right
-    //   makePlatform(x+4.75, z-4.5, floorNum*5 + 2.5, 1, 0.5, 3, scene, list, color=0xfaf398); //F left
-    //   makePlatform(x-4.75, z+1.5, floorNum*5 + 2.5, 1, 0.5, 3, scene, list, color=0xfaf398); //D right
-    //   makePlatform(x+4.75, z+1.5, floorNum*5 + 2.5, 1, 0.5, 3, scene, list, color=0xfaf398); //D left
-    //   makePlatform(x-4.75, z-1.5, floorNum*5 + 2.5, 1, 0.5, 3, scene, list, color=0xfaf398); //E right
-    //   makePlatform(x+4.75, z-1.5, floorNum*5 + 2.5, 1, 0.5, 3, scene, list, color=0xfaf398); //E left
-    // }
-    // function makeSkyscraper(x, z, floors, scene, list){
-    //   for (let i=0; i<floors; i++){
-    //     makeFloor(x, z, i, scene, list);
-    //   }
-    // }
-
-    function makeFloorGeometry(x, z, floorNum) {
-      const parts = [];
-
-      // NOTE: args: (x, z, y, sx, sz, sy, color)
-      function addBox(px, pz, py, sx, sz, sy, color) {
-        // map your convention -> Three.js convention
-        const geom = new THREE.BoxGeometry(sz, sy, sx);
-        geom.translate(px, py, pz); // (x, y, z) in Three.js
-        geom.userData = { color };
-        parts.push(geom);
-      }
-
-      // === converted layout ===
-      addBox(x, floorNum*5 + 2.5, z, 9, 9, 5, 0x466078); // Main Block
-      addBox(x, floorNum*5 + 0.5, z+4.75, 0.5, 10, 1, 0xfaf398); // A back
-      addBox(x, floorNum*5 + 0.5, z-4.75, 0.5, 10, 1, 0xfaf398); // A front
-      addBox(x, floorNum*5 + 4.5, z-4.75, 0.5, 10, 1, 0xfaf398); // B front
-      addBox(x, floorNum*5 + 4.5, z+4.75, 0.5, 10, 1, 0xfaf398); // B back
-
-      addBox(x+4.5, floorNum*5 + 2.5, z-4.75, 0.5, 1, 3, 0xfaf398); // C front
-      addBox(x+4.5, floorNum*5 + 2.5, z+4.75, 0.5, 1, 3, 0xfaf398); // C back
-      addBox(x-4.5, floorNum*5 + 2.5, z-4.75, 0.5, 1, 3, 0xfaf398); // F front
-      addBox(x-4.5, floorNum*5 + 2.5, z+4.75, 0.5, 1, 3, 0xfaf398); // F back
-
-      addBox(x+1.5, floorNum*5 + 2.5, z-4.75, 0.5, 1, 3, 0xfaf398); // D front
-      addBox(x+1.5, floorNum*5 + 2.5, z+4.75, 0.5, 1, 3, 0xfaf398); // D back
-      addBox(x-1.5, floorNum*5 + 2.5, z-4.75, 0.5, 1, 3, 0xfaf398); // E front
-      addBox(x-1.5, floorNum*5 + 2.5, z+4.75, 0.5, 1, 3, 0xfaf398); // E back
-
-      addBox(x-4.75, floorNum*5 + 0.5, z, 10, 0.5, 1, 0xfaf398); // A right
-      addBox(x+4.75, floorNum*5 + 0.5, z, 10, 0.5, 1, 0xfaf398); // A left
-      addBox(x-4.75, floorNum*5 + 4.5, z, 10, 0.5, 1, 0xfaf398); // B right
-      addBox(x+4.75, floorNum*5 + 4.5, z, 10, 0.5, 1, 0xfaf398); // B left
-
-      addBox(x-4.75, floorNum*5 + 2.5, z+4.5, 1, 0.5, 3, 0xfaf398); // C right
-      addBox(x+4.75, floorNum*5 + 2.5, z+4.5, 1, 0.5, 3, 0xfaf398); // C left
-      addBox(x-4.75, floorNum*5 + 2.5, z-4.5, 1, 0.5, 3, 0xfaf398); // F right
-      addBox(x+4.75, floorNum*5 + 2.5, z-4.5, 1, 0.5, 3, 0xfaf398); // F left
-
-      addBox(x-4.75, floorNum*5 + 2.5, z+1.5, 1, 0.5, 3, 0xfaf398); // D right
-      addBox(x+4.75, floorNum*5 + 2.5, z+1.5, 1, 0.5, 3, 0xfaf398); // D left
-      addBox(x-4.75, floorNum*5 + 2.5, z-1.5, 1, 0.5, 3, 0xfaf398); // E right
-      addBox(x+4.75, floorNum*5 + 2.5, z-1.5, 1, 0.5, 3, 0xfaf398); // E left
-
-      return parts;
-    }
-
-    function makeSkyscraper(x, z, floors, scene, list) {
-      const geometries = [];
-
-      for (let i=0; i<floors; i++) {
-        geometries.push(...makeFloorGeometry(x, z, i));
-      }
-
-      const mergedGeometry = THREE.BufferGeometryUtils.mergeBufferGeometries(geometries);
-      const material = new THREE.MeshStandardMaterial({ color: 0x888888 });
-      const skyscraper = new THREE.Mesh(mergedGeometry, material);
-
-      scene.add(skyscraper);
-      list.push(skyscraper);
-    }
 
     let zoomDistance = 6;
     const scene = new THREE.Scene();
@@ -415,15 +310,12 @@
     const bouncers=[];
     const markers=[];
     const tp=[];
-    const bots=[];
-    let lightning=[]
     let markersFound=[];
     playerRef.onDisconnect().update({ Achievements: markersFound.join(', ') });
     for (let i = 1; i < 5; i++) {
       makePlatform(0, i, i, 1, 3, 0.5, scene, platforms, color=0x000dff);
     }
-    makePlatform(-2475, 2460, 0, 5080, 5050, 0.5, scene, platforms);
-    makePlatform(2525, 2460, 0, 5080, 4950, 0.5, scene, platforms, color=0xf2b65c);
+    makePlatform(0, 2460, 0, 5080, 10000, 0.5, scene, platforms);
     makePlatform(0, 6, 5, 3, 3, 0.5, scene, platforms, color=0x000dff);
     for (let i=1; i<5; i++) {
       makePlatform(-i-1, 6, i+5, 3, 1, 0.5, scene, platforms, color=0x000dff);
@@ -603,7 +495,7 @@
     makePlatform(28.5, -29, 2.5, 0.5, 3, 5, scene, platforms, color=0x737373);
     makePlatform(28.5, -44, 2.5, 0.5, 3, 5, scene, platforms, color=0x737373);
     makePlatform(28.5, -53, 2.5, 0.5, 3, 5, scene, platforms, color=0x737373);
-    makePlatform(28.5, -77, 2.5, 0.5, 3, 5, scene, platforms, color=0x737373); //width
+    makePlatform(28.5, -77, 2.5, 0.5, 3, 5, scene, platforms, color=0x737373);
     makePlatform(3, -63.5, 2.5, 3, 0.5, 5, scene, platforms, color=0x737373);
     makePlatform(3, -74, 2.5, 6, 0.5, 5, scene, platforms, color=0x737373);
     makePlatform(6, -26, 2.5, 6, 0.5, 5, scene, platforms, color=0x737373);
@@ -647,100 +539,8 @@
     makePlatform(27, -60.5, 2.5, 3, 0.5, 5, scene, platforms, color=0x737373);
     makePlatform(27, -71, 2.5, 6, 0.5, 5, scene, platforms, color=0x737373);
     makePlatform(0, -50, 5, 60, 60, 0.5, scene, platforms, color=0x737373);
-
     makePlatform(-1.5, -86, 0, 4.5, 1.5, 0.5, scene, platforms, color=0xff0000, opacity=0.0);
     makePlatform(-7.5, -87.5, 0, 1.5, 1.5, 0.5, scene, tp, color=0xff0000, opacity=0.0);
-
-    makePlatform(50, 2460, 50, 5090, 0.5, 100, scene, platforms, color=0x737373);
-    makePlatform(40, -50, 0.25, 1, 0.5, 1, scene, tp, color=0x737373); //temp tp
-    window.onload = function() {
-      makeSkyscraper(205, 135, 16, scene, platforms);
-      makeSkyscraper(155, 135, 7, scene, platforms);
-      makeSkyscraper(125, 135, 11, scene, platforms);
-      makeSkyscraper(95, 135, 12, scene, platforms);
-      makeSkyscraper(85, 135, 17, scene, platforms);
-      makeSkyscraper(185, 125, 6, scene, platforms);
-      makeSkyscraper(175, 125, 8, scene, platforms);
-      makeSkyscraper(135, 125, 11, scene, platforms);
-      makeSkyscraper(175, 115, 8, scene, platforms);
-      makeSkyscraper(125, 115, 5, scene, platforms);
-      makeSkyscraper(115, 115, 10, scene, platforms);
-      makeSkyscraper(95, 115, 15, scene, platforms);
-      makeSkyscraper(65, 115, 18, scene, platforms);
-      makeSkyscraper(55, 115, 19, scene, platforms);
-      makeSkyscraper(195, 105, 8, scene, platforms);
-      makeSkyscraper(145, 105, 14, scene, platforms);
-      makeSkyscraper(105, 105, 16, scene, platforms);
-      makeSkyscraper(85, 105, 6, scene, platforms);
-      makeSkyscraper(165, 95, 5, scene, platforms);
-      makeSkyscraper(125, 95, 8, scene, platforms);
-      makeSkyscraper(65, 95, 7, scene, platforms);
-      makeSkyscraper(195, 85, 18, scene, platforms);
-      makeSkyscraper(185, 85, 10, scene, platforms);
-      makeSkyscraper(165, 85, 5, scene, platforms);
-      makeSkyscraper(145, 85, 8, scene, platforms);
-      makeSkyscraper(105, 85, 8, scene, platforms);
-      makeSkyscraper(85, 85, 19, scene, platforms);
-      makeSkyscraper(205, 75, 19, scene, platforms);
-      makeSkyscraper(135, 75, 13, scene, platforms);
-      makeSkyscraper(75, 75, 5, scene, platforms);
-      makeSkyscraper(65, 75, 10, scene, platforms);
-      makeSkyscraper(55, 75, 13, scene, platforms);
-      makeSkyscraper(195, 65, 12, scene, platforms);
-      makeSkyscraper(175, 65, 9, scene, platforms);
-      makeSkyscraper(145, 65, 8, scene, platforms);
-      makeSkyscraper(115, 65, 10, scene, platforms);
-      makeSkyscraper(55, 65, 9, scene, platforms);
-      makeSkyscraper(155, 55, 10, scene, platforms);
-      makeSkyscraper(125, 55, 18, scene, platforms);
-      makeSkyscraper(105, 55, 15, scene, platforms);
-      makeSkyscraper(95, 55, 14, scene, platforms);
-      makeSkyscraper(75, 55, 18, scene, platforms);
-      makeSkyscraper(185, 45, 12, scene, platforms);
-      makeSkyscraper(165, 45, 11, scene, platforms);
-      makeSkyscraper(145, 45, 10, scene, platforms);
-      makeSkyscraper(135, 45, 14, scene, platforms);
-      makeSkyscraper(205, 35, 15, scene, platforms);
-      makeSkyscraper(195, 35, 11, scene, platforms);
-      makeSkyscraper(165, 35, 9, scene, platforms);
-      makeSkyscraper(105, 35, 20, scene, platforms);
-      makeSkyscraper(85, 35, 14, scene, platforms);
-      makeSkyscraper(75, 35, 20, scene, platforms);
-      makeSkyscraper(65, 35, 20, scene, platforms);
-      makeSkyscraper(165, 25, 6, scene, platforms);
-      makeSkyscraper(135, 25, 17, scene, platforms);
-      makeSkyscraper(85, 25, 17, scene, platforms);
-      makeSkyscraper(75, 25, 18, scene, platforms);
-      makeSkyscraper(185, 15, 13, scene, platforms);
-      makeSkyscraper(105, 15, 12, scene, platforms);
-      makeSkyscraper(65, 15, 18, scene, platforms);
-      makeSkyscraper(55, 15, 5, scene, platforms);
-      makeSkyscraper(205, 5, 8, scene, platforms);
-      makeSkyscraper(175, 5, 11, scene, platforms);
-      makeSkyscraper(155, 5, 20, scene, platforms);
-      makeSkyscraper(125, 5, 16, scene, platforms);
-      makeSkyscraper(195, -5, 6, scene, platforms);
-      makeSkyscraper(125, -5, 7, scene, platforms);
-      makeSkyscraper(95, -5, 18, scene, platforms);
-      makeSkyscraper(85, -5, 16, scene, platforms);
-      makeSkyscraper(55, -5, 9, scene, platforms);
-      makeSkyscraper(185, -15, 18, scene, platforms);
-      makeSkyscraper(145, -15, 19, scene, platforms);
-      makeSkyscraper(135, -15, 7, scene, platforms);
-      makeSkyscraper(55, -15, 13, scene, platforms);
-      makeSkyscraper(205, -25, 10, scene, platforms);
-      makeSkyscraper(185, -25, 19, scene, platforms);
-      makeSkyscraper(165, -25, 20, scene, platforms);
-      makeSkyscraper(105, -25, 17, scene, platforms);
-      makeSkyscraper(95, -25, 5, scene, platforms);
-      makeSkyscraper(205, -35, 5, scene, platforms);
-      makeSkyscraper(165, -35, 17, scene, platforms);
-      makeSkyscraper(135, -35, 18, scene, platforms);
-      makeSkyscraper(105, -35, 17, scene, platforms);
-      makeSkyscraper(65, -35, 10, scene, platforms);
-    }
-    
-
     const bullets = [];
     function createNameTag(name) {
       const canvas = document.createElement('canvas');
@@ -900,36 +700,6 @@
 
       return group;
     }
-    function updateBotX(bot, player, speed) {
-      // Vector from bot → player
-      const toPlayer = new THREE.Vector3().subVectors(player.position, bot.position);
-
-      // Flatten to XZ plane (ignore vertical difference if you want ground movement only)
-      toPlayer.y = 0;
-      toPlayer.normalize();
-
-      // Move bot toward player
-      // bot.position.add(toPlayer.multiplyScalar(speed));
-      bot.position.x+=toPlayer.x*speed;
-
-      // Make bot face player (rotate toward player)
-      bot.lookAt(player.position.x, bot.position.y, player.position.z);
-    }
-    function updateBotZ(bot, player, speed) {
-      // Vector from bot → player
-      const toPlayer = new THREE.Vector3().subVectors(player.position, bot.position);
-
-      // Flatten to XZ plane (ignore vertical difference if you want ground movement only)
-      toPlayer.y = 0;
-      toPlayer.normalize();
-
-      // Move bot toward player
-      // bot.position.add(toPlayer.multiplyScalar(speed));
-      bot.position.z+=toPlayer.z*speed;
-
-      // Make bot face player (rotate toward player)
-      bot.lookAt(player.position.x, bot.position.y, player.position.z);
-    }
 
     const player = createPlayer();
     player.position.set(0, 5, 0);
@@ -1032,16 +802,8 @@
     let alrTd=false;
     const crosshair = document.getElementById('crosshair');
     var standingPlatform = null;
-    let gameTicks = 0;
-    let lightningTicks=0;
-    let lightningID = null;
-    let lightningRef = null;
-    let toStrikeX=null;
-    let toStrikeZ=null;
     function animate() {
-        gameTicks++;
         let phasing = false;
-        let callLightning=false;
         requestAnimationFrame(animate);
 
         const direction = new THREE.Vector3();
@@ -1052,7 +814,6 @@
         if (keys['a']) direction.x -= 1;
         if (keys['d']) direction.x += 1;
         if (keys['p']) phasing=true;
-        if (keys['l'] && admin) callLightning=true;
         checkLadderClimb();
         if (keys['arrowleft']) {
           yaw += 15 * 0.002;
@@ -1192,7 +953,7 @@
         for (const p of tp) {
           var bboxobj = new THREE.Box3().setFromObject(p);
           if (bboxplayer.intersectsBox(bboxobj)) {
-            player.position.set(100, 5, -50);
+            player.position.set(0, 5, 0);
             if (markersFound.includes("Maze Completed")){
             } else {
               alert("You have completed the Maze");
@@ -1201,17 +962,7 @@
             }
           }
         }
-        bboxplayer = new THREE.Box3().setFromObject(player);
-        for (const l in lightnings){
-          for (const m of lightnings[l]) {
-            var bboxobj = new THREE.Box3().setFromObject(m);
-            if (bboxplayer.intersectsBox(bboxobj)) {
-              if (!callLightning){
-                // player.position.set(0, 5, 0);
-              }
-            }
-          }
-        }
+        
             // for (const p of platforms) {
         //     const halfWidth = p.geometry.parameters.width / 2;
         //     const halfDepth = p.geometry.parameters.depth / 2;
@@ -1339,58 +1090,6 @@
                 
           //   }
           // }
-        }
-        if (gameTicks%5 === 0) {
-          lightningTicks+=1;
-          if (lightningTicks%5===0 && lightningTicks%10 != 0 && (player.position.x > 50 || callLightning)){
-            lightningID = "lightning_" + Math.random().toString(36).substring(2, 10);
-            lightningRef = db.ref('lightning/' + lightningID);
-            lightningRef.set({ x: toStrikeX, z: toStrikeZ });
-          } else if (lightningTicks%10 === 0) {
-            lightningRef.remove();
-          }
-          else if (lightningTicks%10 == 2){
-            toStrikeX=player.position.x;
-            toStrikeZ=player.position.z;
-          }
-          for (l in lightnings) {
-            for (m of lightnings[l]){
-              m.rotation.x = -m.rotation.x;
-            }
-          }
-        }
-        if (gameTicks%500 === 0){
-          let bot = createPlayer();
-          bot.position.set(70, 1, 20);
-          scene.add(bot);
-          bots.push({ mesh: bot, age: 0 })
-        }   
-        for (let i = bots.length - 1; i >= 0; i--) {
-          let b = bots[i];
-          let bOldPosition = b.mesh.position.clone();
-          updateBotX(b.mesh, player, 0.1);
-          let botBoxObj = new THREE.Box3().setFromObject(b.mesh);
-          for (const p of platforms) {
-            var bboxobj = new THREE.Box3().setFromObject(p);
-            if (botBoxObj.intersectsBox(bboxobj)) {
-              b.mesh.position.x=bOldPosition.x;
-              break;
-            }
-          }
-          updateBotZ(b.mesh, player, 0.1);
-          botBoxObj = new THREE.Box3().setFromObject(b.mesh);
-          for (const p of platforms) {
-            var bboxobj = new THREE.Box3().setFromObject(p);
-            if (botBoxObj.intersectsBox(bboxobj)) {
-              b.mesh.position.z=bOldPosition.z;
-              break;
-            }
-          }
-          b.age++;
-          if (b.age >= 500) {
-            scene.remove(b.mesh);
-            bots.splice(i, 1);
-          }
         }
 
         const lookDirection = new THREE.Vector3(
@@ -1528,28 +1227,6 @@ playerRef.child("admin").on("value", snapshot => {
 playerRef.child("auth").on("value", snapshot => {
   auth = snapshot.val();
   checkStart();
-});
-
-db.ref('lightning').on('value', snapshot => {
-  const data = snapshot.val() || {};
-  for (const id in data) {
-    if (!lightnings[id]) {
-      lightnings[id]=[];
-      for (let i = 0; i < 10; i+=2){
-        makePlatform(data[id].x, data[id].z, 3+(2.598076211*i), 0.5, 0.5, 3, scene, lightnings[id], color=0xfcfc03, opacity=1.0, rotx=-Math.PI/6);
-        makePlatform(data[id].x, data[id].z, 3+(2.598076211*(i+1)), 0.5, 0.5, 3, scene, lightnings[id], color=0xfcfc03, opacity=1.0, rotx=Math.PI/6);
-      }
-    }
-  }
-
-  for (const id in lightnings) {
-    if (!data[id]){
-      for (lin of lightnings[id]) {
-        scene.remove(lin);
-      }
-      delete lightnings[id];
-    }
-  }
 });
 
 function checkStart() {
