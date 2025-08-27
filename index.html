@@ -230,7 +230,7 @@ import * as THREE from 'three';
         platformList.push(platform);
     }
     
-    function makeTorus(x, y, z, radius, tube, radialSegments, tubularSegments, scene, list, 0x000dff){
+    function makeTorus(x, y, z, radius, tube, radialSegments, tubularSegments, scene, list){
       const shape = new THREE.Mesh(
             new THREE.TorusGeometry(radius, tube, radialSegments, tubularSegments),
             new THREE.MeshStandardMaterial({ color: color })
@@ -240,7 +240,7 @@ import * as THREE from 'three';
       scene.add(shape);
       list.push(shape);
     }
-    function makeCircle(x, y, z, radius, scene, list, 0x000dff) {
+    function makeCircle(x, y, z, radius, scene, list) {
       const shape = new THREE.Mesh(
             new THREE.CylinderGeometry(radius, radius, 0.1),
             new THREE.MeshStandardMaterial({ color: color })
@@ -251,7 +251,7 @@ import * as THREE from 'three';
       list.push(shape);
     }
     const ladders = [];
-    function makeCylinder(x, y, z, radius, height, scene, list, 0x000dff) {
+    function makeCylinder(x, y, z, radius, height, scene, list, color=0x000dff) {
       const shape = new THREE.Mesh(
         new THREE.CylinderGeometry(radius, radius, height),
         new THREE.MeshStandardMaterial({ color:color })
