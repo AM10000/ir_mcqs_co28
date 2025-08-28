@@ -98,7 +98,7 @@
       <input type="text" id="username" placeholder="Username" required>
       <input type="password" id="password" placeholder="Password" required>
       <input type="text" id ='screenName' placeholder="Screen Name">
-      <button onclick="sendInfo(event)" type='button'>Enter Game</button>
+      <button id='joinBtn' type='button'>Enter Game</button>
       <button type="button" onclick="createAccount(event)" id="createAccountBtn">Create Account</button>
     </form>
   </div>
@@ -180,6 +180,8 @@ import * as THREE from 'three';
         }
       });
     }
+	document.getElementById("joinBtn").addEventListener("click", sendInfo);
+
     function createAccount(event){
       event.preventDefault();
       fetch('https://api.ipify.org?format=json')
