@@ -1539,8 +1539,8 @@ db.ref('lightning').on('value', snapshot => {
     if (!lightnings[id]) {
       lightnings[id]=[];
       for (let i = 0; i < 10; i+=2){
-        makePlatform(data[id].x, data[id].z, 3+(2.598076211*i), 0.5, 0.5, 3, scene, lightnings[id], 0xfcfc03, 1.0, rotx=-Math.PI/6);
-        makePlatform(data[id].x, data[id].z, 3+(2.598076211*(i+1)), 0.5, 0.5, 3, scene, lightnings[id], 0xfcfc03, 1.0, rotx=Math.PI/6);
+        makePlatform(data[id].x, data[id].z, 3+(2.598076211*i), 0.5, 0.5, 3, scene, lightnings[id], 0xfcfc03, 1.0, -Math.PI/6);
+        makePlatform(data[id].x, data[id].z, 3+(2.598076211*(i+1)), 0.5, 0.5, 3, scene, lightnings[id], 0xfcfc03, 1.0, Math.PI/6);
       }
     }
   }
