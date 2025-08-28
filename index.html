@@ -387,7 +387,7 @@ import * as THREE from 'three';
       const skyscraperParts = new THREE.Mesh(mergedGeometryParts, materialParts);
 	  const mergedGeometryMain = BufferGeometryUtils.mergeGeometries(mains);
 	  const materialMain = new THREE.MeshStandardMaterial({ color: 0x466078 });
-      const skyscraperMain = new THREE.Mesh(mergedGeometryParts, materialMain);
+      const skyscraperMain = new THREE.Mesh(mergedGeometryMain, materialMain);
       scene.add(skyscraperParts);
 	  scene.add(skyscraperMain);
       list.push(skyscraperMain);
