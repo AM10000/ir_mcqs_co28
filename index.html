@@ -325,7 +325,7 @@ import * as THREE from 'three';
       const parts = [];
 
       // NOTE: args: (x, z, y, sx, sz, sy, color)
-      function addBox(px, pz, py, sx, sz, sy, color) {
+      function addBox(px, py, pz, sx, sz, sy, color) {
         // map your convention -> Three.js convention
         const geom = new THREE.BoxGeometry(sz, sy, sx);
         geom.translate(px, py, pz); // (x, y, z) in Three.js
