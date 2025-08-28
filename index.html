@@ -373,7 +373,7 @@ import * as THREE from 'three';
         geometries.push(...makeFloorGeometry(x, z, i));
       }
 
-      const mergedGeometry = BufferGeometryUtils.mergeBufferGeometries(geometries);
+      const mergedGeometry = BufferGeometryUtils.mergeGeometries(geometries);
       const material = new THREE.MeshStandardMaterial({ color: 0x888888 });
       const skyscraper = new THREE.Mesh(mergedGeometry, material);
 
