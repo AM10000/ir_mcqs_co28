@@ -323,14 +323,19 @@ import * as THREE from 'three';
 
     function makeFloorGeometry(x, z, floorNum) {
       const parts = [];
-
+	  const mainBlock = [];
       // NOTE: args: (x, z, y, sx, sz, sy, color)
       function addBox(px, py, pz, sx, sz, sy, color) {
         // map your convention -> Three.js convention
         const geom = new THREE.BoxGeometry(sz, sy, sx);
         geom.translate(px, py, pz); // (x, y, z) in Three.js
-        geom.userData = { color };
-        parts.push(geom);
+        // geom.userData = { color };
+		if (color == 0xfaf398) {
+			parts.push(geom);
+		} else {
+			mainBlock.push(geom);
+		}
+        
       }
 
       // === converted layout ===
@@ -365,22 +370,28 @@ import * as THREE from 'three';
       addBox(x-4.75, floorNum*5 + 2.5, z-1.5, 1, 0.5, 3, 0xfaf398); // E right
       addBox(x+4.75, floorNum*5 + 2.5, z-1.5, 1, 0.5, 3, 0xfaf398); // E left
 
-      return parts;
+      return [parts, mainBlock];
     }
 
     function makeSkyscraper(x, z, floors, scene, list) {
       const geometries = [];
-
+	  const mains = [];
       for (let i=0; i<floors; i++) {
-        geometries.push(...makeFloorGeometry(x, z, i));
+		const tempone = makeFloorGeometry(x, z, i);
+        geometries.push(...tempone[0]);
+		mains.push(...tempone[1]);
       }
 
-      const mergedGeometry = BufferGeometryUtils.mergeGeometries(geometries);
-      const material = new THREE.MeshStandardMaterial({ color: 0x888888 });
-      const skyscraper = new THREE.Mesh(mergedGeometry, material);
-
-      scene.add(skyscraper);
-      list.push(skyscraper);
+      const mergedGeometryParts = BufferGeometryUtils.mergeGeometries(geometries);
+      const materialParts = new THREE.MeshStandardMaterial({ color: 0xfaf398 });
+      const skyscraperParts = new THREE.Mesh(mergedGeometryParts, materialParts);
+	  const mergedGeometryMain = BufferGeometryUtils.mergeGeometries(mains);
+	  const materialMain = new THREE.MeshStandardMaterial({ color: 0x466078 });
+      const skyscraperMain = new THREE.Mesh(mergedGeometryParts, materialMain);
+      scene.add(skyscraperParts);
+	  scene.add(skyscraperMain);
+      list.push(skyscraperMain);
+	  list.push(skyscraperParts);
     }
 
     let zoomDistance = 6;
