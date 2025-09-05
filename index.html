@@ -117,6 +117,7 @@
     
 import * as THREE from 'three';
     import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
+    import * as GLTFLoader from 'three/addons/loaders/GLTFLoader.js';
     const firebaseConfig = {
       apiKey: "AIzaSyDpjt4ZKm1jWeLMH9jbLeM-y2E9Vl58k4Y",
       authDomain: "irmcqs-ca2af.firebaseapp.com",
@@ -401,6 +402,8 @@ import * as THREE from 'three';
 	  scene.add(skyscraperMain);
       list.push(skyscraperMain);
 	  list.push(skyscraperParts);
+    skyscrapers.push(skyscraperMain);
+    skyscrapers.push(skyscraperParts);
     }
 
     let zoomDistance = 6;
@@ -433,6 +436,10 @@ import * as THREE from 'three';
     // Optional: ambient light
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
     scene.add(ambientLight);
+    const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+    dirLight.position.set(10, 10, 10);
+    dirLight.castShadow = true;
+    scene.add(dirLight);
 
     const platforms = [];
     const killBricks = [];
@@ -441,6 +448,7 @@ import * as THREE from 'three';
     const markers=[];
     const tp=[];
     const bots=[];
+    const skyscrapers=[]
     let lightningsTimed={};
     let markersFound=[];
     playerRef.onDisconnect().update({ Achievements: markersFound.join(', ') });
@@ -477,7 +485,7 @@ import * as THREE from 'three';
     makePlatform(-42.75, 1.5, 5, 23, 0.5, 10, scene, platforms, 0x737373);
     makePlatform(-19, 13.25, 5, 0.5, 48, 10, scene, platforms, 0x737373);
     makePlatform(4.75, 1.5, 5, 23, 0.5, 10, scene, platforms, 0x737373);
-    makeRoad(-19, 0.3, -24.75, 3, 30, scene);
+    // makeRoad(-19, 0.3, -24.75, 3, 30, scene);
 
     makePlatform(-15, -20, 2.5, 0.5, 30, 5, scene, platforms, 0x737373);
     makePlatform(16.5, -20, 2.5, 0.5, 27, 5, scene, platforms, 0x737373);
@@ -677,7 +685,7 @@ import * as THREE from 'three';
     makePlatform(-7.5, -87.5, 0, 1.5, 1.5, 0.5, scene, tp, 0xff0000, 1.0);
 
     makePlatform(50, 2460, 50, 5090, 0.5, 100, scene, platforms, 0x737373);
-    window.onload = function() {
+    function makeCity(){
       makeSkyscraper(205, 135, 16, scene, platforms);
       makeSkyscraper(155, 135, 7, scene, platforms);
       makeSkyscraper(125, 135, 11, scene, platforms);
@@ -763,7 +771,16 @@ import * as THREE from 'three';
       makeSkyscraper(105, -35, 17, scene, platforms);
       makeSkyscraper(65, -35, 10, scene, platforms);
     }
-    
+    // const loader = new GLTFLoader.GLTFLoader();
+    // let car = null;
+    // loader.load('SSC Supercar Design v1.glb?v=' + Date.now(), (gltf) => {
+    //   car = gltf.scene;
+    //   car.scale.set(0.015, 0.015, 0.015);   // adjust if needed
+    //   car.position.set(40, 1, -50);
+    //   car.rotation.x = -Math.PI/2;
+    //   car.rotation.z = Math.PI/2;
+    //   scene.add(car);
+    // });
 
     const bullets = [];
     function createNameTag(name) {
@@ -803,21 +820,7 @@ import * as THREE from 'three';
             }
         });
     }
-    function createHealthBar(player) {
-        const canvas = document.createElement('canvas');
-        canvas.width = 128;
-        canvas.height = 16;
-        const context = canvas.getContext('2d');
-        context.fillStyle = 'green';
-        context.fillRect(0, 0, 128, 16);
-        const texture = new THREE.CanvasTexture(canvas);
-        const material = new THREE.SpriteMaterial({ map: texture });
-        const sprite = new THREE.Sprite(material);
-        sprite.scale.set(2, 0.25, 1);
-        sprite.position.set(0, 2.5, 0); // Position above the player's head
-        player.add(sprite);
-        player.healthBar = { sprite, context, texture };
-    }
+    
     function updateHealthBar(player) {
         const { context, texture } = player.healthBar;
         context.clearRect(0, 0, 128, 16);
@@ -962,7 +965,21 @@ import * as THREE from 'three';
     const player = createPlayer();
     player.position.set(0, 5, 0);
     scene.add(player);
-
+    function createHealthBar(p) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 128;
+        canvas.height = 16;
+        const context = canvas.getContext('2d');
+        context.fillStyle = 'green';
+        context.fillRect(0, 0, 128, 16);
+        const texture = new THREE.CanvasTexture(canvas);
+        const material = new THREE.SpriteMaterial({ map: texture });
+        const sprite = new THREE.Sprite(material);
+        sprite.scale.set(2, 0.25, 1);
+        sprite.position.set(0, 2.5, 0); // Position above the player's head
+        p.add(sprite);
+        p.healthBar = { sprite, context, texture };
+    }
     // Initialize player health here (added fix)
     let velocityY = 0;
     let onGround = false;
@@ -1070,6 +1087,8 @@ import * as THREE from 'three';
     let toStrikeXAuto = null;
     let toStrikezAuto = null;
     let nextSpawnTick = 0;
+    // let inCar = false;
+    let inCity = false;
     function animate() {
         gameTicks++;
         let phasing = false;
@@ -1137,131 +1156,147 @@ import * as THREE from 'three';
             break;
           }
         }
-        let testPosition = player.position.clone();
+        // if (!inCar) {
+          let testPosition = player.position.clone();
 
-        testPosition.x += direction.x * speed;
-        let testBox = new THREE.Box3().setFromObject(player);
-        let offset = testPosition.clone().sub(player.position); 
-        testBox.translate(offset);
-        let blocked = false;
-        for (const p of platforms) {
-          var bboxobj = new THREE.Box3().setFromObject(p);
-          if (testBox.intersectsBox(bboxobj)) {
-            if (standingPlatform != p || !onGround) {
-              if (admin!=true || !phasing){
-                blocked=true;
-                break;
-                // player.position.x = oldPosition.x; 
+          testPosition.x += direction.x * speed;
+          let testBox = new THREE.Box3().setFromObject(player);
+          let offset = testPosition.clone().sub(player.position); 
+          testBox.translate(offset);
+          let blocked = false;
+          for (const p of platforms) {
+            var bboxobj = new THREE.Box3().setFromObject(p);
+            if (testBox.intersectsBox(bboxobj)) {
+              if (standingPlatform != p || !onGround) {
+                if (admin!=true || !phasing){
+                  blocked=true;
+                  break;
+                  // player.position.x = oldPosition.x; 
+                }
               }
             }
           }
-        }
-        for (const m of markers) {
-          var bboxobj = new THREE.Box3().setFromObject(m);
-          if (testBox.intersectsBox(bboxobj)) {
-            if (standingPlatform != m || !onGround) {
-              // player.position.x = oldPosition.x;
-              blocked=true;
-              if (markersFound.includes("Obby Marker")){
-              } else {
-                alert("You found Obby Marker!");
-                markersFound.push("Obby Marker");
-                playerRef.onDisconnect().update({ Achievements: markersFound.join(', ') });
-              }
-              break;
-            }
-          }
-        }
-        if (!blocked) {
-          player.position.x = testPosition.x;
-        }
-        testPosition = player.position.clone();
-
-        testPosition.z += direction.z * speed;
-        testBox = new THREE.Box3().setFromObject(player);
-        offset = testPosition.clone().sub(player.position); 
-        testBox.translate(offset);
-        blocked = false;
-        for (const p of platforms) {
-          var bboxobj = new THREE.Box3().setFromObject(p);
-          if (testBox.intersectsBox(bboxobj)) {
-            if (standingPlatform != p || !onGround) {
-              if (admin != true || !phasing){
+          for (const m of markers) {
+            var bboxobj = new THREE.Box3().setFromObject(m);
+            if (testBox.intersectsBox(bboxobj)) {
+              if (standingPlatform != m || !onGround) {
+                // player.position.x = oldPosition.x;
                 blocked=true;
+                if (markersFound.includes("Obby Marker")){
+                } else {
+                  alert("You found Obby Marker!");
+                  markersFound.push("Obby Marker");
+                  playerRef.onDisconnect().update({ Achievements: markersFound.join(', ') });
+                }
                 break;
               }
-              
             }
           }
-        }
-        for (const m of markers) {
-          var bboxobj = new THREE.Box3().setFromObject(m);
-          if (testBox.intersectsBox(bboxobj)) {
-            if (standingPlatform != m || !onGround) {
-              // player.position.z = oldPosition.z; 
-              blocked=true;
-              if (markersFound.includes("Obby Marker")){
-              } else {
-                alert("You found Obby Marker!");
-                markersFound.push("Obby Marker");
-                playerRef.onDisconnect().update({ Achievements: markersFound.join(', ') });
-              }
-              break;
-            }
+          if (!blocked) {
+            player.position.x = testPosition.x;
           }
-        }
-        if (!blocked){
-          player.position.z = testPosition.z;
-        }
-        bboxplayer = new THREE.Box3().setFromObject(player);
-        for (const k of killBricks) {
-          var bboxobj = new THREE.Box3().setFromObject(k);
-          if (bboxplayer.intersectsBox(bboxobj)) {
-            player.position.set(0, 5, 0);
-          }
-        }
-        bboxplayer = new THREE.Box3().setFromObject(player);
-        for (const p of tp) {
-          var bboxobj = new THREE.Box3().setFromObject(p);
-          if (bboxplayer.intersectsBox(bboxobj)) {
-            player.position.set(100, 5, -50);
-            if (markersFound.includes("Maze Completed")){
-            } else {
-              alert("You have completed the Maze");
-              markersFound.push("Maze Completed");
-              playerRef.onDisconnect().update({ Achievements: markersFound.join(', ') });
-            }
-          }
-        }
-        bboxplayer = new THREE.Box3().setFromObject(player);
-        for (const l in lightnings){
-          for (const m of lightnings[l]) {
-            var bboxobj = new THREE.Box3().setFromObject(m);
-            if (bboxplayer.intersectsBox(bboxobj)) {
-              if (!callLightning){
-                player.position.set(0, 5, 0);
+          testPosition = player.position.clone();
+
+          testPosition.z += direction.z * speed;
+          testBox = new THREE.Box3().setFromObject(player);
+          offset = testPosition.clone().sub(player.position); 
+          testBox.translate(offset);
+          blocked = false;
+          for (const p of platforms) {
+            var bboxobj = new THREE.Box3().setFromObject(p);
+            if (testBox.intersectsBox(bboxobj)) {
+              if (standingPlatform != p || !onGround) {
+                if (admin != true || !phasing){
+                  blocked=true;
+                  break;
+                }
+                
               }
             }
           }
-        }
-        bboxplayer = new THREE.Box3().setFromObject(player);
-        for (const l in lightningsTimed){
-          for (const m of lightningsTimed[l]) {
+          for (const m of markers) {
             var bboxobj = new THREE.Box3().setFromObject(m);
+            if (testBox.intersectsBox(bboxobj)) {
+              if (standingPlatform != m || !onGround) {
+                // player.position.z = oldPosition.z; 
+                blocked=true;
+                if (markersFound.includes("Obby Marker")){
+                } else {
+                  alert("You found Obby Marker!");
+                  markersFound.push("Obby Marker");
+                  playerRef.onDisconnect().update({ Achievements: markersFound.join(', ') });
+                }
+                break;
+              }
+            }
+          }
+          if (!blocked){
+            player.position.z = testPosition.z;
+          }
+          bboxplayer = new THREE.Box3().setFromObject(player);
+          for (const k of killBricks) {
+            var bboxobj = new THREE.Box3().setFromObject(k);
             if (bboxplayer.intersectsBox(bboxobj)) {
               player.position.set(0, 5, 0);
             }
           }
-        }
-        bboxplayer = new THREE.Box3().setFromObject(player);
-        for (let i = bots.length - 1; i >= 0; i--) {
-          let b = bots[i];
-          let bboxBot = new THREE.Box3().setFromObject(b.mesh);
-          if (bboxplayer.intersectsBox(bboxBot)){
-            player.position.set(0, 5, 0)
+          bboxplayer = new THREE.Box3().setFromObject(player);
+          for (const p of tp) {
+            var bboxobj = new THREE.Box3().setFromObject(p);
+            if (bboxplayer.intersectsBox(bboxobj)) {
+              player.position.set(100, 5, -50);
+              if (markersFound.includes("Maze Completed")){
+              } else {
+                alert("You have completed the Maze");
+                markersFound.push("Maze Completed");
+                playerRef.onDisconnect().update({ Achievements: markersFound.join(', ') });
+              }
+            }
           }
-        }
-        
+          bboxplayer = new THREE.Box3().setFromObject(player);
+          for (const l in lightnings){
+            for (const m of lightnings[l]) {
+              var bboxobj = new THREE.Box3().setFromObject(m);
+              if (bboxplayer.intersectsBox(bboxobj)) {
+                if (!callLightning){
+                  player.position.set(0, 5, 0);
+                }
+              }
+            }
+          }
+          bboxplayer = new THREE.Box3().setFromObject(player);
+          for (const l in lightningsTimed){
+            for (const m of lightningsTimed[l]) {
+              var bboxobj = new THREE.Box3().setFromObject(m);
+              if (bboxplayer.intersectsBox(bboxobj)) {
+                player.position.set(0, 5, 0);
+              }
+            }
+          }
+          bboxplayer = new THREE.Box3().setFromObject(player);
+          for (let i = bots.length - 1; i >= 0; i--) {
+            let b = bots[i];
+            let bboxBot = new THREE.Box3().setFromObject(b.mesh);
+            if (bboxplayer.intersectsBox(bboxBot)){
+              player.position.set(0, 5, 0)
+            }
+          }
+        // } else {
+        //   player.position.x+=direction.x * 0.5;
+        //   player.position.z+=direction.z * 0.5;
+        //   car.position.x += direction.x * 0.5;
+        //   car.position.z += direction.z * 0.5;
+        // }
+        // bboxplayer = new THREE.Box3().setFromObject(player);
+        // let bboxcar = new THREE.Box3().setFromObject(car);
+        // if (bboxplayer.intersectsBox(bboxcar) && !inCar) {
+        //   // player.position.set(car.position.x-1.25, car.position.y, car.position.z+1.75);
+        //   player.position.set(car.position.x, car.position.y, car.position.z);
+        //   inCar=true;
+        //   player.traverse(child => {
+        //       if (child.isMesh) child.visible = false;
+        //   });
+        // }
             // for (const p of platforms) {
         //     const halfWidth = p.geometry.parameters.width / 2;
         //     const halfDepth = p.geometry.parameters.depth / 2;
@@ -1485,7 +1520,16 @@ import * as THREE from 'three';
           makeBot(65, -25, scene, bots);
           makeBot(175, -35, scene, bots);
           nextSpawnTick+=500;
-        }   
+        }
+        if (player.position.x > 50 && !inCity){
+          makeCity();
+          inCity=true;
+        } else if (player.position.x <= 50) {
+          inCity=false;
+          for (const s of skyscrapers){
+            scene.remove(s);
+          }
+        }
         for (let i = bots.length - 1; i >= 0; i--) {
           let b = bots[i];
           let bOldPosition = b.mesh.position.clone();
@@ -1522,6 +1566,9 @@ import * as THREE from 'three';
 
         // Player should face the same direction as camera
         player.rotation.y = yaw + Math.PI;
+        // if (inCar) {
+        //   car.rotation.z = yaw+Math.PI/2;
+        // }
 
 
         const isFirstPerson = zoomDistance < 2;
@@ -1537,18 +1584,28 @@ import * as THREE from 'three';
           player.traverse(child => {
               if (child.isMesh) child.visible = false;
           });
+          player.healthBar.sprite.visible=false;
+
 
         } else {
           crosshair.style.display='none';
-          const cameraPosition = player.position.clone().sub(lookDirection.clone().multiplyScalar(zoomDistance));
-          cameraPosition.y += 2;
-          camera.position.copy(cameraPosition);
-          camera.lookAt(player.position.clone().add(new THREE.Vector3(0, 1, 0)));
+          player.healthBar.sprite.visible=true;
+          // if (!inCar){
+            const cameraPosition = player.position.clone().sub(lookDirection.clone().multiplyScalar(zoomDistance));
+            cameraPosition.y += 2;
+            camera.position.copy(cameraPosition);
+            camera.lookAt(player.position.clone().add(new THREE.Vector3(0, 1, 0)));
 
-          // Show body in third-person
-          player.traverse(child => {
-              if (child.isMesh) child.visible = true;
-          });
+            // Show body in third-person
+            player.traverse(child => {
+                if (child.isMesh) child.visible = true;
+            });
+          // } else {
+          //   const cameraPosition = car.position.clone().add(new THREE.Vector3(-1.25, 0, 1.75)).sub(lookDirection.clone().multiplyScalar(zoomDistance));
+          //   cameraPosition.y += 2;
+          //   camera.position.copy(cameraPosition);
+          //   camera.lookAt(car.position.clone().add(new THREE.Vector3(-1.25, 0, 1.75)).add(new THREE.Vector3(0, 1, 0)));
+          // }
         }
 
 
@@ -1620,7 +1677,7 @@ import * as THREE from 'three';
         if (player.health <= 0){
           player.health=100;
           player.position.set(0, 3, 0);
-          onGround=true;
+          onGround=True;
         }
 
         renderer.render(scene, camera);
