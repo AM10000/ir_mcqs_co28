@@ -220,18 +220,60 @@ import * as THREE from 'three';
     }
 
     function makePlatform(x, y, z, height, width, depth, scene, platformList, color=0x00ff00, opacity=1.0, rotx=0, roty=0, rotz=0) {
-        const platform = new THREE.Mesh(
-            new THREE.BoxGeometry(width, depth, height),
-            new THREE.MeshStandardMaterial({ color: color, transparent: true, opacity: opacity })
-        );
-        platform.position.set(x, z, y);
-        // platform.castShadow=true;
-        // platform.receiveShadow=true;
-        platform.rotation.x=rotx;
-        platform.rotation.y=rotz;
-        platform.rotation.z=roty;
-        scene.add(platform);
-        platformList.push(platform);
+        const loader = new THREE.TextureLoader();
+const imagePath = (color == 0x00ff00) ? 'download.jpeg' : 'rocks.jpeg';
+
+loader.load(imagePath, (baseTexture) => {
+  baseTexture.wrapS = THREE.ClampToEdgeWrapping;
+  baseTexture.wrapT = THREE.ClampToEdgeWrapping;
+
+  // Match BoxGeometry signature: (width, height, depth)
+  // BoxGeometry(width, height, depth)
+//    width = X  |  height = Y  |  depth = Z
+
+const w = width;    // X
+const h = depth;    // Y  (your naming)
+const d = height;   // Z  (your naming)
+
+const faceSizes = [
+  [h, d], // +X  (Y × Z)
+  [h, d], // -X
+  [w, d], // +Y  (X × Z)
+  [w, d], // -Y
+  [w, h], // +Z  (X × Y)
+  [w, h], // -Z
+];
+
+
+  const materials = faceSizes.map(([fw, fh]) => {
+    const tex = baseTexture.clone();
+
+    
+    tex.wrapS = THREE.RepeatWrapping; // Horizontal wrapping (U-axis)
+    tex.wrapT = THREE.RepeatWrapping; // Vertical wrapping (V-axis)
+    tex.repeat.set(fw/5, fh/3.3333333); // Repeat 4 times horizontally and 4 times vertically
+    return new THREE.MeshStandardMaterial({
+      color: color,
+      transparent: opacity < 1,
+      opacity: opacity,
+      map: tex
+    });
+  });
+
+  const platform = new THREE.Mesh(
+    new THREE.BoxGeometry(w, h, d),
+    materials
+  );
+
+  platform.position.set(x, z, y);
+  platform.rotation.x = rotx;
+  platform.rotation.y = rotz;
+  platform.rotation.z = roty;
+
+  scene.add(platform);
+  platformList.push(platform);
+});
+
     }
     
     function makeTorus(x, y, z, radius, tube, radialSegments, tubularSegments, scene, list){
