@@ -219,63 +219,68 @@ import * as THREE from 'three';
         }
     }
 
-    function makePlatform(x, y, z, height, width, depth, scene, platformList, color=0x00ff00, opacity=1.0, rotx=0, roty=0, rotz=0) {
+    function makePlatform(x, y, z, height, width, depth, scene, platformList, color = 0x00ff00, opacity = 1.0, rotx = 0, roty = 0, rotz = 0) {
         const loader = new THREE.TextureLoader();
-const imagePath = (color == 0x00ff00) ? 'download.jpeg' : 'rocks.jpeg';
+        let imagePath;
+        if(color === 0x00ff00) {
+          imagePath = 'download.jpeg' ;
+        }else if (color === 0x737373) {
+          imagePath = 'rocks.jpeg';
+        }else{
+          imagePath='studs.jpeg';
+        }
+        loader.load(imagePath, (baseTexture) => {
+            // Set wrapping mode to repeat
+            baseTexture.wrapS = THREE.RepeatWrapping;
+            baseTexture.wrapT = THREE.RepeatWrapping;
 
-loader.load(imagePath, (baseTexture) => {
-  baseTexture.wrapS = THREE.ClampToEdgeWrapping;
-  baseTexture.wrapT = THREE.ClampToEdgeWrapping;
+            // Correctly map your variables to Three.js's standard BoxGeometry dimensions
+            const boxWidth = width;   // Mapped to X-axis
+            const boxHeight = depth;  // Mapped to Y-axis
+            const boxDepth = height;  // Mapped to Z-axis
 
-  // Match BoxGeometry signature: (width, height, depth)
-  // BoxGeometry(width, height, depth)
-//    width = X  |  height = Y  |  depth = Z
+            // Define a desired texture scale (e.g., how many units per repeat)
+            const textureScale = 2; // This means one texture tile will be 2x2 units
 
-const w = width;    // X
-const h = depth;    // Y  (your naming)
-const d = height;   // Z  (your naming)
+            // Calculate repeat values for each face based on its dimensions and the desired texture scale
+            const faceSizes = [
+                [boxDepth, boxHeight], // Right side (+X) -> depth by height
+                [boxDepth, boxHeight], // Left side (-X) -> depth by height
+                [boxWidth, boxDepth],  // Top side (+Y) -> width by depth
+                [boxWidth, boxDepth],  // Bottom side (-Y) -> width by depth
+                [boxWidth, boxHeight], // Front side (+Z) -> width by height
+                [boxWidth, boxHeight], // Back side (-Z) -> width by height
+            ];
 
-const faceSizes = [
-  [h, d], // +X  (Y × Z)
-  [h, d], // -X
-  [w, d], // +Y  (X × Z)
-  [w, d], // -Y
-  [w, h], // +Z  (X × Y)
-  [w, h], // -Z
-];
+            const materials = faceSizes.map(([fw, fh]) => {
+                const tex = baseTexture.clone();
+                
+                // Dynamically calculate the repeat values for each face
+                tex.repeat.set(fw / textureScale, fh / textureScale);
 
+                return new THREE.MeshStandardMaterial({
+                    color: color,
+                    transparent: opacity < 1,
+                    opacity: opacity,
+                    map: tex
+                });
+            });
 
-  const materials = faceSizes.map(([fw, fh]) => {
-    const tex = baseTexture.clone();
+            const platform = new THREE.Mesh(
+                new THREE.BoxGeometry(boxWidth, boxHeight, boxDepth),
+                materials
+            );
 
-    
-    tex.wrapS = THREE.RepeatWrapping; // Horizontal wrapping (U-axis)
-    tex.wrapT = THREE.RepeatWrapping; // Vertical wrapping (V-axis)
-    tex.repeat.set(fw/5, fh/3.3333333); // Repeat 4 times horizontally and 4 times vertically
-    return new THREE.MeshStandardMaterial({
-      color: color,
-      transparent: opacity < 1,
-      opacity: opacity,
-      map: tex
-    });
-  });
+            // Map your position and rotation variables to Three.js's standard axes
+            platform.position.set(x, z, y);
+            platform.rotation.x = rotx;
+            platform.rotation.y = rotz;
+            platform.rotation.z = roty;
 
-  const platform = new THREE.Mesh(
-    new THREE.BoxGeometry(w, h, d),
-    materials
-  );
-
-  platform.position.set(x, z, y);
-  platform.rotation.x = rotx;
-  platform.rotation.y = rotz;
-  platform.rotation.z = roty;
-
-  scene.add(platform);
-  platformList.push(platform);
-});
-
-    }
-    
+            scene.add(platform);
+            platformList.push(platform);
+        });
+    }    
     function makeTorus(x, y, z, radius, tube, radialSegments, tubularSegments, scene, list){
       const shape = new THREE.Mesh(
             new THREE.TorusGeometry(radius, tube, radialSegments, tubularSegments),
