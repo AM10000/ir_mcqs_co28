@@ -834,15 +834,15 @@ import * as THREE from 'three';
       makeSkyscraper(65, -35, 10, scene, platforms);
     }
     const loader = new GLTFLoader.GLTFLoader();
-    let car = null;
-    loader.load('SSC Supercar Design v2.glb?v=' + Date.now(), (gltf) => {
-      car = gltf.scene;
-      car.scale.set(0.015, 0.015, 0.015);   // adjust if needed
-      car.position.set(40, 1, -50);
-      car.rotation.x = -Math.PI/2;
-      car.rotation.z = Math.PI/2;
-      scene.add(car);
-    });
+    // let car = null;
+    // loader.load('SSC Supercar Design v2.glb?v=' + Date.now(), (gltf) => {
+    //   car = gltf.scene;
+    //   car.scale.set(0.015, 0.015, 0.015);   // adjust if needed
+    //   car.position.set(40, 1, -50);
+    //   car.rotation.x = -Math.PI/2;
+    //   car.rotation.z = Math.PI/2;
+    //   scene.add(car);
+    // });
 
     const bullets = [];
     function createNameTag(name) {
@@ -1156,7 +1156,7 @@ import * as THREE from 'three';
     let toStrikeXAuto = null;
     let toStrikezAuto = null;
     let nextSpawnTick = 0;
-    let inCar = false;
+    // let inCar = false;
     let inCity = false;
     let bossLightningCall = false;
     function animate() {
@@ -1226,7 +1226,7 @@ import * as THREE from 'three';
             break;
           }
         }
-        if (!inCar) {
+        // if (!inCar) {
           let testPosition = player.position.clone();
 
           testPosition.x += direction.x * speed;
@@ -1351,22 +1351,22 @@ import * as THREE from 'three';
               player.position.set(0, 5, 0)
             }
           }
-        } else {
-          player.position.x+=direction.x * 0.5;
-          player.position.z+=direction.z * 0.5;
-          car.position.x += direction.x * 0.5;
-          car.position.z += direction.z * 0.5;
-        }
-        bboxplayer = new THREE.Box3().setFromObject(player);
-        let bboxcar = new THREE.Box3().setFromObject(car);
-        if (bboxplayer.intersectsBox(bboxcar) && !inCar) {
-          // player.position.set(car.position.x-1.25, car.position.y, car.position.z+1.75);
-          player.position.set(car.position.x, car.position.y, car.position.z);
-          inCar=true;
-          player.traverse(child => {
-              if (child.isMesh) child.visible = false;
-          });
-        }
+        // } else {
+        //   player.position.x+=direction.x * 0.5;
+        //   player.position.z+=direction.z * 0.5;
+        //   car.position.x += direction.x * 0.5;
+        //   car.position.z += direction.z * 0.5;
+        // }
+        // bboxplayer = new THREE.Box3().setFromObject(player);
+        // let bboxcar = new THREE.Box3().setFromObject(car);
+        // if (bboxplayer.intersectsBox(bboxcar) && !inCar) {
+        //   // player.position.set(car.position.x-1.25, car.position.y, car.position.z+1.75);
+        //   player.position.set(car.position.x, car.position.y, car.position.z);
+        //   inCar=true;
+        //   player.traverse(child => {
+        //       if (child.isMesh) child.visible = false;
+        //   });
+        // }
             // for (const p of platforms) {
         //     const halfWidth = p.geometry.parameters.width / 2;
         //     const halfDepth = p.geometry.parameters.depth / 2;
@@ -1646,9 +1646,9 @@ import * as THREE from 'three';
 
         // Player should face the same direction as camera
         player.rotation.y = yaw + Math.PI;
-        if (inCar) {
-          car.rotation.z = yaw+Math.PI/2;
-        }
+        // if (inCar) {
+        //   car.rotation.z = yaw+Math.PI/2;
+        // }
 
 
         const isFirstPerson = zoomDistance < 2;
@@ -1670,7 +1670,7 @@ import * as THREE from 'three';
         } else {
           crosshair.style.display='none';
           player.healthBar.sprite.visible=true;
-          if (!inCar){
+          // if (!inCar){
             const cameraPosition = player.position.clone().sub(lookDirection.clone().multiplyScalar(zoomDistance));
             cameraPosition.y += 2;
             camera.position.copy(cameraPosition);
@@ -1680,12 +1680,12 @@ import * as THREE from 'three';
             player.traverse(child => {
                 if (child.isMesh) child.visible = true;
             });
-          } else {
-            const cameraPosition = car.position.clone().sub(lookDirection.clone().multiplyScalar(zoomDistance));
-            cameraPosition.y += 2;
-            camera.position.copy(cameraPosition);
-            camera.lookAt(car.position.clone().add(new THREE.Vector3(0, 1, 0)));
-          }
+          // } else {
+          //   const cameraPosition = car.position.clone().sub(lookDirection.clone().multiplyScalar(zoomDistance));
+          //   cameraPosition.y += 2;
+          //   camera.position.copy(cameraPosition);
+          //   camera.lookAt(car.position.clone().add(new THREE.Vector3(0, 1, 0)));
+          // }
         }
 
 
