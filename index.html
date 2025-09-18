@@ -1044,8 +1044,8 @@ import * as THREE from 'three';
     }
     let boss = createPlayer(0x000000, false, 2);
     if (!bossSpawned){
-      boss.position.set(40, 2, 0);
-      db.ref('bosses').set({ x:40, y:2, z:0 });
+      boss.position.set(-75, 2, 5);
+      db.ref('bosses').set({ x:-75, y:2, z:5 });
       bossSpawned=true;
     }
     scene.add(boss);
