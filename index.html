@@ -1045,7 +1045,8 @@ import * as THREE from 'three';
     let boss = createPlayer(0x000000, false, 2);
     if (!bossSpawned){
       boss.position.set(-75, 2, 5);
-      db.ref('bosses').set({ x:-75, y:2, z:5 });
+      boss.health=100;
+      db.ref('bosses').set({ x:-75, y:2, z:5, health:100 });
       bossSpawned=true;
     }
     scene.add(boss);
@@ -1057,6 +1058,8 @@ import * as THREE from 'three';
     let pitch = 0;
     createHealthBar(player);
     updateHealthBar(player);
+    createHealthBar(boss);
+    updateHealthBar(boss);
     let started = false;
     let velocity = new THREE.Vector3();
     const keys = {};
@@ -1159,6 +1162,9 @@ import * as THREE from 'three';
     // let inCar = false;
     let inCity = false;
     let bossLightningCall = false;
+    let prevL = null;
+    let pbossHealth = null;
+    let bossHealth = null;
     function animate() {
         gameTicks++;
         let phasing = false;
@@ -1174,6 +1180,19 @@ import * as THREE from 'three';
         if (keys['d']) direction.x += 1;
         if (keys['p']) phasing=true;
         if (keys['l'] && admin) callLightning=true;
+        db.ref('bosses').once('value')
+          .then((snapshot) => {
+            if (snapshot.exists()) {
+              const data = snapshot.val() || {};
+              pbossHealth=data.health;
+              boss.health=data.health;
+              updateHealthBar(boss);
+            } else {
+            }
+          })
+          .catch((error) => {
+            console.error("Error fetching data:", error);
+          });
         checkLadderClimb();
         if (keys['arrowleft']) {
           yaw += 15 * 0.002;
@@ -1329,7 +1348,17 @@ import * as THREE from 'three';
               var bboxobj = new THREE.Box3().setFromObject(m);
               if (bboxplayer.intersectsBox(bboxobj)) {
                 if (!callLightning){
-                  player.position.set(0, 5, 0);
+                  if (prevL!=m){
+                    player.health -= 50;
+                    if (player.health <= 0){
+                      player.health=100;
+                      player.position.set(0, 3, 0);
+                      onGround=True;
+                    }
+                    updateHealthBar(player);
+                    prevL=m;
+                  }
+                  
                 }
               }
             }
@@ -1752,6 +1781,15 @@ import * as THREE from 'three';
                 scene.remove(b.mesh);
                 bots.splice(i, 1);
               }
+            }
+            let bboxBoss = new THREE.Box3().setFromObject(boss);
+            if (bboxBullet.intersectsBox(bboxBoss)){
+              boss.health -= 10;
+              updateHealthBar(boss);
+              // Remove bullet
+              scene.remove(bullet.mesh);
+              bullets.splice(bulletIndex, 1);
+              db.ref('bosses').update({health:boss.health});
             }
         });
         if (player.health <= 0){
