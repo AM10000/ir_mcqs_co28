@@ -100,8 +100,9 @@
       <input type="text" id ='screenName' placeholder="Screen Name">
       <button id='joinBtn' type='button'>Enter Game</button>
       <button type="button" id="createAccountBtn">Create Account</button>
-      <a href="b.html">Click for test</a>
+      
     </form>
+    <button id="gtp" type="button">Click for test</button>
   </div>
 
 <!--   <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script> -->
@@ -188,6 +189,11 @@ import * as THREE from 'three';
       });
     }
 	document.getElementById("joinBtn").addEventListener("click", sendInfo);
+  function goToTstPage(event){
+    event.preventDefault();
+    window.location.href = 'b.html?id='+playerId;
+  }
+  document.getElementById("gtp").addEventListener("click", goToTstPage);
     function createAccount(event){
       event.preventDefault();
       fetch('https://api.ipify.org?format=json')
