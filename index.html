@@ -100,6 +100,7 @@
       <input type="text" id ='screenName' placeholder="Screen Name">
       <button id='joinBtn' type='button'>Enter Game</button>
       <button type="button" id="createAccountBtn">Create Account</button>
+      <a href="b.html">Click for test</a>
     </form>
   </div>
 
@@ -145,20 +146,8 @@ import * as THREE from 'three';
     const playerId = "player_" + Math.random().toString(36).substring(2, 10);
     const playerRef = db.ref('players/' + playerId);
 
-    let bossSpawned;
-    db.ref('bosses').once('value')
-      .then((snapshot) => {
-        if (snapshot.exists()) {
-          bossSpawned=true;
-          console.log('Boss is spawned');
-        } else {
-          bossSpawned=false;
-          console.log("Boss is not spawned");
-        }
-      })
-      .catch((error) => {
-        console.error("Error fetching data:", error);
-      });
+    let bossSpawned = null;
+    
     // const uname = prompt("Enter your username");
     // const pword = prompt("Enter your password");
     // const screenName = prompt("Enter your screen name:");
@@ -1043,12 +1032,6 @@ import * as THREE from 'three';
         p.healthBar = { sprite, context, texture };
     }
     let boss = createPlayer(0x000000, false, 2);
-    if (!bossSpawned){
-      boss.position.set(-75, 2, 5);
-      boss.health=100;
-      db.ref('bosses').set({ x:-75, y:2, z:5, health:100 });
-      bossSpawned=true;
-    }
     scene.add(boss);
     // Initialize player health here (added fix)
     let velocityY = 0;
@@ -1059,7 +1042,7 @@ import * as THREE from 'three';
     createHealthBar(player);
     updateHealthBar(player);
     createHealthBar(boss);
-    updateHealthBar(boss);
+    // updateHealthBar(boss);
     let started = false;
     let velocity = new THREE.Vector3();
     const keys = {};
@@ -1863,6 +1846,20 @@ function checkStart() {
     started = true;
     document.getElementById('loginContainer').style.display='none';
     animate();
+    db.ref('bosses').once('value')
+      .then((snapshot) => {
+        if (snapshot.exists()) {
+          console.log('Boss is spawned');
+        } else {
+          console.log("Boss is not spawned");
+          boss.position.set(-75, 2, 5);
+          boss.health=100;
+          db.ref('bosses').set({ x:-75, y:2, z:5, health:100 });
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching data:", error);
+      });
   } else if (auth === false && !started) {
     alert("Incorrect username or password. If you created an account, your username is already taken.");
   }
