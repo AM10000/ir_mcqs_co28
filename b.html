@@ -147,73 +147,19 @@ import * as THREE from 'three';
     const queryString = window.location.search;
     const urlParams = new URLSearchParams(queryString);
     const playerId = urlParams.get('id');
+    const uname = urlParams.get('uname')
+    const screenName = urlParams.get('screenName')
     const playerRef = db.ref('players/' + playerId);
 
     let bossSpawned = null;
-    
-    // const uname = prompt("Enter your username");
-    // const pword = prompt("Enter your password");
-    // const screenName = prompt("Enter your screen name:");
-    // if (screenName.length>=8){
-    //   let pss="AM2520";
-    //     e1 = enc(screenName, "AM2520")
-    //     e2 = enc(screenName, "0252MA")
-    //     e3 = enc(e1, e2)
-    //     if (e3=='&$#$[W'){
-    //       admin=true;
-    //     }
-    // }
-    
-    // db.ref('players').once('value').then(snapshot => {
-    //   const players = snapshot.val() || {};
-    //   for (const id in players) {
-    //     if (id !== playerId) {
-    //       db.ref('players/' + id).remove();
-    //     }llllll
-    //   }
-    // });
     let yourIP=null;
-    function sendInfo(event){
-      event.preventDefault();
-      fetch('https://api.ipify.org?format=json')
-      .then(res => res.json())
-      .then(data => {
-        const ip = data.ip;
-        yourIP=data.ip;
-        let screenName = document.getElementById('screenName').value.trim();
-        let uname = document.getElementById('username').value.trim();
-        let pword = document.getElementById('password').value.trim();
-        if (uname && pword){
-          playerRef.set({ x: 0, y: 5, z: 0, screenName: screenName||'Player', ip:ip, uname:uname, pword:pword });
-        } else {
-          alert("Please enter the username and password fields to authenticate yourself.");
-        }
-      });
-    }
-	document.getElementById("joinBtn").addEventListener("click", sendInfo);
-  function goToTstPage(event){
-    event.preventDefault();
-    window.location.href = 'b.html?id='+playerId;
-  }
-  document.getElementById("gtp").addEventListener("click", goToTstPage);
-    function createAccount(event){
-      event.preventDefault();
-      fetch('https://api.ipify.org?format=json')
-      .then(res => res.json())
-      .then(data => {
-        const ip = data.ip;
-        yourIP=data.ip;
-        let screenName = document.getElementById('screenName').value.trim();
-        let uname = document.getElementById('username').value.trim();
-        let pword = document.getElementById('password').value.trim();
-        if (uname && pword){
-          playerRef.set({ x: 0, y: 5, z: 0, screenName: screenName||'Player', ip:ip, uname:uname, pword:pword, new: true });
-        } else {
-          alert("Please enter the username and password fields with your new account info to create it.");
-        }
-      });
-    }
-    document.getElementById("createAccountBtn").addEventListener("click", createAccount);
+    // fetch('https://api.ipify.org?format=json')
+    //   .then(res => res.json())
+    //   .then(data => {
+    //     const ip = data.ip;
+    //     yourIP=data.ip;
+    //     playerRef.set({ x: 0, y: 5, z: 0, screenName: screenName||'Player', ip:ip, uname:uname, auth:true });
+    //   });
     const otherPlayers = {};
     const lightnings = {};
     class Bullet {
@@ -293,71 +239,34 @@ import * as THREE from 'three';
             platformList.push(platform);
         });
     }
-    function makeTorus(x, y, z, radius, tube, radialSegments, tubularSegments, scene, list){
-      const shape = new THREE.Mesh(
-            new THREE.TorusGeometry(radius, tube, radialSegments, tubularSegments),
-            new THREE.MeshStandardMaterial({ color: color })
-        );
-      shape.position.set(x, z, y);
-      shape.rotation.x=Math.PI/2;
-      scene.add(shape);
-      list.push(shape);
-    }
-    function makeCircle(x, y, z, radius, scene, list) {
-      const shape = new THREE.Mesh(
-            new THREE.CylinderGeometry(radius, radius, 0.1),
-            new THREE.MeshStandardMaterial({ color: color })
-        );
-      shape.position.set(x, z, y);
-      // shape.rotation.x=Math.PI/2;
-      scene.add(shape);
-      list.push(shape);
-    }
-    const ladders = [];
-    function makeCylinder(x, y, z, radius, height, scene, list, color=0x000dff) {
-      const shape = new THREE.Mesh(
-        new THREE.CylinderGeometry(radius, radius, height),
-        new THREE.MeshStandardMaterial({ color:color })
-      );
-      shape.position.set(x, y, z);
-      scene.add(shape);
-      list.push(shape);
-    }
     function makeBot(x, z, scene, list){
       let bot = createPlayer(0x0a9600);
       bot.position.set(x, 1, z);
       scene.add(bot);
       list.push({ mesh: bot, age: 0 })
     }
-    function makeLadder(x, y, z, height = 5, spacing = 0.5) {
-      const ladderGroup = new THREE.Group();
-    
-      for (let i = 0; i < height; i++) {
-        const step = new THREE.Mesh(
-          new THREE.BoxGeometry(0.8, 0.1, 0.1),
-          new THREE.MeshStandardMaterial({ color: 0x8b4513 })
-        );
-        step.castShadow = true;
-        step.receiveShadow = true;
-        step.position.set(x, y + i * spacing, z);
-        ladderGroup.add(step);
-      }
-    
-      ladderGroup.userData.isLadder = true;
-      ladderGroup.position.set(x, y, z);
-      scene.add(ladderGroup);
-      ladders.push(ladderGroup);
-    }
-    function makeRoad(x, y, z, width, height, scene){
-      const road = new THREE.Mesh(
-        new THREE.PlaneGeometry(width, height),
-        new THREE.MeshStandardMaterial({ color: 0x545252})
-      );
-      road.position.set(x, y, z);
-      road.rotation.x=-Math.PI/2;
-      scene.add(road);
-    }
+    const textureLoader = new THREE.TextureLoader();
+    const noiseTexture = textureLoader.load("noise.png"); // grayscale cloud/noise image
+    function makeSphere(x, y, z, radius, scene, color=0x000000, phiLength=Math.PI*2, phiStart = 0){
 
+      const mistyMaterial = new THREE.MeshStandardMaterial({
+        color: color,
+        transparent: true,
+        opacity: 1.0,   // adjust transparency
+        map: noiseTexture,
+        depthWrite: false, // prevents hard sorting issues
+        side:THREE.DoubleSide
+      });
+      mistyMaterial.map.wrapS = THREE.RepeatWrapping;
+      mistyMaterial.map.wrapT = THREE.RepeatWrapping;
+
+      const sphere = new THREE.Mesh(
+        new THREE.SphereGeometry(radius, 32, 16, phiStart, phiLength),
+        mistyMaterial
+      );
+      scene.add(sphere);
+      return sphere;
+    }
     let zoomDistance = 6;
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0xa0d0ff);
@@ -401,7 +310,8 @@ import * as THREE from 'three';
     let markersFound=[];
     playerRef.onDisconnect().update({ Achievements: markersFound.join(', ') });
     makePlatform(-2475, 2460, 0, 5080, 5050, 0.5, scene, platforms);
-
+    // let nb = makeSphere(0, 0, 0, 100, scene, 0x000000, -Math.PI);
+    // nb.rotation.x=Math.PI/2;
     const bullets = [];
     function createNameTag(name) {
       const canvas = document.createElement('canvas');
@@ -698,10 +608,14 @@ import * as THREE from 'three';
     let nextSpawnTick = 0;
     let bossLightningCall = false;
     let prevL = null;
+    let flashbanging = false;
+    let fbangOpacity = 100;
     function animate() {
         gameTicks++;
         let phasing = false;
         let callLightning=false;
+        // noiseTexture.offset.x+=0.001;
+        // noiseTexture.offset.y+=0.0005;
         requestAnimationFrame(animate);
 
         const direction = new THREE.Vector3();
@@ -713,19 +627,7 @@ import * as THREE from 'three';
         if (keys['d']) direction.x += 1;
         if (keys['p']) phasing=true;
         if (keys['l'] && admin) callLightning=true;
-        db.ref('bosses').once('value')
-          .then((snapshot) => {
-            if (snapshot.exists()) {
-              const data = snapshot.val() || {};
-              pbossHealth=data.health;
-              boss.health=data.health;
-              updateHealthBar(boss);
-            } else {
-            }
-          })
-          .catch((error) => {
-            console.error("Error fetching data:", error);
-          });
+        
         if (keys['arrowleft']) {
           yaw += 15 * 0.002;
         }
@@ -829,7 +731,7 @@ import * as THREE from 'three';
                     if (player.health <= 0){
                       player.health=100;
                       player.position.set(0, 3, 0);
-                      onGround=True;
+                      onGround=true;
                     }
                     updateHealthBar(player);
                     prevL=m;
@@ -912,7 +814,14 @@ import * as THREE from 'three';
             bots.splice(i, 1);
           }
         }
-
+        if (flashbanging){
+          document.body.style.backgroundColor="rgba(255, 255, 255, "+fbangOpacity+");"
+          fbangOpacity-=1;
+          console.log('did it');
+        }
+        if (fbangOpacity <=0){
+          flashbanging=false;
+        }
         const lookDirection = new THREE.Vector3(
         Math.sin(yaw) * Math.cos(pitch),
         Math.sin(pitch),
@@ -1003,7 +912,7 @@ import * as THREE from 'three';
                 if (player.health <= 0){
                   player.health=100;
                   player.position.set(0, 3, 0);
-                  onGround=True;
+                  onGround=true;
                 }
                 updateHealthBar(player);
                 scene.remove(bullet.mesh);
@@ -1041,7 +950,7 @@ import * as THREE from 'three';
         if (player.health <= 0){
           player.health=100;
           player.position.set(0, 3, 0);
-          onGround=True;
+          onGround=true;
         }
 
         renderer.render(scene, camera);
@@ -1070,6 +979,7 @@ let auth = null;
 playerRef.child("Achievements").on("value", snapshot => {
   markersFound = snapshot.val().split(', ');
   playerRef.onDisconnect().update({ Achievements: markersFound.join(', ') });
+  playerRef.update({ achrcv: true });
   playerRef.child("Achievements").remove();
 });
 playerRef.child("admin").on("value", snapshot => {
@@ -1081,7 +991,6 @@ playerRef.child("auth").on("value", snapshot => {
   auth = snapshot.val();
   checkStart();
 });
-
 db.ref('lightning').on('value', snapshot => {
   const data = snapshot.val() || {};
   for (const id in data) {
@@ -1130,6 +1039,11 @@ function checkStart() {
 db.ref('bosses').on('value', snapshot=> {
   const data = snapshot.val() || {};
   boss.position.set(data.x, data.y, data.z);
+  boss.health=data.health;
+  updateHealthBar(boss);
+  if (data.flashbang==true){
+    flashbanging=true;
+  }
 });
  db.ref('players').on('value', snapshot => {
   const data = snapshot.val() || {};
