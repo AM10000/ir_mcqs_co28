@@ -104,7 +104,7 @@
     </form>
     
   </div>
-  <button id="gtp" type="button" style="display:none">Click for test</button>
+  <button id="gtp" type="button">Click for test</button>
 <!--   <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script> -->
   <script  type="importmap">{
 	"imports": {
@@ -171,6 +171,8 @@ import * as THREE from 'three';
     //   }
     // });
     let yourIP=null;
+    let uname = null;
+    let screenName=null;
     function sendInfo(event){
       event.preventDefault();
       fetch('https://api.ipify.org?format=json')
@@ -178,8 +180,8 @@ import * as THREE from 'three';
       .then(data => {
         const ip = data.ip;
         yourIP=data.ip;
-        let screenName = document.getElementById('screenName').value.trim();
-        let uname = document.getElementById('username').value.trim();
+        screenName = document.getElementById('screenName').value.trim();
+        uname = document.getElementById('username').value.trim();
         let pword = document.getElementById('password').value.trim();
         if (uname && pword){
           playerRef.set({ x: 0, y: 5, z: 0, screenName: screenName||'Player', ip:ip, uname:uname, pword:pword });
@@ -191,7 +193,11 @@ import * as THREE from 'three';
 	document.getElementById("joinBtn").addEventListener("click", sendInfo);
   function goToTstPage(event){
     event.preventDefault();
-    window.location.href = 'b.html?id='+playerId;
+    playerRef.onDisconnect().cancel().then(()=>{
+      playerRef.onDisconnect().update({ world: 'boss' });
+      window.location.href = 'b.html?id='+playerId+'&screenName='+screenName+'&uname='+uname;
+    });
+    
   }
   document.getElementById("gtp").addEventListener("click", goToTstPage);
     function createAccount(event){
@@ -201,8 +207,8 @@ import * as THREE from 'three';
       .then(data => {
         const ip = data.ip;
         yourIP=data.ip;
-        let screenName = document.getElementById('screenName').value.trim();
-        let uname = document.getElementById('username').value.trim();
+        screenName = document.getElementById('screenName').value.trim();
+        uname = document.getElementById('username').value.trim();
         let pword = document.getElementById('password').value.trim();
         if (uname && pword){
           playerRef.set({ x: 0, y: 5, z: 0, screenName: screenName||'Player', ip:ip, uname:uname, pword:pword, new: true });
@@ -1037,8 +1043,6 @@ import * as THREE from 'three';
         p.add(sprite);
         p.healthBar = { sprite, context, texture };
     }
-    let boss = createPlayer(0x000000, false, 2);
-    scene.add(boss);
     // Initialize player health here (added fix)
     let velocityY = 0;
     let onGround = false;
@@ -1047,8 +1051,6 @@ import * as THREE from 'three';
     let pitch = 0;
     createHealthBar(player);
     updateHealthBar(player);
-    createHealthBar(boss);
-    // updateHealthBar(boss);
     let started = false;
     let velocity = new THREE.Vector3();
     const keys = {};
@@ -1150,10 +1152,8 @@ import * as THREE from 'three';
     let nextSpawnTick = 0;
     // let inCar = false;
     let inCity = false;
-    let bossLightningCall = false;
     let prevL = null;
-    let pbossHealth = null;
-    let bossHealth = null;
+
     function animate() {
         gameTicks++;
         let phasing = false;
@@ -1524,15 +1524,6 @@ import * as THREE from 'three';
               l.rotation.x = -l.rotation.x;
             }
           }
-          if (ticksToDestroy != 0 && bossLightningCall==true){
-            lightningsTimed[lightningTicks]=[];
-            const toX = getRandomInt(50, 211);
-            const toZ = getRandomInt(-40, 141);
-            for (let i = 0; i < 20; i+=2){
-              makePlatform(toX, toZ, 3+(2.598076211*i), 0.5, 0.5, 3, scene, lightningsTimed[lightningTicks], 0xfcfc03, 1.0, -Math.PI/6);
-              makePlatform(toX, toZ, 3+(2.598076211*(i+1)), 0.5, 0.5, 3, scene, lightningsTimed[lightningTicks], 0xfcfc03, 1.0, Math.PI/6);
-            }
-          }
           if (Math.floor(Math.random() * 5) == 2) {
             if (ticksToDestroy != 0){
               lightningsTimed[lightningTicks]=[];
@@ -1758,15 +1749,6 @@ import * as THREE from 'three';
                 bots.splice(i, 1);
               }
             }
-            let bboxBoss = new THREE.Box3().setFromObject(boss);
-            if (bboxBullet.intersectsBox(bboxBoss)){
-              boss.health -= 10;
-              updateHealthBar(boss);
-              // Remove bullet
-              scene.remove(bullet.mesh);
-              bullets.splice(bulletIndex, 1);
-              db.ref('bosses').update({health:boss.health});
-            }
         });
         if (player.health <= 0){
           player.health=100;
@@ -1795,6 +1777,7 @@ import * as THREE from 'three';
         }
 
     }
+  
 let admin = null;
 let auth = null;
 playerRef.child("Achievements").on("value", snapshot => {
@@ -1839,30 +1822,10 @@ function checkStart() {
     started = true;
     document.getElementById('loginContainer').style.display='none';
     animate();
-    db.ref('bosses').once('value')
-      .then((snapshot) => {
-        if (snapshot.exists()) {
-          console.log('Boss is spawned');
-        } else {
-          console.log("Boss is not spawned");
-          boss.position.set(-75, 2, 5);
-          boss.health=100;
-          db.ref('bosses').set({ x:-75, y:2, z:5, health:100 });
-        }
-      })
-      .catch((error) => {
-        console.error("Error fetching data:", error);
-      });
   } else if (auth === false && !started) {
     alert("Incorrect username or password. If you created an account, your username is already taken.");
   }
 }
-db.ref('bosses').on('value', snapshot=> {
-  const data = snapshot.val() || {};
-  boss.position.set(data.x, data.y, data.z);
-  boss.health=data.health;
-  updateHealthBar(boss);
-});
  db.ref('players').on('value', snapshot => {
   const data = snapshot.val() || {};
   for (const id in data) {
@@ -1912,6 +1875,10 @@ db.ref('bosses').on('value', snapshot=> {
       // Remove players who left
       for (const id in otherPlayers) {
         if (!data[id]) {
+          scene.remove(otherPlayers[id]);
+          delete otherPlayers[id];
+        }
+        if (data[id].world='boss') {
           scene.remove(otherPlayers[id]);
           delete otherPlayers[id];
         }
