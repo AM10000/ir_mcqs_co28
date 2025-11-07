@@ -93,18 +93,8 @@
     display: none;">
   </div>
   <div id="loginContainer">
-    <h2>Login</h2>
-    <form id="loginForm">
-      <input type="text" id="username" placeholder="Username" required>
-      <input type="password" id="password" placeholder="Password" required>
-      <input type="text" id ='screenName' placeholder="Screen Name">
-      <button id='joinBtn' type='button'>Enter Game</button>
-      <button type="button" id="createAccountBtn">Create Account</button>
-      
-    </form>
-    
+    <h2>YOU REALLY THOUGHT U WERE SMART</h2>
   </div>
-  <button id="gtp" type="button">Click for test</button>
 <!--   <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script> -->
   <script  type="importmap">{
 	"imports": {
@@ -128,29 +118,21 @@ import * as THREE from 'three';
       messagingSenderId: "875933253854",
       appId: "1:875933253854:web:db7af0719c4cc7cb60824f"
     };
-    function enc(screenName, pss){
-      let npss="";
-      for (let i=0; i<screenName.length; i++){
-        let N = screenName.charCodeAt(i);
-          for (let l=0; l<pss.length; l++){
-            let M = pss.charCodeAt(l);
-              npss+=String.fromCharCode(N^M);
-          }
-          pss=npss;
-          npss="";
-        
-      }
-      return pss;
-    }
     const app = firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     const queryString = window.location.search;
     const urlParams = new URLSearchParams(queryString);
     const playerId = urlParams.get('id');
-    const uname = urlParams.get('uname')
-    const screenName = urlParams.get('screenName')
+    const uname = urlParams.get('uname');
+    const screenName = urlParams.get('screenName');
     const playerRef = db.ref('players/' + playerId);
 
+    function tpSpawn(){
+      playerRef.onDisconnect().cancel().then(()=>{
+        playerRef.update({ world: 'spawn', achrcv: false });
+        window.location.href = 'index.html?id='+playerId+'&screenName='+screenName+'&uname='+uname;
+      });
+    }
     let bossSpawned = null;
     let yourIP=null;
     // fetch('https://api.ipify.org?format=json')
@@ -184,6 +166,8 @@ import * as THREE from 'three';
           imagePath = 'download.jpeg' ;
         }else if (color === 0x737373) {
           imagePath = 'rocks.jpeg';
+        }else if (color === 0x00fff7){
+          imagePath = 'portal.jpeg';
         }else{
           imagePath='studs.jpeg';
         }
@@ -610,6 +594,8 @@ import * as THREE from 'three';
     let prevL = null;
     let flashbanging = false;
     let fbangOpacity = 100;
+    const spawnTele = [];
+    makePlatform(0, -5, 1, 0.5, 3, 10, scene, spawnTele, 0x00fff7);
     function animate() {
         gameTicks++;
         let phasing = false;
@@ -749,6 +735,12 @@ import * as THREE from 'three';
               player.position.set(0, 5, 0)
             }
           }
+          for (const st of spawnTele){
+            let bboxspawnTele = new THREE.Box3().setFromObject(st);
+            if (bboxplayer.intersectsBox(bboxspawnTele)) {
+              tpSpawn();
+            }
+          }
         
 
         if (keys[' '] && onGround) {
@@ -821,6 +813,14 @@ import * as THREE from 'three';
         }
         if (fbangOpacity <=0){
           flashbanging=false;
+        }
+        for (const st of spawnTele) {
+          st.material.forEach((mat) => {
+            if (mat.map) {
+              mat.map.offset.x += 0.01;
+              mat.map.offset.y += 0.005;
+            }
+          });
         }
         const lookDirection = new THREE.Vector3(
         Math.sin(yaw) * Math.cos(pitch),
@@ -1015,9 +1015,21 @@ db.ref('lightning').on('value', snapshot => {
 
 function checkStart() {
   if (!started && admin != null && auth === true) {
-    started = true;
-    document.getElementById('loginContainer').style.display='none';
-    animate();
+    let ipGood = false;
+    playerRef.child("ip").once('value')
+      .then((snapshot)=>{
+        if(snapshot.exists()){
+          fetch('https://api.ipify.org?format=json')
+            .then(res => res.json())
+            .then(data => {
+              if (data.ip == snapshot.val()){
+                started = true;
+                document.getElementById('loginContainer').style.display='none';
+                animate();
+              } else {alert("Bad IP");}
+            });
+        }
+      });
     db.ref('bosses').once('value')
       .then((snapshot) => {
         if (snapshot.exists()) {
@@ -1098,6 +1110,10 @@ db.ref('bosses').on('value', snapshot=> {
           delete otherPlayers[id];
         }
       }
+      if (data[id].world='spawn'){
+          scene.remove(otherPlayers[id]);
+          delete otherPlayers[id];
+        }
     });
   </script>
 </body>

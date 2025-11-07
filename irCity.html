@@ -73,21 +73,6 @@
     #loginContainer button:hover {
       background: #45a049;
     }
-    #toggleContainer {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      background: rgba(0,0,0,0.5);
-      color: white;
-      padding: 8px 12px;
-      border-radius: 8px;
-      font-family: sans-serif;
-      z-index: 10;
-    }
-    input[type="checkbox"] {
-      transform: scale(1.3);
-      margin-right: 8px;
-    }
 
     canvas { display: block; }
   </style>
@@ -108,22 +93,7 @@
     display: none;">
   </div>
   <div id="loginContainer">
-    <h2>Login</h2>
-    <form id="loginForm">
-      <input type="text" id="username" placeholder="Username" required>
-      <input type="password" id="password" placeholder="Password" required>
-      <input type="text" id ='screenName' placeholder="Screen Name">
-      <button id='joinBtn' type='button'>Enter Game</button>
-      <button type="button" id="createAccountBtn">Create Account</button>
-      
-    </form>
-    
-  </div>
-   <div id="toggleContainer">
-    <label>
-      <input type="checkbox" id="graphicsToggle" checked>
-      Enable Shadows
-    </label>
+    <h2>YOU REALLY THOUGHT U WERE SMART</h2>
   </div>
 <!--   <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script> -->
   <script  type="importmap">{
@@ -148,79 +118,25 @@ import * as THREE from 'three';
       messagingSenderId: "875933253854",
       appId: "1:875933253854:web:db7af0719c4cc7cb60824f"
     };
+
     const app = firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     const queryString = window.location.search;
     const urlParams = new URLSearchParams(queryString);
-    let playerId, uname, screenName;
-    let firstTime;
-    if (!urlParams.has('id')){
-      playerId = "player_" + Math.random().toString(36).substring(2, 10);
-      uname = null;
-      screenName=null;
-      firstTime = true;
-    } else {
-      playerId = urlParams.get('id');
-      uname = urlParams.get('uname');
-      screenName = urlParams.get('screenName');
-      firstTime = false;
-    }
-    
+    const playerId = urlParams.get('id');
+    const uname = urlParams.get('uname');
+    const screenName = urlParams.get('screenName');
     const playerRef = db.ref('players/' + playerId);
-    // playerRef.update({ achrcv: false });
-    let yourIP=null;
-    function sendInfo(event){
-      event.preventDefault();
-      fetch('https://api.ipify.org?format=json')
-      .then(res => res.json())
-      .then(data => {
-        const ip = data.ip;
-        yourIP=data.ip;
-        screenName = document.getElementById('screenName').value.trim();
-        uname = document.getElementById('username').value.trim();
-        let pword = document.getElementById('password').value.trim();
-        if (uname && pword){
-          playerRef.set({ x: 0, y: 5, z: 0, screenName: screenName||'Player', ip:ip, uname:uname, pword:pword, world: 'spawn' });
-        } else {
-          alert("Please enter the username and password fields to authenticate yourself.");
-        }
-      });
-    }
-	document.getElementById("joinBtn").addEventListener("click", sendInfo);
-
-  function tpBoss(){
-    playerRef.onDisconnect().cancel().then(()=>{
-      playerRef.update({ world: 'boss', achrcv: false });
-      window.location.href = 'b.html?id='+playerId+'&screenName='+screenName+'&uname='+uname;
-    });
-  }
-
-  function tpCity(){
-    playerRef.onDisconnect().cancel().then(()=>{
-      playerRef.update({ world: 'city', achrcv: false });
-      window.location.href = 'irCity.html?id='+playerId+'&screenName='+screenName+'&uname='+uname;
-    });
-  }
-    function createAccount(event){
-      event.preventDefault();
-      fetch('https://api.ipify.org?format=json')
-      .then(res => res.json())
-      .then(data => {
-        const ip = data.ip;
-        yourIP=data.ip;
-        screenName = document.getElementById('screenName').value.trim();
-        uname = document.getElementById('username').value.trim();
-        let pword = document.getElementById('password').value.trim();
-        if (uname && pword){
-          playerRef.set({ x: 0, y: 5, z: 0, screenName: screenName||'Player', ip:ip, uname:uname, pword:pword, new: true });
-        } else {
-          alert("Please enter the username and password fields with your new account info to create it.");
-        }
-      });
-    }
-    document.getElementById("createAccountBtn").addEventListener("click", createAccount);
+    let yourIP = null;
     const otherPlayers = {};
     const lightnings = {};
+    // playerRef.update({ achrcv: false });
+    function tpSpawn(){
+      playerRef.onDisconnect().cancel().then(()=>{
+        playerRef.update({ world: 'spawn', achrcv: false });
+        window.location.href = 'index.html?id='+playerId+'&screenName='+screenName+'&uname='+uname;
+      });
+    }
     class Bullet {
         constructor(position, direction) {
             const geometry = new THREE.SphereGeometry(0.1, 8, 8);
@@ -295,8 +211,6 @@ import * as THREE from 'three';
             platform.rotation.x = rotx;
             platform.rotation.y = rotz;
             platform.rotation.z = roty;
-            platform.castShadow = true;
-            platform.receiveShadow = true;
 
             scene.add(platform);
             if (!ret){
@@ -370,51 +284,114 @@ import * as THREE from 'three';
       road.rotation.x=-Math.PI/2;
       scene.add(road);
     }
+    function makeFloorGeometry(x, z, floorNum) {
+      const parts = [];
+	  const mainBlock = [];
+      // NOTE: args: (x, z, y, sx, sz, sy, color)
+      function addBox(px, py, pz, sx, sz, sy, color) {
+        // map your convention -> Three.js convention
+        const geom = new THREE.BoxGeometry(sz, sy, sx);
+        geom.translate(px, py, pz); // (x, y, z) in Three.js
+        // geom.userData = { color };
+		if (color == 0xfaf398) {
+			parts.push(geom);
+		} else {
+			mainBlock.push(geom);
+		}
+        
+      }
+
+      // === converted layout ===
+      addBox(x, floorNum*5 + 2.5, z, 9, 9, 5, 0x466078); // Main Block
+      addBox(x, floorNum*5 + 0.5, z+4.75, 0.5, 10, 1, 0xfaf398); // A back
+      addBox(x, floorNum*5 + 0.5, z-4.75, 0.5, 10, 1, 0xfaf398); // A front
+      addBox(x, floorNum*5 + 4.5, z-4.75, 0.5, 10, 1, 0xfaf398); // B front
+      addBox(x, floorNum*5 + 4.5, z+4.75, 0.5, 10, 1, 0xfaf398); // B back
+
+      addBox(x+4.5, floorNum*5 + 2.5, z-4.75, 0.5, 1, 3, 0xfaf398); // C front
+      addBox(x+4.5, floorNum*5 + 2.5, z+4.75, 0.5, 1, 3, 0xfaf398); // C back
+      addBox(x-4.5, floorNum*5 + 2.5, z-4.75, 0.5, 1, 3, 0xfaf398); // F front
+      addBox(x-4.5, floorNum*5 + 2.5, z+4.75, 0.5, 1, 3, 0xfaf398); // F back
+
+      addBox(x+1.5, floorNum*5 + 2.5, z-4.75, 0.5, 1, 3, 0xfaf398); // D front
+      addBox(x+1.5, floorNum*5 + 2.5, z+4.75, 0.5, 1, 3, 0xfaf398); // D back
+      addBox(x-1.5, floorNum*5 + 2.5, z-4.75, 0.5, 1, 3, 0xfaf398); // E front
+      addBox(x-1.5, floorNum*5 + 2.5, z+4.75, 0.5, 1, 3, 0xfaf398); // E back
+
+      addBox(x-4.75, floorNum*5 + 0.5, z, 10, 0.5, 1, 0xfaf398); // A right
+      addBox(x+4.75, floorNum*5 + 0.5, z, 10, 0.5, 1, 0xfaf398); // A left
+      addBox(x-4.75, floorNum*5 + 4.5, z, 10, 0.5, 1, 0xfaf398); // B right
+      addBox(x+4.75, floorNum*5 + 4.5, z, 10, 0.5, 1, 0xfaf398); // B left
+
+      addBox(x-4.75, floorNum*5 + 2.5, z+4.5, 1, 0.5, 3, 0xfaf398); // C right
+      addBox(x+4.75, floorNum*5 + 2.5, z+4.5, 1, 0.5, 3, 0xfaf398); // C left
+      addBox(x-4.75, floorNum*5 + 2.5, z-4.5, 1, 0.5, 3, 0xfaf398); // F right
+      addBox(x+4.75, floorNum*5 + 2.5, z-4.5, 1, 0.5, 3, 0xfaf398); // F left
+
+      addBox(x-4.75, floorNum*5 + 2.5, z+1.5, 1, 0.5, 3, 0xfaf398); // D right
+      addBox(x+4.75, floorNum*5 + 2.5, z+1.5, 1, 0.5, 3, 0xfaf398); // D left
+      addBox(x-4.75, floorNum*5 + 2.5, z-1.5, 1, 0.5, 3, 0xfaf398); // E right
+      addBox(x+4.75, floorNum*5 + 2.5, z-1.5, 1, 0.5, 3, 0xfaf398); // E left
+
+      return [parts, mainBlock];
+    }
+
+    function makeSkyscraper(x, z, floors, scene, list) {
+      const geometries = [];
+	  const mains = [];
+      for (let i=0; i<floors; i++) {
+		const tempone = makeFloorGeometry(x, z, i);
+        geometries.push(...tempone[0]);
+		mains.push(...tempone[1]);
+      }
+
+      const mergedGeometryParts = BufferGeometryUtils.mergeGeometries(geometries);
+      const materialParts = new THREE.MeshStandardMaterial({ color: 0xfaf398 });
+      const skyscraperParts = new THREE.Mesh(mergedGeometryParts, materialParts);
+	  const mergedGeometryMain = BufferGeometryUtils.mergeGeometries(mains);
+	  const materialMain = new THREE.MeshStandardMaterial({ color: 0x466078 });
+      const skyscraperMain = new THREE.Mesh(mergedGeometryMain, materialMain);
+      scene.add(skyscraperParts);
+	  scene.add(skyscraperMain);
+      list.push(skyscraperMain);
+	  list.push(skyscraperParts);
+    skyscrapers.push(skyscraperMain);
+    skyscrapers.push(skyscraperParts);
+    }
+
     let zoomDistance = 6;
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0xa0d0ff);
+
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
     const renderer = new THREE.WebGLRenderer();
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    const light = new THREE.DirectionalLight(0xffffff, 1);
-    light.position.set(5, 10, 5);
-    light.castShadow = true;
+    // renderer.shadowMap.enabled = true;
+    // renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    // const light = new THREE.DirectionalLight(0xffffff, 1);
+    // light.position.set(5, 10, 5);
+    // light.castShadow = true;
+    // scene.add(light);
 
-    light.shadow.mapSize.width = 2048;
-    light.shadow.mapSize.height = 2048;
-    light.shadow.camera.near = 0.5;
-    light.shadow.camera.far = 50;
-    light.shadow.camera.left = -50;
-    light.shadow.camera.right = 50;
-    light.shadow.camera.top = 50;
-    light.shadow.camera.bottom = -50;
-    light.shadow.camera.updateProjectionMatrix();
+    // Optional: improve shadow quality
+    // light.shadow.mapSize.width = 8;
+    // light.shadow.mapSize.height = 8;
+    // light.shadow.camera.near = 0.5;
+    // light.shadow.camera.far = 50;
+    // light.shadow.camera.left = -50;
+    // light.shadow.camera.right = 50;
+    // light.shadow.camera.top = 50;
+    // light.shadow.camera.bottom = -50;
+    // light.shadow.camera.updateProjectionMatrix();
 
-    function toggleGraphics(enabled) {
-      console.log("Graphics toggled:", enabled);
-      // You can add your own graphics toggle logic here
-      if (enabled){
-        scene.add(light);
-      } else {
-        scene.remove(light);
-      }
 
-    }
-
-    // --- Checkbox event listener ---
-    const checkbox = document.getElementById('graphicsToggle');
-    checkbox.addEventListener('change', (e) => {
-      toggleGraphics(e.target.checked);
-    });
     // Optional: ambient light
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
     scene.add(ambientLight);
     const dirLight = new THREE.DirectionalLight(0xffffff, 1);
     dirLight.position.set(10, 10, 10);
-    // dirLight.castShadow = true;
+    dirLight.castShadow = true;
     scene.add(dirLight);
 
     const platforms = [];
@@ -422,242 +399,100 @@ import * as THREE from 'three';
     const rings = [];
     const bouncers=[];
     const markers=[];
+    const tp=[];
     const bots=[];
     const skyscrapers=[]
     let lightningsTimed={};
     let markersFound=[];
     playerRef.onDisconnect().update({ Achievements: markersFound.join(', ') });
-    for (let i = 1; i < 5; i++) {
-      makePlatform(0, i, i, 1, 3, 0.5, scene, platforms, 0x000dff);
+    makePlatform(2525, 2460, 0, 5080, 4950, 0.5, scene, platforms, 0xf2b65c);
+    function makeCity(){
+      makeSkyscraper(205, 135, 16, scene, platforms);
+      makeSkyscraper(155, 135, 7, scene, platforms);
+      makeSkyscraper(125, 135, 11, scene, platforms);
+      makeSkyscraper(95, 135, 12, scene, platforms);
+      makeSkyscraper(85, 135, 17, scene, platforms);
+      makeSkyscraper(185, 125, 6, scene, platforms);
+      makeSkyscraper(175, 125, 8, scene, platforms);
+      makeSkyscraper(135, 125, 11, scene, platforms);
+      makeSkyscraper(175, 115, 8, scene, platforms);
+      makeSkyscraper(125, 115, 5, scene, platforms);
+      makeSkyscraper(115, 115, 10, scene, platforms);
+      makeSkyscraper(95, 115, 15, scene, platforms);
+      makeSkyscraper(65, 115, 18, scene, platforms);
+      makeSkyscraper(55, 115, 19, scene, platforms);
+      makeSkyscraper(195, 105, 8, scene, platforms);
+      makeSkyscraper(145, 105, 14, scene, platforms);
+      makeSkyscraper(105, 105, 16, scene, platforms);
+      makeSkyscraper(85, 105, 6, scene, platforms);
+      makeSkyscraper(165, 95, 5, scene, platforms);
+      makeSkyscraper(125, 95, 8, scene, platforms);
+      makeSkyscraper(65, 95, 7, scene, platforms);
+      makeSkyscraper(195, 85, 18, scene, platforms);
+      makeSkyscraper(185, 85, 10, scene, platforms);
+      makeSkyscraper(165, 85, 5, scene, platforms);
+      makeSkyscraper(145, 85, 8, scene, platforms);
+      makeSkyscraper(105, 85, 8, scene, platforms);
+      makeSkyscraper(85, 85, 19, scene, platforms);
+      makeSkyscraper(205, 75, 19, scene, platforms);
+      makeSkyscraper(135, 75, 13, scene, platforms);
+      makeSkyscraper(75, 75, 5, scene, platforms);
+      makeSkyscraper(65, 75, 10, scene, platforms);
+      makeSkyscraper(55, 75, 13, scene, platforms);
+      makeSkyscraper(195, 65, 12, scene, platforms);
+      makeSkyscraper(175, 65, 9, scene, platforms);
+      makeSkyscraper(145, 65, 8, scene, platforms);
+      makeSkyscraper(115, 65, 10, scene, platforms);
+      makeSkyscraper(55, 65, 9, scene, platforms);
+      makeSkyscraper(155, 55, 10, scene, platforms);
+      makeSkyscraper(125, 55, 18, scene, platforms);
+      makeSkyscraper(105, 55, 15, scene, platforms);
+      makeSkyscraper(95, 55, 14, scene, platforms);
+      makeSkyscraper(75, 55, 18, scene, platforms);
+      makeSkyscraper(185, 45, 12, scene, platforms);
+      makeSkyscraper(165, 45, 11, scene, platforms);
+      makeSkyscraper(145, 45, 10, scene, platforms);
+      makeSkyscraper(135, 45, 14, scene, platforms);
+      makeSkyscraper(205, 35, 15, scene, platforms);
+      makeSkyscraper(195, 35, 11, scene, platforms);
+      makeSkyscraper(165, 35, 9, scene, platforms);
+      makeSkyscraper(105, 35, 20, scene, platforms);
+      makeSkyscraper(85, 35, 14, scene, platforms);
+      makeSkyscraper(75, 35, 20, scene, platforms);
+      makeSkyscraper(65, 35, 20, scene, platforms);
+      makeSkyscraper(165, 25, 6, scene, platforms);
+      makeSkyscraper(135, 25, 17, scene, platforms);
+      makeSkyscraper(85, 25, 17, scene, platforms);
+      makeSkyscraper(75, 25, 18, scene, platforms);
+      makeSkyscraper(185, 15, 13, scene, platforms);
+      makeSkyscraper(105, 15, 12, scene, platforms);
+      makeSkyscraper(65, 15, 18, scene, platforms);
+      makeSkyscraper(55, 15, 5, scene, platforms);
+      makeSkyscraper(205, 5, 8, scene, platforms);
+      makeSkyscraper(175, 5, 11, scene, platforms);
+      makeSkyscraper(155, 5, 20, scene, platforms);
+      makeSkyscraper(125, 5, 16, scene, platforms);
+      makeSkyscraper(195, -5, 6, scene, platforms);
+      makeSkyscraper(125, -5, 7, scene, platforms);
+      makeSkyscraper(95, -5, 18, scene, platforms);
+      makeSkyscraper(85, -5, 16, scene, platforms);
+      makeSkyscraper(55, -5, 9, scene, platforms);
+      makeSkyscraper(185, -15, 18, scene, platforms);
+      makeSkyscraper(145, -15, 19, scene, platforms);
+      makeSkyscraper(135, -15, 7, scene, platforms);
+      makeSkyscraper(55, -15, 13, scene, platforms);
+      makeSkyscraper(205, -25, 10, scene, platforms);
+      makeSkyscraper(185, -25, 19, scene, platforms);
+      makeSkyscraper(165, -25, 20, scene, platforms);
+      makeSkyscraper(105, -25, 17, scene, platforms);
+      makeSkyscraper(95, -25, 5, scene, platforms);
+      makeSkyscraper(205, -35, 5, scene, platforms);
+      makeSkyscraper(165, -35, 17, scene, platforms);
+      makeSkyscraper(135, -35, 18, scene, platforms);
+      makeSkyscraper(105, -35, 17, scene, platforms);
+      makeSkyscraper(65, -35, 10, scene, platforms);
     }
-    makePlatform(-2475, 2460, 0, 5080, 5050, 0.5, scene, platforms);
-    makePlatform(0, 6, 5, 3, 3, 0.5, scene, platforms, 0x000dff);
-    for (let i=1; i<5; i++) {
-      makePlatform(-i-1, 6, i+5, 3, 1, 0.5, scene, platforms, 0x000dff);
-    }
-    for(let i=1; i<5; i++) {
-      if (i%2==1){
-        makePlatform(-i*5-5, 6, 9, 3, 3, 0.5, scene, platforms, 0x000dff);
-        makePlatform(-i*5-5, 5, 9.5, 1, 3, 0.5, scene, killBricks, 0xff0000);
-      } else {
-        makePlatform(-i*5-5, 6, 9, 3, 3, 0.5, scene, platforms, 0x000dff);
-        makePlatform(-i*5-5, 7, 9.5, 1, 3, 0.5, scene, killBricks, 0xff0000);
-      }
-    }
-    makePlatform(-34, 6, 9, 7, 10, 0.5, scene, platforms, 0x000dff);
-    makePlatform(-32, 6, 14, 7, 1, 10, scene, platforms, 0x000dff);
-    makePlatform(-36, 6, 14, 7, 1, 10, scene, platforms, 0x000dff);
-    makeCylinder(-38, 10, 6, 0.5, 2, scene, markers, 0x00f2ff);
-    // makePlatform(-19, -10, 5, 0.5, 48, 10, scene, platforms, 0x737373);
-    makePlatform(-6.25, -10, 2.5, 0.5, 22.5, 5, scene, platforms, 0x737373);
-    makePlatform(-31.75, -10, 2.5, 0.5, 22.5, 5, scene, platforms, 0x737373);
-    // width = 22.5
-    // dist from ends = 11.25
-    // end 1 = 5
-    // end 2 = -43
-    makePlatform(-19, -10, 7.5, 0.5, 48, 5, scene, platforms, 0x737373);
-    makePlatform(-42.75, 1.5, 5, 23, 0.5, 10, scene, platforms, 0x737373);
-    makePlatform(-19, 13.25, 5, 0.5, 48, 10, scene, platforms, 0x737373);
-    makePlatform(4.75, 1.5, 5, 23, 0.5, 10, scene, platforms, 0x737373);
-    // makeRoad(-19, 0.3, -24.75, 3, 30, scene);
-
-    makePlatform(-15, -20, 2.5, 0.5, 30, 5, scene, platforms, 0x737373);
-    makePlatform(16.5, -20, 2.5, 0.5, 27, 5, scene, platforms, 0x737373);
-    makePlatform(30, -50, 2.5, 60, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(15, -80, 2.5, 0.5, 30, 5, scene, platforms, 0x737373);
-    makePlatform(-16.5, -80, 2.5, 0.5, 27, 5, scene, platforms, 0x737373);
-    makePlatform(-30, -50, 2.5, 60, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(3, -21.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(1.5, -23, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(0, -27.5, 2.5, 9, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(1.5, -26, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(-7.5, -29, 2.5, 0.5, 15, 5, scene, platforms, 0x737373);
-    makePlatform(-3, -23, 2.5, 6, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-6, -26, 2.5, 0.5, 6, 5, scene, platforms, 0x737373);
-    makePlatform(-9, -24.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-7.5, -23, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(-12, -26, 2.5, 6, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-15, -21.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-15, -26, 2.5, 0.5, 6, 5, scene, platforms, 0x737373);
-    makePlatform(-18, -26, 2.5, 6, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-19.5, -23, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(-21, -32, 2.5, 18, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-24, -23, 2.5, 6, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-27, -26, 2.5, 6, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-24, -29, 2.5, 0.5, 6, 5, scene, platforms, 0x737373);
-    makePlatform(-27, -32, 2.5, 0.5, 6, 5, scene, platforms, 0x737373);
-    makePlatform(-24, -35, 2.5, 6, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-15, -32, 2.5, 0.5, 12, 5, scene, platforms, 0x737373);
-
-    makePlatform(-13.5, -35, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(-7.5, -35, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(-4.5, -32, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(-3, -38, 2.5, 0.5, 6, 5, scene, platforms, 0x737373);
-    makePlatform(-13.5, -38, 2.5, 0.5, 9, 5, scene, platforms, 0x737373);
-    makePlatform(-21, -41, 2.5, 0.5, 12, 5, scene, platforms, 0x737373);
-    makePlatform(-22.5, -44, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(-19.5, -47, 2.5, 0.5, 15, 5, scene, platforms, 0x737373);
-    makePlatform(-28.5, -44, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(-10.5, -50, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(-21, -50, 2.5, 0.5, 6, 5, scene, platforms, 0x737373);
-    makePlatform(-28.5, -50, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(-9, -53, 2.5, 0.5, 6, 5, scene, platforms, 0x737373);
-    makePlatform(-27, -38, 2.5, 6, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-15, -33.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-6, -35, 2.5, 12, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-18, -36.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-15, -41, 2.5, 6, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-24, -42.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-9, -44, 2.5, 12, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-12, -44, 2.5, 6, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-27, -45.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-18, -45.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-15, -51.5, 2.5, 9, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-6, -48.5, 2.5, 9, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-12, -51.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-27, -53, 2.5, 6, 0.5, 5, scene, platforms, 0x737373);
-
-    makePlatform(-19.5, -53, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(0, -35, 2.5, 0.5, 6, 5, scene, platforms, 0x737373);
-    makePlatform(0, -41, 2.5, 0.5, 6, 5, scene, platforms, 0x737373);
-    makePlatform(-1.5, -44, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(-7.5, -56, 2.5, 0.5, 15, 5, scene, platforms, 0x737373);
-    makePlatform(4.5, -29, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(4.5, -38, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(4.5, -44, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(1.5, -47, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(-25.5, -59, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(-25.5, -65, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(-25.5, -68, 2.5, 0.5, 9, 5, scene, platforms, 0x737373);
-    makePlatform(-22.5, -62, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(-19.5, -65, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(-13.5, -71, 2.5, 0.5, 15, 5, scene, platforms, 0x737373);
-    makePlatform(-15, -59, 2.5, 0.5, 6, 5, scene, platforms, 0x737373);
-    makePlatform(-12, -62, 2.5, 0.5, 6, 5, scene, platforms, 0x737373);
-    makePlatform(-12, -68, 2.5, 0.5, 6, 5, scene, platforms, 0x737373);
-    makePlatform(-24, -77, 2.5, 0.5, 6, 5, scene, platforms, 0x737373);
-    makePlatform(-28.5, -74, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(-19.5, -74, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(-7.5, -65, 2.5, 0.5, 9, 5, scene, platforms, 0x737373);
-    makePlatform(-7.5, -59, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(-12, -77, 2.5, 0.5, 6, 5, scene, platforms, 0x737373);
-    makePlatform(-7.5, -74, 2.5, 0.5, 9, 5, scene, platforms, 0x737373);
-    makePlatform(-3, -77, 2.5, 0.5, 6, 5, scene, platforms, 0x737373);
-    makePlatform(-1.5, -71, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(10.5, -68, 2.5, 0.5, 27, 5, scene, platforms, 0x737373);
-    makePlatform(1.5, -53, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(4.5, -50, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(-24, -54.5, 2.5, 9, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-18, -54.5, 2.5, 9, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-3, -48.5, 2.5, 15, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(3, -36.5, 2.5, 15, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(6, -39.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(0, -50, 2.5, 6, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-27, -62, 2.5, 6, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-24, -71, 2.5, 12, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-21, -60.5, 2.5, 9, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-18, -66.5, 2.5, 9, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-12, -60.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-15, -65, 2.5, 6, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-27, -72.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-18, -77, 2.5, 6, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-6, -65, 2.5, 12, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-9, -57.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-15, -74, 2.5, 6, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-9, -75.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(0, -77, 2.5, 6, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-3, -72.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-3, -62, 2.5, 6, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(0, -65, 2.5, 12, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(3, -54.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(3, -48.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-
-    makePlatform(1.5, -62, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(4.5, -71, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(4.5, -59, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(7.5, -77, 2.5, 0.5, 9, 5, scene, platforms, 0x737373);
-    makePlatform(7.5, -47, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(7.5, -35, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(7.5, -23, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(9, -32, 2.5, 0.5, 6, 5, scene, platforms, 0x737373);
-    makePlatform(10.5, -26, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(10.5, -38, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(10.5, -65, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(10.5, -71, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(12, -44, 2.5, 0.5, 6, 5, scene, platforms, 0x737373);
-    makePlatform(12, -53, 2.5, 0.5, 12, 5, scene, platforms, 0x737373);
-    makePlatform(13.5, -59, 2.5, 0.5, 9, 5, scene, platforms, 0x737373);
-    makePlatform(13.5, -62, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(13.5, -74, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(15, -35, 2.5, 0.5, 6, 5, scene, platforms, 0x737373);
-    makePlatform(15, -23, 2.5, 0.5, 6, 5, scene, platforms, 0x737373);
-    makePlatform(16.5, -41, 2.5, 0.5, 9, 5, scene, platforms, 0x737373);
-    makePlatform(16.5, -47, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(16.5, -71, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(16.5, -77, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(18, -50, 2.5, 0.5, 18, 5, scene, platforms, 0x737373);
-    makePlatform(19.5, -26, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(19.5, -29, 2.5, 0.5, 9, 5, scene, platforms, 0x737373);
-    makePlatform(19.5, -38, 2.5, 0.5, 9, 5, scene, platforms, 0x737373);
-    makePlatform(22.5, -62, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(22.5, -65, 2.5, 0.5, 15, 5, scene, platforms, 0x737373);
-    makePlatform(22.5, -74, 2.5, 0.5, 9, 5, scene, platforms, 0x737373);
-    makePlatform(25.5, -26, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(25.5, -35, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(25.5, -47, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(25.5, -56, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(27, -59, 2.5, 0.5, 6, 5, scene, platforms, 0x737373);
-    makePlatform(28.5, -29, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(28.5, -44, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(28.5, -53, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(28.5, -77, 2.5, 0.5, 3, 5, scene, platforms, 0x737373); //width
-    makePlatform(3, -63.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(3, -74, 2.5, 6, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(6, -26, 2.5, 6, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(6, -59, 2.5, 18, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(6, -72.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(9, -29, 2.5, 6, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(9, -36.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(9, -42.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(9, -48.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(9, -60.5, 2.5, 9, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(9, -74, 2.5, 6, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(12, -24.5, 2.5, 9, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(12, -36.5, 2.5, 9, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(12, -45.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(12, -57.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-
-    makePlatform(12, -69.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(15, -29, 2.5, 6, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(15, -45.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(15, -54.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(15, -63.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(15, -75.5, 2.5, 9, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(18, -24.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(18, -32, 2.5, 6, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(18, -42.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(18, -48.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(18, -57.5, 2.5, 9, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(21, -24.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(21, -35, 2.5, 6, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(21, -44, 2.5, 6, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(21, -59, 2.5, 12, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(21, -74, 2.5, 6, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(24, -21.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(24, -30.5, 2.5, 9, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(24, -48.5, 2.5, 21, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(24, -69.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(24, -77, 2.5, 6, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(27, -24.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(27, -30.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(27, -38, 2.5, 6, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(27, -60.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(27, -71, 2.5, 6, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(0, -50, 5, 60, 60, 0.5, scene, platforms, 0x737373);
-
-    makePlatform(-1.5, -86, 0, 4.5, 1.5, 0.5, scene, platforms, 0xff0000, 1.0);
-    const cityTele = [];
-    makePlatform(-7.5, -87.5, 0, 1.5, 1.5, 0.5, scene, cityTele, 0x00fff7, 1.0);
+    
     const bullets = [];
     function createNameTag(name) {
       const canvas = document.createElement('canvas');
@@ -803,8 +638,43 @@ import * as THREE from 'three';
 
       return group;
     }
+    function updateBotX(bot, player, speed) {
+      // Vector from bot → player
+      const toPlayer = new THREE.Vector3().subVectors(player.position, bot.position);
+
+      // Flatten to XZ plane (ignore vertical difference if you want ground movement only)
+      toPlayer.y = 0;
+      toPlayer.normalize();
+
+      // Move bot toward player
+      // bot.position.add(toPlayer.multiplyScalar(speed));
+      bot.position.x+=toPlayer.x*speed;
+
+      // Make bot face player (rotate toward player)
+      bot.lookAt(player.position.x, bot.position.y, player.position.z);
+    }
+    function updateBotZ(bot, player, speed) {
+      // Vector from bot → player
+      const toPlayer = new THREE.Vector3().subVectors(player.position, bot.position);
+
+      // Flatten to XZ plane (ignore vertical difference if you want ground movement only)
+      toPlayer.y = 0;
+      toPlayer.normalize();
+
+      // Move bot toward player
+      // bot.position.add(toPlayer.multiplyScalar(speed));
+      bot.position.z+=toPlayer.z*speed;
+
+      // Make bot face player (rotate toward player)
+      bot.lookAt(player.position.x, bot.position.y, player.position.z);
+    }
+    function getRandomInt(min, max) {
+      const minCeiled = Math.ceil(min);
+      const maxFloored = Math.floor(max);
+      return Math.floor(Math.random() * (maxFloored - minCeiled) + minCeiled);
+    }
     const player = createPlayer();
-    player.position.set(0, 5, 0);
+    player.position.set(100, 5, -50);
     scene.add(player);
     function createHealthBar(p) {
         const canvas = document.createElement('canvas');
@@ -922,11 +792,16 @@ import * as THREE from 'three';
     let lightningID = null;
     let lightningRef = null;
     let toStrikeX=null;
+    let ticksToDestroy = -1
     let toStrikeZ=null;
+    let toStrikeXAuto = null;
+    let toStrikezAuto = null;
+    let nextSpawnTick = 0;
+    // let inCar = false;
+    let inCity = false;
     let prevL = null;
-    const bossTele = [];
-    makePlatform(-50, -20, 1, 3, 0.5, 10, scene, bossTele, 0x00fff7);
-    
+    const spawnTele = [];
+    makePlatform(100, -55, 1, 0.5, 3, 10, scene, spawnTele, 0x00fff7);
     function animate() {
         gameTicks++;
         let phasing = false;
@@ -1071,13 +946,7 @@ import * as THREE from 'three';
           if (!blocked){
             player.position.z = testPosition.z;
           }
-          bboxplayer = new THREE.Box3().setFromObject(player);
-          for (const k of killBricks) {
-            var bboxobj = new THREE.Box3().setFromObject(k);
-            if (bboxplayer.intersectsBox(bboxobj)) {
-              player.position.set(0, 5, 0);
-            }
-          }
+
           bboxplayer = new THREE.Box3().setFromObject(player);
           for (const l in lightnings){
             for (const m of lightnings[l]) {
@@ -1100,22 +969,26 @@ import * as THREE from 'three';
             }
           }
           bboxplayer = new THREE.Box3().setFromObject(player);
-          for (const bt of bossTele){
-            let bboxBossTele = new THREE.Box3().setFromObject(bt);
-            if (bboxplayer.intersectsBox(bboxBossTele)) {
-              tpBoss();
+          for (const l in lightningsTimed){
+            for (const m of lightningsTimed[l]) {
+              var bboxobj = new THREE.Box3().setFromObject(m);
+              if (bboxplayer.intersectsBox(bboxobj)) {
+                player.position.set(100, 5, -50);
+              }
             }
           }
-          for (const ct of cityTele){
-            let bboxCityTele = new THREE.Box3().setFromObject(ct);
-            if (bboxplayer.intersectsBox(bboxCityTele)) {
-              if (markersFound.includes("Maze Completed")){
-              } else {
-                alert("You have completed the Maze");
-                markersFound.push("Maze Completed");
-                playerRef.onDisconnect().update({ Achievements: markersFound.join(', ') });
-              }
-              tpCity();
+          bboxplayer = new THREE.Box3().setFromObject(player);
+          for (let i = bots.length - 1; i >= 0; i--) {
+            let b = bots[i];
+            let bboxBot = new THREE.Box3().setFromObject(b.mesh);
+            if (bboxplayer.intersectsBox(bboxBot)){
+              player.position.set(100, 5, -50);
+            }
+          }
+          for (const st of spawnTele){
+            let bboxspawnTele = new THREE.Box3().setFromObject(st);
+            if (bboxplayer.intersectsBox(bboxspawnTele)) {
+              tpSpawn();
             }
           }
 
@@ -1124,6 +997,7 @@ import * as THREE from 'three';
           if (admin!=true){
             onGround = false;
           }
+
         }
 
         if (gameTicks%5 === 0) {
@@ -1144,19 +1018,117 @@ import * as THREE from 'three';
               m.rotation.x = -m.rotation.x;
             }
           }
+          for (const t in lightningsTimed) {
+            for (const l of lightningsTimed[t]){
+              l.rotation.x = -l.rotation.x;
+            }
+          }
+          if (Math.floor(Math.random() * 5) == 2) {
+            if (ticksToDestroy != 0){
+              lightningsTimed[lightningTicks]=[];
+              const toX = getRandomInt(50, 211);
+              const toZ = getRandomInt(-40, 141);
+              for (let i = 0; i < 20; i+=2){
+                makePlatform(toX, toZ, 3+(2.598076211*i), 0.5, 0.5, 3, scene, lightningsTimed[lightningTicks], 0xfcfc03, 1.0, -Math.PI/6);
+                makePlatform(toX, toZ, 3+(2.598076211*(i+1)), 0.5, 0.5, 3, scene, lightningsTimed[lightningTicks], 0xfcfc03, 1.0, Math.PI/6);
+              }
+            }
+            if (Math.floor(Math.random()*10)==2 && ticksToDestroy==-1 && player.position.x>50) {
+              toStrikeXAuto=player.position.x;
+              toStrikezAuto=player.position.z;
+              ticksToDestroy=20;
+            }
+          }
+          if (ticksToDestroy>0){
+            ticksToDestroy--;
+          } else if (ticksToDestroy == 0) {
+            lightningsTimed[lightningTicks]=[];
+            for (let i = 0; i < 20; i+=2){
+              makePlatform(toStrikeXAuto, toStrikezAuto, 3+(2.598076211*i), 0.5, 0.5, 3, scene, lightningsTimed[lightningTicks], 0xfcfc03, 1.0, -Math.PI/6);
+              makePlatform(toStrikeXAuto, toStrikezAuto, 3+(2.598076211*(i+1)), 0.5, 0.5, 3, scene, lightningsTimed[lightningTicks], 0xfcfc03, 1.0, Math.PI/6);
+            }
+            ticksToDestroy=-1;
+          }
+          for (const t in lightningsTimed) {
+            if (lightningTicks-t >= 10) {
+              for (const seg of lightningsTimed[t]) {
+                scene.remove(seg);
+              }
+              delete lightningsTimed[t];
+            }
+          }
+        }
+        if (gameTicks>=nextSpawnTick){
+          makeBot(195, 125, scene, bots);
+          makeBot(165, 125, scene, bots);
+          makeBot(145, 125, scene, bots);
+          makeBot(115, 125, scene, bots);
+          makeBot(95, 125, scene, bots);
+          makeBot(75, 125, scene, bots);
+          makeBot(205, 105, scene, bots);
+          makeBot(175, 105, scene, bots);
+          makeBot(125, 105, scene, bots);
+          makeBot(95, 105, scene, bots);
+          makeBot(175, 85, scene, bots);
+          makeBot(115, 85, scene, bots);
+          makeBot(145, 75, scene, bots);
+          makeBot(105, 65, scene, bots);
+          makeBot(75, 65, scene, bots);
+          makeBot(195, 55, scene, bots);
+          makeBot(145, 55, scene, bots);
+          makeBot(155, 45, scene, bots);
+          makeBot(105, 45, scene, bots);
+          makeBot(175, 35, scene, bots);
+          makeBot(55, 35, scene, bots);
+          makeBot(145, 25, scene, bots);
+          makeBot(195, 15, scene, bots);
+          makeBot(115, 15, scene, bots);
+          makeBot(75, 15, scene, bots);
+          makeBot(135, 5, scene, bots);
+          makeBot(55, 5, scene, bots);
+          makeBot(185, -5, scene, bots);
+          makeBot(155, -5, scene, bots);
+          makeBot(195, -15, scene, bots);
+          makeBot(95, -15, scene, bots);
+          makeBot(135, -25, scene, bots);
+          makeBot(65, -25, scene, bots);
+          makeBot(175, -35, scene, bots);
+          nextSpawnTick+=500;
         }
         
-
-        for (const bt of bossTele){
-          bt.material.forEach((mat) => {
-            if (mat.map) {
-              mat.map.offset.x += 0.01;
-              mat.map.offset.y += 0.005;
-            }
-          });
+        if (!inCity){
+          makeCity();
+          inCity=true;
         }
-        for (const ct of cityTele) {
-          ct.material.forEach((mat) => {
+        for (let i = bots.length - 1; i >= 0; i--) {
+          let b = bots[i];
+          let bOldPosition = b.mesh.position.clone();
+          updateBotX(b.mesh, player, 0.1);
+          let botBoxObj = new THREE.Box3().setFromObject(b.mesh);
+          for (const p of platforms) {
+            var bboxobj = new THREE.Box3().setFromObject(p);
+            if (botBoxObj.intersectsBox(bboxobj)) {
+              b.mesh.position.x=bOldPosition.x;
+              break;
+            }
+          }
+          updateBotZ(b.mesh, player, 0.1);
+          botBoxObj = new THREE.Box3().setFromObject(b.mesh);
+          for (const p of platforms) {
+            var bboxobj = new THREE.Box3().setFromObject(p);
+            if (botBoxObj.intersectsBox(bboxobj)) {
+              b.mesh.position.z=bOldPosition.z;
+              break;
+            }
+          }
+          b.age++;
+          if (b.age >= 500) {
+            scene.remove(b.mesh);
+            bots.splice(i, 1);
+          }
+        }
+        for (const st of spawnTele) {
+          st.material.forEach((mat) => {
             if (mat.map) {
               mat.map.offset.x += 0.01;
               mat.map.offset.y += 0.005;
@@ -1314,6 +1286,11 @@ playerRef.child("Achievements").on("value", snapshot => {
   playerRef.onDisconnect().update({ Achievements: markersFound.join(', ') });
   playerRef.update({ achrcv: true });
   playerRef.child("Achievements").remove();
+  if (markersFound.includes("Maze Completed")){
+
+  } else {
+    tpSpawn();
+  }
 });
 playerRef.child("admin").on("value", snapshot => {
   admin = snapshot.val();
@@ -1420,14 +1397,11 @@ function checkStart() {
           scene.remove(otherPlayers[id]);
           delete otherPlayers[id];
         }
-        if (data[id].world='boss') {
+        if (data[id].world='spawn'){
           scene.remove(otherPlayers[id]);
           delete otherPlayers[id];
         }
-        if (data[id].world='city'){
-          scene.remove(otherPlayers[id]);
-          delete otherPlayers[id];
-        }
+        
       }
     });
   </script>
