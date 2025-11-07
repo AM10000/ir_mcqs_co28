@@ -612,19 +612,6 @@ import * as THREE from 'three';
             player.position.z = testPosition.z;
           }
           bboxplayer = new THREE.Box3().setFromObject(player);
-          for (const p of tp) {
-            var bboxobj = new THREE.Box3().setFromObject(p);
-            if (bboxplayer.intersectsBox(bboxobj)) {
-              player.position.set(100, 5, -50);
-              if (markersFound.includes("Maze Completed")){
-              } else {
-                alert("You have completed the Maze");
-                markersFound.push("Maze Completed");
-                playerRef.onDisconnect().update({ Achievements: markersFound.join(', ') });
-              }
-            }
-          }
-          bboxplayer = new THREE.Box3().setFromObject(player);
           for (const l in lightnings){
             for (const m of lightnings[l]) {
               var bboxobj = new THREE.Box3().setFromObject(m);
