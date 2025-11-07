@@ -73,21 +73,6 @@
     #loginContainer button:hover {
       background: #45a049;
     }
-    #toggleContainer {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      background: rgba(0,0,0,0.5);
-      color: white;
-      padding: 8px 12px;
-      border-radius: 8px;
-      font-family: sans-serif;
-      z-index: 10;
-    }
-    input[type="checkbox"] {
-      transform: scale(1.3);
-      margin-right: 8px;
-    }
 
     canvas { display: block; }
   </style>
@@ -108,22 +93,7 @@
     display: none;">
   </div>
   <div id="loginContainer">
-    <h2>Login</h2>
-    <form id="loginForm">
-      <input type="text" id="username" placeholder="Username" required>
-      <input type="password" id="password" placeholder="Password" required>
-      <input type="text" id ='screenName' placeholder="Screen Name">
-      <button id='joinBtn' type='button'>Enter Game</button>
-      <button type="button" id="createAccountBtn">Create Account</button>
-      
-    </form>
-    
-  </div>
-   <div id="toggleContainer">
-    <label>
-      <input type="checkbox" id="graphicsToggle" checked>
-      Enable Shadows
-    </label>
+    <h2>YOU REALLY THOUGHT U WERE SMART</h2>
   </div>
 <!--   <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script> -->
   <script  type="importmap">{
@@ -152,73 +122,25 @@ import * as THREE from 'three';
     const db = firebase.database();
     const queryString = window.location.search;
     const urlParams = new URLSearchParams(queryString);
-    let playerId, uname, screenName;
-    let firstTime;
-    if (!urlParams.has('id')){
-      playerId = "player_" + Math.random().toString(36).substring(2, 10);
-      uname = null;
-      screenName=null;
-      firstTime = true;
-    } else {
-      playerId = urlParams.get('id');
-      uname = urlParams.get('uname');
-      screenName = urlParams.get('screenName');
-      firstTime = false;
-    }
-    
+    const playerId = urlParams.get('id');
+    const uname = urlParams.get('uname');
+    const screenName = urlParams.get('screenName');
     const playerRef = db.ref('players/' + playerId);
-    // playerRef.update({ achrcv: false });
+
+    function tpBoss(){
+        playerRef.onDisconnect().cancel().then(()=>{
+            playerRef.update({ world: 'boss', achrcv: false });
+            window.location.href = 'b.html?id='+playerId+'&screenName='+screenName+'&uname='+uname;
+        });
+    }
     let yourIP=null;
-    function sendInfo(event){
-      event.preventDefault();
-      fetch('https://api.ipify.org?format=json')
-      .then(res => res.json())
-      .then(data => {
-        const ip = data.ip;
-        yourIP=data.ip;
-        screenName = document.getElementById('screenName').value.trim();
-        uname = document.getElementById('username').value.trim();
-        let pword = document.getElementById('password').value.trim();
-        if (uname && pword){
-          playerRef.set({ x: 0, y: 5, z: 0, screenName: screenName||'Player', ip:ip, uname:uname, pword:pword, world: 'spawn' });
-        } else {
-          alert("Please enter the username and password fields to authenticate yourself.");
-        }
-      });
-    }
-	document.getElementById("joinBtn").addEventListener("click", sendInfo);
-
-  function tpBoss(){
-    playerRef.onDisconnect().cancel().then(()=>{
-      playerRef.update({ world: 'boss', achrcv: false });
-      window.location.href = 'b.html?id='+playerId+'&screenName='+screenName+'&uname='+uname;
-    });
-  }
-
-  function tpCity(){
-    playerRef.onDisconnect().cancel().then(()=>{
-      playerRef.update({ world: 'city', achrcv: false });
-      window.location.href = 'irCity.html?id='+playerId+'&screenName='+screenName+'&uname='+uname;
-    });
-  }
-    function createAccount(event){
-      event.preventDefault();
-      fetch('https://api.ipify.org?format=json')
-      .then(res => res.json())
-      .then(data => {
-        const ip = data.ip;
-        yourIP=data.ip;
-        screenName = document.getElementById('screenName').value.trim();
-        uname = document.getElementById('username').value.trim();
-        let pword = document.getElementById('password').value.trim();
-        if (uname && pword){
-          playerRef.set({ x: 0, y: 5, z: 0, screenName: screenName||'Player', ip:ip, uname:uname, pword:pword, new: true });
-        } else {
-          alert("Please enter the username and password fields with your new account info to create it.");
-        }
-      });
-    }
-    document.getElementById("createAccountBtn").addEventListener("click", createAccount);
+    // fetch('https://api.ipify.org?format=json')
+    //   .then(res => res.json())
+    //   .then(data => {
+    //     const ip = data.ip;
+    //     yourIP=data.ip;
+    //     playerRef.set({ x: 0, y: 5, z: 0, screenName: screenName||'Player', ip:ip, uname:uname, auth:true });
+    //   });
     const otherPlayers = {};
     const lightnings = {};
     class Bullet {
@@ -236,7 +158,7 @@ import * as THREE from 'three';
         }
     }
 
-    function makePlatform(x, y, z, height, width, depth, scene, platformList, color = 0x00ff00, opacity = 1.0, rotx = 0, roty = 0, rotz = 0, ret = false) {
+    function makePlatform(x, y, z, height, width, depth, scene, platformList, color = 0x00ff00, opacity = 1.0, rotx = 0, roty = 0, rotz = 0) {
         const loader = new THREE.TextureLoader();
         let imagePath;
         if(color === 0x00ff00) {
@@ -244,7 +166,7 @@ import * as THREE from 'three';
         }else if (color === 0x737373) {
           imagePath = 'rocks.jpeg';
         }else if (color === 0x00fff7){
-          imagePath= 'portal.jpeg';
+          imagePath = 'portal.jpeg';
         }else{
           imagePath='studs.jpeg';
         }
@@ -295,369 +217,53 @@ import * as THREE from 'three';
             platform.rotation.x = rotx;
             platform.rotation.y = rotz;
             platform.rotation.z = roty;
-            platform.castShadow = true;
-            platform.receiveShadow = true;
 
             scene.add(platform);
-            if (!ret){
-              platformList.push(platform);
-            } else {
-              return platform;
-            }
+            platformList.push(platform);
         });
-    }
-    function makeTorus(x, y, z, radius, tube, radialSegments, tubularSegments, scene, list){
-      const shape = new THREE.Mesh(
-            new THREE.TorusGeometry(radius, tube, radialSegments, tubularSegments),
-            new THREE.MeshStandardMaterial({ color: color })
-        );
-      shape.position.set(x, z, y);
-      shape.rotation.x=Math.PI/2;
-      scene.add(shape);
-      list.push(shape);
-    }
-    function makeCircle(x, y, z, radius, scene, list) {
-      const shape = new THREE.Mesh(
-            new THREE.CylinderGeometry(radius, radius, 0.1),
-            new THREE.MeshStandardMaterial({ color: color })
-        );
-      shape.position.set(x, z, y);
-      // shape.rotation.x=Math.PI/2;
-      scene.add(shape);
-      list.push(shape);
-    }
-    const ladders = [];
-    function makeCylinder(x, y, z, radius, height, scene, list, color=0x000dff) {
-      const shape = new THREE.Mesh(
-        new THREE.CylinderGeometry(radius, radius, height),
-        new THREE.MeshStandardMaterial({ color:color })
-      );
-      shape.position.set(x, y, z);
-      scene.add(shape);
-      list.push(shape);
-    }
-    function makeBot(x, z, scene, list){
-      let bot = createPlayer(0x0a9600);
-      bot.position.set(x, 1, z);
-      scene.add(bot);
-      list.push({ mesh: bot, age: 0 })
-    }
-    function makeLadder(x, y, z, height = 5, spacing = 0.5) {
-      const ladderGroup = new THREE.Group();
-    
-      for (let i = 0; i < height; i++) {
-        const step = new THREE.Mesh(
-          new THREE.BoxGeometry(0.8, 0.1, 0.1),
-          new THREE.MeshStandardMaterial({ color: 0x8b4513 })
-        );
-        step.castShadow = true;
-        step.receiveShadow = true;
-        step.position.set(x, y + i * spacing, z);
-        ladderGroup.add(step);
-      }
-    
-      ladderGroup.userData.isLadder = true;
-      ladderGroup.position.set(x, y, z);
-      scene.add(ladderGroup);
-      ladders.push(ladderGroup);
-    }
-    function makeRoad(x, y, z, width, height, scene){
-      const road = new THREE.Mesh(
-        new THREE.PlaneGeometry(width, height),
-        new THREE.MeshStandardMaterial({ color: 0x545252})
-      );
-      road.position.set(x, y, z);
-      road.rotation.x=-Math.PI/2;
-      scene.add(road);
     }
     let zoomDistance = 6;
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0xa0d0ff);
+
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
     const renderer = new THREE.WebGLRenderer();
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    const light = new THREE.DirectionalLight(0xffffff, 1);
-    light.position.set(5, 10, 5);
-    light.castShadow = true;
+    // renderer.shadowMap.enabled = true;
+    // renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    // const light = new THREE.DirectionalLight(0xffffff, 1);
+    // light.position.set(5, 10, 5);
+    // light.castShadow = true;
+    // scene.add(light);
 
-    light.shadow.mapSize.width = 2048;
-    light.shadow.mapSize.height = 2048;
-    light.shadow.camera.near = 0.5;
-    light.shadow.camera.far = 50;
-    light.shadow.camera.left = -50;
-    light.shadow.camera.right = 50;
-    light.shadow.camera.top = 50;
-    light.shadow.camera.bottom = -50;
-    light.shadow.camera.updateProjectionMatrix();
+    // Optional: improve shadow quality
+    // light.shadow.mapSize.width = 8;
+    // light.shadow.mapSize.height = 8;
+    // light.shadow.camera.near = 0.5;
+    // light.shadow.camera.far = 50;
+    // light.shadow.camera.left = -50;
+    // light.shadow.camera.right = 50;
+    // light.shadow.camera.top = 50;
+    // light.shadow.camera.bottom = -50;
+    // light.shadow.camera.updateProjectionMatrix();
 
-    function toggleGraphics(enabled) {
-      console.log("Graphics toggled:", enabled);
-      // You can add your own graphics toggle logic here
-      if (enabled){
-        scene.add(light);
-      } else {
-        scene.remove(light);
-      }
 
-    }
-
-    // --- Checkbox event listener ---
-    const checkbox = document.getElementById('graphicsToggle');
-    checkbox.addEventListener('change', (e) => {
-      toggleGraphics(e.target.checked);
-    });
     // Optional: ambient light
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
     scene.add(ambientLight);
     const dirLight = new THREE.DirectionalLight(0xffffff, 1);
     dirLight.position.set(10, 10, 10);
-    // dirLight.castShadow = true;
+    dirLight.castShadow = true;
     scene.add(dirLight);
 
     const platforms = [];
     const killBricks = [];
-    const rings = [];
-    const bouncers=[];
-    const markers=[];
-    const bots=[];
-    const skyscrapers=[]
-    let lightningsTimed={};
     let markersFound=[];
     playerRef.onDisconnect().update({ Achievements: markersFound.join(', ') });
-    for (let i = 1; i < 5; i++) {
-      makePlatform(0, i, i, 1, 3, 0.5, scene, platforms, 0x000dff);
-    }
-    makePlatform(-2475, 2460, 0, 5080, 5050, 0.5, scene, platforms);
-    makePlatform(0, 6, 5, 3, 3, 0.5, scene, platforms, 0x000dff);
-    for (let i=1; i<5; i++) {
-      makePlatform(-i-1, 6, i+5, 3, 1, 0.5, scene, platforms, 0x000dff);
-    }
-    for(let i=1; i<5; i++) {
-      if (i%2==1){
-        makePlatform(-i*5-5, 6, 9, 3, 3, 0.5, scene, platforms, 0x000dff);
-        makePlatform(-i*5-5, 5, 9.5, 1, 3, 0.5, scene, killBricks, 0xff0000);
-      } else {
-        makePlatform(-i*5-5, 6, 9, 3, 3, 0.5, scene, platforms, 0x000dff);
-        makePlatform(-i*5-5, 7, 9.5, 1, 3, 0.5, scene, killBricks, 0xff0000);
-      }
-    }
-    makePlatform(-34, 6, 9, 7, 10, 0.5, scene, platforms, 0x000dff);
-    makePlatform(-32, 6, 14, 7, 1, 10, scene, platforms, 0x000dff);
-    makePlatform(-36, 6, 14, 7, 1, 10, scene, platforms, 0x000dff);
-    makeCylinder(-38, 10, 6, 0.5, 2, scene, markers, 0x00f2ff);
-    // makePlatform(-19, -10, 5, 0.5, 48, 10, scene, platforms, 0x737373);
-    makePlatform(-6.25, -10, 2.5, 0.5, 22.5, 5, scene, platforms, 0x737373);
-    makePlatform(-31.75, -10, 2.5, 0.5, 22.5, 5, scene, platforms, 0x737373);
-    // width = 22.5
-    // dist from ends = 11.25
-    // end 1 = 5
-    // end 2 = -43
-    makePlatform(-19, -10, 7.5, 0.5, 48, 5, scene, platforms, 0x737373);
-    makePlatform(-42.75, 1.5, 5, 23, 0.5, 10, scene, platforms, 0x737373);
-    makePlatform(-19, 13.25, 5, 0.5, 48, 10, scene, platforms, 0x737373);
-    makePlatform(4.75, 1.5, 5, 23, 0.5, 10, scene, platforms, 0x737373);
-    // makeRoad(-19, 0.3, -24.75, 3, 30, scene);
-
-    makePlatform(-15, -20, 2.5, 0.5, 30, 5, scene, platforms, 0x737373);
-    makePlatform(16.5, -20, 2.5, 0.5, 27, 5, scene, platforms, 0x737373);
-    makePlatform(30, -50, 2.5, 60, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(15, -80, 2.5, 0.5, 30, 5, scene, platforms, 0x737373);
-    makePlatform(-16.5, -80, 2.5, 0.5, 27, 5, scene, platforms, 0x737373);
-    makePlatform(-30, -50, 2.5, 60, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(3, -21.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(1.5, -23, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(0, -27.5, 2.5, 9, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(1.5, -26, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(-7.5, -29, 2.5, 0.5, 15, 5, scene, platforms, 0x737373);
-    makePlatform(-3, -23, 2.5, 6, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-6, -26, 2.5, 0.5, 6, 5, scene, platforms, 0x737373);
-    makePlatform(-9, -24.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-7.5, -23, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(-12, -26, 2.5, 6, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-15, -21.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-15, -26, 2.5, 0.5, 6, 5, scene, platforms, 0x737373);
-    makePlatform(-18, -26, 2.5, 6, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-19.5, -23, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(-21, -32, 2.5, 18, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-24, -23, 2.5, 6, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-27, -26, 2.5, 6, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-24, -29, 2.5, 0.5, 6, 5, scene, platforms, 0x737373);
-    makePlatform(-27, -32, 2.5, 0.5, 6, 5, scene, platforms, 0x737373);
-    makePlatform(-24, -35, 2.5, 6, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-15, -32, 2.5, 0.5, 12, 5, scene, platforms, 0x737373);
-
-    makePlatform(-13.5, -35, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(-7.5, -35, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(-4.5, -32, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(-3, -38, 2.5, 0.5, 6, 5, scene, platforms, 0x737373);
-    makePlatform(-13.5, -38, 2.5, 0.5, 9, 5, scene, platforms, 0x737373);
-    makePlatform(-21, -41, 2.5, 0.5, 12, 5, scene, platforms, 0x737373);
-    makePlatform(-22.5, -44, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(-19.5, -47, 2.5, 0.5, 15, 5, scene, platforms, 0x737373);
-    makePlatform(-28.5, -44, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(-10.5, -50, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(-21, -50, 2.5, 0.5, 6, 5, scene, platforms, 0x737373);
-    makePlatform(-28.5, -50, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(-9, -53, 2.5, 0.5, 6, 5, scene, platforms, 0x737373);
-    makePlatform(-27, -38, 2.5, 6, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-15, -33.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-6, -35, 2.5, 12, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-18, -36.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-15, -41, 2.5, 6, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-24, -42.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-9, -44, 2.5, 12, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-12, -44, 2.5, 6, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-27, -45.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-18, -45.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-15, -51.5, 2.5, 9, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-6, -48.5, 2.5, 9, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-12, -51.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-27, -53, 2.5, 6, 0.5, 5, scene, platforms, 0x737373);
-
-    makePlatform(-19.5, -53, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(0, -35, 2.5, 0.5, 6, 5, scene, platforms, 0x737373);
-    makePlatform(0, -41, 2.5, 0.5, 6, 5, scene, platforms, 0x737373);
-    makePlatform(-1.5, -44, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(-7.5, -56, 2.5, 0.5, 15, 5, scene, platforms, 0x737373);
-    makePlatform(4.5, -29, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(4.5, -38, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(4.5, -44, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(1.5, -47, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(-25.5, -59, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(-25.5, -65, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(-25.5, -68, 2.5, 0.5, 9, 5, scene, platforms, 0x737373);
-    makePlatform(-22.5, -62, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(-19.5, -65, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(-13.5, -71, 2.5, 0.5, 15, 5, scene, platforms, 0x737373);
-    makePlatform(-15, -59, 2.5, 0.5, 6, 5, scene, platforms, 0x737373);
-    makePlatform(-12, -62, 2.5, 0.5, 6, 5, scene, platforms, 0x737373);
-    makePlatform(-12, -68, 2.5, 0.5, 6, 5, scene, platforms, 0x737373);
-    makePlatform(-24, -77, 2.5, 0.5, 6, 5, scene, platforms, 0x737373);
-    makePlatform(-28.5, -74, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(-19.5, -74, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(-7.5, -65, 2.5, 0.5, 9, 5, scene, platforms, 0x737373);
-    makePlatform(-7.5, -59, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(-12, -77, 2.5, 0.5, 6, 5, scene, platforms, 0x737373);
-    makePlatform(-7.5, -74, 2.5, 0.5, 9, 5, scene, platforms, 0x737373);
-    makePlatform(-3, -77, 2.5, 0.5, 6, 5, scene, platforms, 0x737373);
-    makePlatform(-1.5, -71, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(10.5, -68, 2.5, 0.5, 27, 5, scene, platforms, 0x737373);
-    makePlatform(1.5, -53, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(4.5, -50, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(-24, -54.5, 2.5, 9, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-18, -54.5, 2.5, 9, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-3, -48.5, 2.5, 15, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(3, -36.5, 2.5, 15, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(6, -39.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(0, -50, 2.5, 6, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-27, -62, 2.5, 6, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-24, -71, 2.5, 12, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-21, -60.5, 2.5, 9, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-18, -66.5, 2.5, 9, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-12, -60.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-15, -65, 2.5, 6, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-27, -72.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-18, -77, 2.5, 6, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-6, -65, 2.5, 12, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-9, -57.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-15, -74, 2.5, 6, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-9, -75.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(0, -77, 2.5, 6, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-3, -72.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(-3, -62, 2.5, 6, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(0, -65, 2.5, 12, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(3, -54.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(3, -48.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-
-    makePlatform(1.5, -62, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(4.5, -71, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(4.5, -59, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(7.5, -77, 2.5, 0.5, 9, 5, scene, platforms, 0x737373);
-    makePlatform(7.5, -47, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(7.5, -35, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(7.5, -23, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(9, -32, 2.5, 0.5, 6, 5, scene, platforms, 0x737373);
-    makePlatform(10.5, -26, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(10.5, -38, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(10.5, -65, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(10.5, -71, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(12, -44, 2.5, 0.5, 6, 5, scene, platforms, 0x737373);
-    makePlatform(12, -53, 2.5, 0.5, 12, 5, scene, platforms, 0x737373);
-    makePlatform(13.5, -59, 2.5, 0.5, 9, 5, scene, platforms, 0x737373);
-    makePlatform(13.5, -62, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(13.5, -74, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(15, -35, 2.5, 0.5, 6, 5, scene, platforms, 0x737373);
-    makePlatform(15, -23, 2.5, 0.5, 6, 5, scene, platforms, 0x737373);
-    makePlatform(16.5, -41, 2.5, 0.5, 9, 5, scene, platforms, 0x737373);
-    makePlatform(16.5, -47, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(16.5, -71, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(16.5, -77, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(18, -50, 2.5, 0.5, 18, 5, scene, platforms, 0x737373);
-    makePlatform(19.5, -26, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(19.5, -29, 2.5, 0.5, 9, 5, scene, platforms, 0x737373);
-    makePlatform(19.5, -38, 2.5, 0.5, 9, 5, scene, platforms, 0x737373);
-    makePlatform(22.5, -62, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(22.5, -65, 2.5, 0.5, 15, 5, scene, platforms, 0x737373);
-    makePlatform(22.5, -74, 2.5, 0.5, 9, 5, scene, platforms, 0x737373);
-    makePlatform(25.5, -26, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(25.5, -35, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(25.5, -47, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(25.5, -56, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(27, -59, 2.5, 0.5, 6, 5, scene, platforms, 0x737373);
-    makePlatform(28.5, -29, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(28.5, -44, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(28.5, -53, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(28.5, -77, 2.5, 0.5, 3, 5, scene, platforms, 0x737373); //width
-    makePlatform(3, -63.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(3, -74, 2.5, 6, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(6, -26, 2.5, 6, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(6, -59, 2.5, 18, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(6, -72.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(9, -29, 2.5, 6, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(9, -36.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(9, -42.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(9, -48.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(9, -60.5, 2.5, 9, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(9, -74, 2.5, 6, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(12, -24.5, 2.5, 9, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(12, -36.5, 2.5, 9, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(12, -45.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(12, -57.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-
-    makePlatform(12, -69.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(15, -29, 2.5, 6, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(15, -45.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(15, -54.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(15, -63.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(15, -75.5, 2.5, 9, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(18, -24.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(18, -32, 2.5, 6, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(18, -42.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(18, -48.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(18, -57.5, 2.5, 9, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(21, -24.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(21, -35, 2.5, 6, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(21, -44, 2.5, 6, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(21, -59, 2.5, 12, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(21, -74, 2.5, 6, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(24, -21.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(24, -30.5, 2.5, 9, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(24, -48.5, 2.5, 21, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(24, -69.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(24, -77, 2.5, 6, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(27, -24.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(27, -30.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(27, -38, 2.5, 6, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(27, -60.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(27, -71, 2.5, 6, 0.5, 5, scene, platforms, 0x737373);
-    makePlatform(0, -50, 5, 60, 60, 0.5, scene, platforms, 0x737373);
-
-    makePlatform(-1.5, -86, 0, 4.5, 1.5, 0.5, scene, platforms, 0xff0000, 1.0);
-    const cityTele = [];
-    makePlatform(-7.5, -87.5, 0, 1.5, 1.5, 0.5, scene, cityTele, 0x00fff7, 1.0);
+    const bossTele = [];
+    makePlatform(0, -5, 1, 0.5, 3, 10, scene, spawnTele, 0x00fff7);
+    makePlatform(-2475, 2460, 0, 5080, 5050, 0.5, scene, platforms, 0x4d0404);
     const bullets = [];
     function createNameTag(name) {
       const canvas = document.createElement('canvas');
@@ -709,21 +315,6 @@ import * as THREE from 'three';
     }
     let climbing = false;
 
-    function checkLadderClimb() {
-      climbing = false;
-      for (const ladder of ladders) {
-        const dist = player.position.distanceTo((ladder.position)*2);
-        if (dist < 1.5) {
-          if (keys['w']) {
-            velocityY = 0.05; // smooth upward climb
-            climbing = true;
-          } else {
-            velocityY=0;
-          }
-          break; // Only climb one ladder at a time
-        }
-      }
-    }
 
     function createDetailedGun() {
       const gun = new THREE.Group();
@@ -802,6 +393,11 @@ import * as THREE from 'three';
       group.userData = { leftArm, rightArm, leftLeg, rightLeg, walkTime: 0 };
 
       return group;
+    }
+    function getRandomInt(min, max) {
+      const minCeiled = Math.ceil(min);
+      const maxFloored = Math.floor(max);
+      return Math.floor(Math.random() * (maxFloored - minCeiled) + minCeiled);
     }
     const player = createPlayer();
     player.position.set(0, 5, 0);
@@ -917,13 +513,13 @@ import * as THREE from 'three';
     let toStrikeX=null;
     let toStrikeZ=null;
     let prevL = null;
-    const bossTele = [];
-    makePlatform(-50, -20, 1, 3, 0.5, 10, scene, bossTele, 0x00fff7);
-    
+
     function animate() {
         gameTicks++;
         let phasing = false;
         let callLightning=false;
+        // noiseTexture.offset.x+=0.001;
+        // noiseTexture.offset.y+=0.0005;
         requestAnimationFrame(animate);
 
         const direction = new THREE.Vector3();
@@ -935,7 +531,7 @@ import * as THREE from 'three';
         if (keys['d']) direction.x += 1;
         if (keys['p']) phasing=true;
         if (keys['l'] && admin) callLightning=true;
-        checkLadderClimb();
+        
         if (keys['arrowleft']) {
           yaw += 15 * 0.002;
         }
@@ -969,24 +565,6 @@ import * as THREE from 'three';
             player.position.y=oldPosition.y;
           }
         }
-        for (const m of markers) {
-          bboxobj = new THREE.Box3().setFromObject(m);
-          if (bboxplayer.intersectsBox(bboxobj)) {
-            if (player.position.y>m.position.y+m.geometry.parameters.height/2){
-                onGround = true;
-                standingPlatform=m;
-            }
-            velocityY=0;
-            player.position.y=oldPosition.y;
-            if (markersFound.includes("Obby Marker")){
-            } else {
-              alert("You found Obby Marker!");
-              markersFound.push("Obby Marker");
-              playerRef.onDisconnect().update({ Achievements: markersFound.join(', ') });
-            }
-            break;
-          }
-        }
         // if (!inCar) {
           let testPosition = player.position.clone();
 
@@ -1007,22 +585,7 @@ import * as THREE from 'three';
               }
             }
           }
-          for (const m of markers) {
-            var bboxobj = new THREE.Box3().setFromObject(m);
-            if (testBox.intersectsBox(bboxobj)) {
-              if (standingPlatform != m || !onGround) {
-                // player.position.x = oldPosition.x;
-                blocked=true;
-                if (markersFound.includes("Obby Marker")){
-                } else {
-                  alert("You found Obby Marker!");
-                  markersFound.push("Obby Marker");
-                  playerRef.onDisconnect().update({ Achievements: markersFound.join(', ') });
-                }
-                break;
-              }
-            }
-          }
+          
           if (!blocked) {
             player.position.x = testPosition.x;
           }
@@ -1045,30 +608,20 @@ import * as THREE from 'three';
               }
             }
           }
-          for (const m of markers) {
-            var bboxobj = new THREE.Box3().setFromObject(m);
-            if (testBox.intersectsBox(bboxobj)) {
-              if (standingPlatform != m || !onGround) {
-                // player.position.z = oldPosition.z; 
-                blocked=true;
-                if (markersFound.includes("Obby Marker")){
-                } else {
-                  alert("You found Obby Marker!");
-                  markersFound.push("Obby Marker");
-                  playerRef.onDisconnect().update({ Achievements: markersFound.join(', ') });
-                }
-                break;
-              }
-            }
-          }
           if (!blocked){
             player.position.z = testPosition.z;
           }
           bboxplayer = new THREE.Box3().setFromObject(player);
-          for (const k of killBricks) {
-            var bboxobj = new THREE.Box3().setFromObject(k);
+          for (const p of tp) {
+            var bboxobj = new THREE.Box3().setFromObject(p);
             if (bboxplayer.intersectsBox(bboxobj)) {
-              player.position.set(0, 5, 0);
+              player.position.set(100, 5, -50);
+              if (markersFound.includes("Maze Completed")){
+              } else {
+                alert("You have completed the Maze");
+                markersFound.push("Maze Completed");
+                playerRef.onDisconnect().update({ Achievements: markersFound.join(', ') });
+              }
             }
           }
           bboxplayer = new THREE.Box3().setFromObject(player);
@@ -1082,7 +635,7 @@ import * as THREE from 'three';
                     if (player.health <= 0){
                       player.health=100;
                       player.position.set(0, 3, 0);
-                      onGround=True;
+                      onGround=true;
                     }
                     updateHealthBar(player);
                     prevL=m;
@@ -1092,25 +645,13 @@ import * as THREE from 'three';
               }
             }
           }
-          bboxplayer = new THREE.Box3().setFromObject(player);
           for (const bt of bossTele){
             let bboxBossTele = new THREE.Box3().setFromObject(bt);
             if (bboxplayer.intersectsBox(bboxBossTele)) {
               tpBoss();
             }
           }
-          for (const ct of cityTele){
-            let bboxCityTele = new THREE.Box3().setFromObject(ct);
-            if (bboxplayer.intersectsBox(bboxCityTele)) {
-              if (markersFound.includes("Maze Completed")){
-              } else {
-                alert("You have completed the Maze");
-                markersFound.push("Maze Completed");
-                playerRef.onDisconnect().update({ Achievements: markersFound.join(', ') });
-              }
-              tpCity();
-            }
-          }
+        
 
         if (keys[' '] && onGround) {
           velocityY = 0.22;
@@ -1139,17 +680,8 @@ import * as THREE from 'three';
           }
         }
         
-
-        for (const bt of bossTele){
+        for (const bt of bossTele) {
           bt.material.forEach((mat) => {
-            if (mat.map) {
-              mat.map.offset.x += 0.01;
-              mat.map.offset.y += 0.005;
-            }
-          });
-        }
-        for (const ct of cityTele) {
-          ct.material.forEach((mat) => {
             if (mat.map) {
               mat.map.offset.x += 0.01;
               mat.map.offset.y += 0.005;
@@ -1246,7 +778,7 @@ import * as THREE from 'three';
                 if (player.health <= 0){
                   player.health=100;
                   player.position.set(0, 3, 0);
-                  onGround=True;
+                  onGround=true;
                 }
                 updateHealthBar(player);
                 scene.remove(bullet.mesh);
@@ -1261,21 +793,12 @@ import * as THREE from 'three';
                 break;
               }
             }
-            for (let i = bots.length - 1; i >= 0; i--) {
-              let b = bots[i];
-              let bboxBot = new THREE.Box3().setFromObject(b.mesh);
-              if (bboxBullet.intersectsBox(bboxBot)){
-                scene.remove(bullet.mesh);
-                bullets.splice(bulletIndex, 1);
-                scene.remove(b.mesh);
-                bots.splice(i, 1);
-              }
-            }
+
         });
         if (player.health <= 0){
           player.health=100;
           player.position.set(0, 3, 0);
-          onGround=True;
+          onGround=true;
         }
 
         renderer.render(scene, camera);
@@ -1299,7 +822,6 @@ import * as THREE from 'three';
         }
 
     }
-  
 let admin = null;
 let auth = null;
 playerRef.child("Achievements").on("value", snapshot => {
@@ -1317,7 +839,6 @@ playerRef.child("auth").on("value", snapshot => {
   auth = snapshot.val();
   checkStart();
 });
-
 db.ref('lightning').on('value', snapshot => {
   const data = snapshot.val() || {};
   for (const id in data) {
@@ -1413,15 +934,11 @@ function checkStart() {
           scene.remove(otherPlayers[id]);
           delete otherPlayers[id];
         }
-        if (data[id].world='boss') {
-          scene.remove(otherPlayers[id]);
-          delete otherPlayers[id];
-        }
-        if (data[id].world='city'){
-          scene.remove(otherPlayers[id]);
-          delete otherPlayers[id];
-        }
       }
+      if (data[id].world!='lava'){
+          scene.remove(otherPlayers[id]);
+          delete otherPlayers[id];
+        }
     });
   </script>
 </body>
