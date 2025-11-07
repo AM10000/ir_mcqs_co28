@@ -262,7 +262,7 @@ import * as THREE from 'three';
     let markersFound=[];
     playerRef.onDisconnect().update({ Achievements: markersFound.join(', ') });
     const bossTele = [];
-    makePlatform(0, -5, 1, 0.5, 3, 10, scene, spawnTele, 0x00fff7);
+    makePlatform(0, -5, 1, 0.5, 3, 10, scene, bossTele, 0x00fff7);
     makePlatform(-2475, 2460, 0, 5080, 5050, 0.5, scene, platforms, 0x4d0404);
     const bullets = [];
     function createNameTag(name) {
