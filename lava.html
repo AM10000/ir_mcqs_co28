@@ -224,7 +224,7 @@ import * as THREE from 'three';
     }
     let zoomDistance = 6;
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xa0d0ff);
+    scene.background = new THREE.Color(0x000000);
 
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
     const renderer = new THREE.WebGLRenderer();
@@ -921,11 +921,11 @@ function checkStart() {
           scene.remove(otherPlayers[id]);
           delete otherPlayers[id];
         }
-      }
-      if (data[id].world!='lava'){
+        if (data[id].world!='lava'){
           scene.remove(otherPlayers[id]);
           delete otherPlayers[id];
         }
+      }
     });
   </script>
 </body>

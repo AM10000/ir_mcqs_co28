@@ -1330,15 +1330,11 @@ function checkStart() {
     playerRef.child("ip").once('value')
       .then((snapshot)=>{
         if(snapshot.exists()){
-          fetch('https://api.ipify.org?format=json')
-            .then(res => res.json())
-            .then(data => {
-              if (data.ip == snapshot.val()){
-                started = true;
-                document.getElementById('loginContainer').style.display='none';
-                animate();
-              } else {alert("Bad IP");}
-            });
+          if (localStorage.getItem("fakeIP") == snapshot.val()){
+            started = true;
+            document.getElementById('loginContainer').style.display='none';
+            animate();
+          } else {alert("Bad IP");}
         }
       });
   } else if (auth === false && !started) {

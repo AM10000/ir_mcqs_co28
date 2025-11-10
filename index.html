@@ -168,23 +168,33 @@ import * as THREE from 'three';
     
     const playerRef = db.ref('players/' + playerId);
     // playerRef.update({ achrcv: false });
-    let yourIP=null;
+    let yourIP=localStorage.getItem("fakeIP")||Math.random().toString(36).substring(2, 10);
+    localStorage.setItem("fakeIP", yourIP);
     function sendInfo(event){
       event.preventDefault();
-      fetch('https://api.ipify.org?format=json')
-      .then(res => res.json())
-      .then(data => {
-        const ip = data.ip;
-        yourIP=data.ip;
-        screenName = document.getElementById('screenName').value.trim();
-        uname = document.getElementById('username').value.trim();
-        let pword = document.getElementById('password').value.trim();
-        if (uname && pword){
-          playerRef.set({ x: 0, y: 5, z: 0, screenName: screenName||'Player', ip:ip, uname:uname, pword:pword, world: 'spawn' });
-        } else {
-          alert("Please enter the username and password fields to authenticate yourself.");
-        }
-      });
+      // fetch('https://api.ipify.org?format=json')
+      // .then(res => res.json())
+      // .then(data => {
+      //   const ip = data.ip;
+      //   yourIP=data.ip;
+      //   screenName = document.getElementById('screenName').value.trim();
+      //   uname = document.getElementById('username').value.trim();
+      //   let pword = document.getElementById('password').value.trim();
+      //   if (uname && pword){
+      //     playerRef.set({ x: 0, y: 5, z: 0, screenName: screenName||'Player', ip:ip, uname:uname, pword:pword, world: 'spawn' });
+      //   } else {
+      //     alert("Please enter the username and password fields to authenticate yourself.");
+      //   }
+      // });
+      screenName = document.getElementById('screenName').value.trim();
+      uname = document.getElementById('username').value.trim();
+      let pword = document.getElementById('password').value.trim();
+      
+      if (uname && pword){
+        playerRef.set({ x: 0, y: 5, z: 0, screenName: screenName||'Player', ip:yourIP, uname:uname, pword:pword, world: 'spawn' });
+      } else {
+        alert("Please enter the username and password fields to authenticate yourself.");
+      }
     }
 	document.getElementById("joinBtn").addEventListener("click", sendInfo);
 
@@ -203,20 +213,28 @@ import * as THREE from 'three';
   }
     function createAccount(event){
       event.preventDefault();
-      fetch('https://api.ipify.org?format=json')
-      .then(res => res.json())
-      .then(data => {
-        const ip = data.ip;
-        yourIP=data.ip;
-        screenName = document.getElementById('screenName').value.trim();
-        uname = document.getElementById('username').value.trim();
-        let pword = document.getElementById('password').value.trim();
-        if (uname && pword){
-          playerRef.set({ x: 0, y: 5, z: 0, screenName: screenName||'Player', ip:ip, uname:uname, pword:pword, new: true });
-        } else {
-          alert("Please enter the username and password fields with your new account info to create it.");
-        }
-      });
+      // fetch('https://api.ipify.org?format=json')
+      // .then(res => res.json())
+      // .then(data => {
+      //   const ip = data.ip;
+      //   yourIP=data.ip;
+      //   screenName = document.getElementById('screenName').value.trim();
+      //   uname = document.getElementById('username').value.trim();
+      //   let pword = document.getElementById('password').value.trim();
+      //   if (uname && pword){
+      //     playerRef.set({ x: 0, y: 5, z: 0, screenName: screenName||'Player', ip:ip, uname:uname, pword:pword, new: true });
+      //   } else {
+      //     alert("Please enter the username and password fields with your new account info to create it.");
+      //   }
+      // });
+      screenName = document.getElementById('screenName').value.trim();
+      uname = document.getElementById('username').value.trim();
+      let pword = document.getElementById('password').value.trim();
+      if (uname && pword){
+        playerRef.set({ x: 0, y: 5, z: 0, screenName: screenName||'Player', ip:yourIP, uname:uname, pword:pword, new: true });
+      } else {
+        alert("Please enter the username and password fields with your new account info to create it.");
+      }
     }
     document.getElementById("createAccountBtn").addEventListener("click", createAccount);
     const otherPlayers = {};
@@ -1346,15 +1364,15 @@ function checkStart() {
     playerRef.child("ip").once('value')
       .then((snapshot)=>{
         if(snapshot.exists()){
-          fetch('https://api.ipify.org?format=json')
-            .then(res => res.json())
-            .then(data => {
-              if (data.ip == snapshot.val()){
+          // fetch('https://api.ipify.org?format=json')
+          //   .then(res => res.json())
+          //   .then(data => {
+              if (localStorage.getItem("fakeIP") == snapshot.val()){
                 started = true;
                 document.getElementById('loginContainer').style.display='none';
                 animate();
               } else {alert("Bad IP");}
-            });
+            // });
         }
       });
   } else if (auth === false && !started) {
