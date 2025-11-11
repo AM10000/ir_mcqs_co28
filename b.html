@@ -1064,7 +1064,7 @@ db.ref('bosses').on('value', snapshot=> {
         updateHealthBar(player);
       }
       // Do NOT overwrite player.health here to avoid losing local health changes
-    } else {
+    } else if (data[id].world == 'boss') {
       // For other players, update position and health fully from Firebase
       if (!otherPlayers[id]) {
         const newPlayer = createPlayer(0xff0000, pdata.admin||false);
@@ -1106,11 +1106,12 @@ db.ref('bosses').on('value', snapshot=> {
           delete otherPlayers[id];
         }
       }
-      if (data[id].world='spawn'){
+      if (data[id].world=='spawn'){
           scene.remove(otherPlayers[id]);
           delete otherPlayers[id];
         }
     });
   </script>
 </body>
+
 </html>
