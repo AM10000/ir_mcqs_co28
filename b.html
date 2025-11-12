@@ -1105,13 +1105,15 @@ db.ref('bosses').on('value', snapshot=> {
           scene.remove(otherPlayers[id]);
           delete otherPlayers[id];
         }
-      }
-      if (data[id].world=='spawn'){
+		if (data[id].world=='spawn'){
           scene.remove(otherPlayers[id]);
           delete otherPlayers[id];
         }
+      }
+
     });
   </script>
 </body>
 
 </html>
+
