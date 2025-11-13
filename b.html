@@ -133,6 +133,12 @@ import * as THREE from 'three';
         window.location.href = 'index.html?id='+playerId+'&screenName='+screenName+'&uname='+uname;
       });
     }
+    function tpLava(){
+      playerRef.onDisconnect().cancel().then(()=>{
+        playerRef.update({ world: 'lava', achrcv: false });
+        window.location.href = 'lava.html?id='+playerId+'&screenName='+screenName+'&uname='+uname;
+      });
+    }
     let bossSpawned = null;
     let yourIP=null;
     // fetch('https://api.ipify.org?format=json')
@@ -335,13 +341,13 @@ import * as THREE from 'three';
         });
     }
     
-    function updateHealthBar(player) {
+    function updateHealthBar(player, maxHealth = 100) {
         const { context, texture } = player.healthBar;
         context.clearRect(0, 0, 128, 16);
         context.fillStyle = 'red';
         context.fillRect(0, 0, 128, 16);
         context.fillStyle = 'green';
-        context.fillRect(0, 0, (player.health / 100) * 128, 16);
+        context.fillRect(0, 0, (player.health / maxHealth) * 128, 16);
         texture.needsUpdate = true;
         // playerRef.update({health:player.health});
     }
@@ -712,6 +718,10 @@ import * as THREE from 'three';
               var bboxobj = new THREE.Box3().setFromObject(m);
               if (bboxplayer.intersectsBox(bboxobj)) {
                 if (!callLightning){
+                  console.log(m.material[0].color.getHex());
+                  if (m.material[0].color.getHex() ==  0x0320fc) {
+                    tpLava();
+                  }
                   if (prevL!=m){
                     player.health -= 50;
                     if (player.health <= 0){
@@ -940,7 +950,7 @@ import * as THREE from 'three';
             let bboxBoss = new THREE.Box3().setFromObject(boss);
             if (bboxBullet.intersectsBox(bboxBoss)){
               boss.health -= 10;
-              updateHealthBar(boss);
+              updateHealthBar(boss, 800);
               // Remove bullet
               scene.remove(bullet.mesh);
               bullets.splice(bulletIndex, 1);
@@ -997,8 +1007,8 @@ db.ref('lightning').on('value', snapshot => {
     if (!lightnings[id]) {
       lightnings[id]=[];
       for (let i = 0; i < 20; i+=2){
-        makePlatform(data[id].x, data[id].z, 3+(2.598076211*i), 0.5, 0.5, 3, scene, lightnings[id], 0xfcfc03, 1.0, -Math.PI/6);
-        makePlatform(data[id].x, data[id].z, 3+(2.598076211*(i+1)), 0.5, 0.5, 3, scene, lightnings[id], 0xfcfc03, 1.0, Math.PI/6);
+        makePlatform(data[id].x, data[id].z, 3+(2.598076211*i), 0.5, 0.5, 3, scene, lightnings[id], (data[id].blue) ? 0x0320fc : 0xfcfc03, 1.0, -Math.PI/6);
+        makePlatform(data[id].x, data[id].z, 3+(2.598076211*(i+1)), 0.5, 0.5, 3, scene, lightnings[id], (data[id].blue) ? 0x0320fc : 0xfcfc03, 1.0, Math.PI/6);
       }
     }
   }
@@ -1033,8 +1043,8 @@ function checkStart() {
         } else {
           console.log("Boss is not spawned");
           boss.position.set(-75, 2, 5);
-          boss.health=100;
-          db.ref('bosses').set({ x:-75, y:2, z:5, health:100 });
+          boss.health=800;
+          db.ref('bosses').set({ x:-75, y:2, z:5, health:800 });
         }
       })
       .catch((error) => {
@@ -1048,7 +1058,7 @@ db.ref('bosses').on('value', snapshot=> {
   const data = snapshot.val() || {};
   boss.position.set(data.x, data.y, data.z);
   boss.health=data.health;
-  updateHealthBar(boss);
+  updateHealthBar(boss, 800);
   if (data.flashbang==true){
     flashbanging=true;
   }
@@ -1105,7 +1115,7 @@ db.ref('bosses').on('value', snapshot=> {
           scene.remove(otherPlayers[id]);
           delete otherPlayers[id];
         }
-		if (data[id].world=='spawn'){
+		    if (data[id].world!='boss'){
           scene.remove(otherPlayers[id]);
           delete otherPlayers[id];
         }
