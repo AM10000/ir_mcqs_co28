@@ -250,7 +250,7 @@ import * as THREE from 'three';
 
 
     // Optional: ambient light
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.25);
     scene.add(ambientLight);
     const dirLight = new THREE.DirectionalLight(0xffffff, 1);
     dirLight.position.set(10, 10, 10);
@@ -854,15 +854,15 @@ function checkStart() {
     playerRef.child("ip").once('value')
       .then((snapshot)=>{
         if(snapshot.exists()){
-          fetch('https://api.ipify.org?format=json')
-            .then(res => res.json())
-            .then(data => {
-              if (data.ip == snapshot.val()){
+        //   fetch('https://api.ipify.org?format=json')
+        //     .then(res => res.json())
+        //     .then(data => {
+            if (localStorage.getItem("fakeIP") == snapshot.val()){
                 started = true;
                 document.getElementById('loginContainer').style.display='none';
                 animate();
-              } else {alert("Bad IP");}
-            });
+            } else {alert("Bad IP");}
+            // });
         }
       });
   } else if (auth === false && !started) {
@@ -880,7 +880,7 @@ function checkStart() {
         updateHealthBar(player);
       }
       // Do NOT overwrite player.health here to avoid losing local health changes
-    } else {
+    } else if (data[id].world == 'lava'){
       // For other players, update position and health fully from Firebase
       if (!otherPlayers[id]) {
         const newPlayer = createPlayer(0xff0000, pdata.admin||false);
