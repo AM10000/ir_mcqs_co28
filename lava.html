@@ -157,7 +157,47 @@ import * as THREE from 'three';
             this.mesh.position.add(this.velocity);
         }
     }
-
+    function intersectsAngledCylinder(pos, cylinder){
+      let x = pos.x;
+      let y = pos.y;
+      let z = pos.z;
+      let cz = cylinder.position.z;
+      let cx = cylinder.position.x;
+      let cy = cylinder.position.y;
+      let cHeight = cylinder.geometry.parameters.height;
+      let cRTop = cylinder.geometry.parameters.radiusTop;
+      let cRbottom = cylinder.geometry.parameters.radiusBottom;
+      let conePred = (cHeight/(cRTop-cRbottom))*(Math.sqrt(((x-cx)**2)+((z-cz)**2))-cRbottom)+0.5
+      // console.log(conePred);
+      if (y>=(cy-cHeight/2) && y<=(cy+cHeight/2)){
+        if (cylinder.geometry.parameters.openEnded == true && Math.sqrt(((x-cx)**2) + ((z-cz)**2)) <= cRTop){
+          return false;
+        }
+        if (y<=conePred){
+          return true;
+        } else {
+          return false;
+        }
+      } else {
+        return false;
+      }
+    }
+    function intersectsCylinder(pos, cylinder){
+      let x = pos.x;
+      let y = pos.y;
+      let z = pos.z;
+      let cz = cylinder.position.z;
+      let cx = cylinder.position.x;
+      let cy = cylinder.position.y;
+      let cHeight = cylinder.geometry.parameters.height;
+      let cr = cylinder.geometry.parameters.radiusTop;
+      if (y>=(cy-cHeight/2) && y<=(cy+cHeight/2)){
+        if (Math.sqrt(((x-cx)**2)+((z-cz)**2)) <= cr){
+          return true;
+        }
+      }
+      return false;
+    }
     function makePlatform(x, y, z, height, width, depth, scene, platformList, color = 0x00ff00, opacity = 1.0, rotx = 0, roty = 0, rotz = 0) {
         const loader = new THREE.TextureLoader();
         let imagePath;
@@ -222,6 +262,15 @@ import * as THREE from 'three';
             platformList.push(platform);
         });
     }
+    function makeCylinder(x, y, z, height, radiusTop, radiusBottom, scene, list, color=0x00ff00, openEnded = true){
+      const shape = new THREE.Mesh(
+        new THREE.CylinderGeometry(radiusTop, radiusBottom, height, 64, 1, openEnded),
+        new THREE.MeshStandardMaterial({ color:color, side: THREE.DoubleSide })
+      );
+      shape.position.set(x, y, z);
+      scene.add(shape);
+      list.push(shape);
+    }
     let zoomDistance = 6;
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x000000);
@@ -259,11 +308,36 @@ import * as THREE from 'three';
 
     const platforms = [];
     const killBricks = [];
+    const lava = [];
+    const volcano = [];
     let markersFound=[];
     playerRef.onDisconnect().update({ Achievements: markersFound.join(', ') });
     const bossTele = [];
+    makeCylinder(0, 20, 40, 40, 10, 40, scene, volcano, 0x3d3737);
+    makeCylinder(0, 15, 40, 30, 17.5, 17.5, scene, lava, 0xeeff00, false);
     makePlatform(0, -5, 1, 0.5, 3, 10, scene, bossTele, 0x00fff7);
     makePlatform(-2475, 2460, 0, 5080, 5050, 0.5, scene, platforms, 0x4d0404);
+        for (let i = 1; i < 5; i++) {
+      makePlatform(0, i, i, 1, 3, 0.5, scene, platforms, 0x000dff);
+    }
+    // makePlatform(-2475, 2460, 0, 5080, 5050, 0.5, scene, platforms);
+    makePlatform(0, 6, 5, 3, 3, 0.5, scene, platforms, 0x000dff);
+    for (let i=1; i<5; i++) {
+      makePlatform(-i-1, 6, i+5, 3, 1, 0.5, scene, platforms, 0x000dff);
+    }
+    for(let i=1; i<5; i++) {
+      if (i%2==1){
+        makePlatform(-i*5-5, 6, 9, 3, 3, 0.5, scene, platforms, 0x000dff);
+        makePlatform(-i*5-5, 5, 9.5, 1, 3, 0.5, scene, killBricks, 0xff0000);
+      } else {
+        makePlatform(-i*5-5, 6, 9, 3, 3, 0.5, scene, platforms, 0x000dff);
+        makePlatform(-i*5-5, 7, 9.5, 1, 3, 0.5, scene, killBricks, 0xff0000);
+      }
+    }
+    makePlatform(-34, 6, 9, 7, 10, 0.5, scene, platforms, 0x000dff);
+    makePlatform(-32, 6, 14, 7, 1, 10, scene, platforms, 0x000dff);
+    makePlatform(-36, 6, 14, 7, 1, 10, scene, platforms, 0x000dff);
+    //
     const bullets = [];
     function createNameTag(name) {
       const canvas = document.createElement('canvas');
@@ -400,7 +474,7 @@ import * as THREE from 'three';
       return Math.floor(Math.random() * (maxFloored - minCeiled) + minCeiled);
     }
     const player = createPlayer();
-    player.position.set(0, 5, 0);
+    player.position.set(-5, 5, -5);
     scene.add(player);
     function createHealthBar(p) {
         const canvas = document.createElement('canvas');
@@ -565,6 +639,14 @@ import * as THREE from 'three';
             player.position.y=oldPosition.y;
           }
         }
+        for (const v of volcano){
+          if (intersectsAngledCylinder(player.position, v)){
+            onGround = true;
+            standingPlatform=v;
+            velocityY=0;
+            break;
+          }
+        }
         // if (!inCar) {
           let testPosition = player.position.clone();
 
@@ -583,6 +665,12 @@ import * as THREE from 'three';
                   // player.position.x = oldPosition.x; 
                 }
               }
+            }
+          }
+          for (const v of volcano){
+            if (intersectsAngledCylinder(testPosition, v)){
+              blocked=true;
+              break;
             }
           }
           
@@ -606,6 +694,12 @@ import * as THREE from 'three';
                 }
                 
               }
+            }
+          }
+          for (const v of volcano){
+            if (intersectsAngledCylinder(testPosition, v)){
+              blocked=true;
+              break;
             }
           }
           if (!blocked){
@@ -638,7 +732,26 @@ import * as THREE from 'three';
               tpBoss();
             }
           }
-        
+          bboxplayer = new THREE.Box3().setFromObject(player);
+          for (const k of killBricks) {
+            var bboxobj = new THREE.Box3().setFromObject(k);
+            if (bboxplayer.intersectsBox(bboxobj)) {
+              player.position.set(0, 5, 0);
+            }
+          }
+          for (const l of lava){
+            if (intersectsCylinder(player.position, l)){
+              player.position.set(0, 5, 0);
+            }
+          }
+          // bboxplayer = new THREE.Box3().setFromObject(player);
+          // for (const v of volcano) {
+          //   // var bboxobj = new THREE.Box3().setFromObject(v);
+          //   if (intersectsAngledCylinder(player, v)) {
+          //     // player.position.set(0, 5, 0);
+          //     console.log("Intersecting volcano");
+          //   }
+          // }
 
         if (keys[' '] && onGround) {
           velocityY = 0.22;
