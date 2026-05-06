@@ -9,83 +9,135 @@
       padding: 0;
       width: 100%;
       height: 100%;
-      overflow: hidden;
-      font-family: Arial, sans-serif;
-      background: linear-gradient(135deg, #74ebd5, #9face6);
+      overflow: hidden; /* prevents page scrolling */
+      font-family: Arial, sans-serif; /* add nice font */
+      background: linear-gradient(135deg, #74ebd5, #9face6); /* gradient background */
     }
+
     #loginContainer {
       position: absolute;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      width: 300px;
-      background: white;
-      padding: 2rem;
-      border-radius: 12px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-      text-align: center;
+      width: 300px; /* fixed width prevents horizontal shifts */
+      background: white; /* container background */
+      padding: 2rem; /* spacing inside */
+      border-radius: 12px; /* rounded corners */
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2); /* subtle shadow */
+      text-align: center; /* center text inside */
     }
-    #loginContainer h2 { margin-bottom: 1rem; color: #333; }
+
+    #loginContainer h2 {
+      margin-bottom: 1rem;
+      color: #333;
+    }
+
     #loginContainer input {
-      width: 100%; padding: 10px; margin: 8px 0;
-      border: 1px solid #ccc; border-radius: 6px;
-      font-size: 14px; box-sizing: border-box;
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 14px;
+      box-sizing: border-box;
     }
+
     #loginContainer button {
-      width: 100%; padding: 10px; background: #4CAF50;
-      border: none; border-radius: 6px; color: white;
-      font-size: 16px; cursor: pointer; margin-top: 10px;
+      width: 100%;
+      padding: 10px;
+      background: #4CAF50;
+      border: none;
+      border-radius: 6px;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 10px;
     }
     #createAccountBtn {
-      width: 100%; padding: 8px; background: #2196F3;
-      border: none; border-radius: 6px; color: white;
-      font-size: 14px; cursor: pointer; margin-top: 8px;
+      width: 100%;
+      padding: 8px;
+      background: #2196F3;
+      border: none;
+      border-radius: 6px;
+      color: white;
+      font-size: 14px;
+      cursor: pointer;
+      margin-top: 8px;
     }
-    #createAccountBtn:hover { background: #1976D2; }
-    #loginContainer button:hover { background: #45a049; }
+
+    #createAccountBtn:hover {
+      background: #1976D2;
+    }
+
+
+    #loginContainer button:hover {
+      background: #45a049;
+    }
     #toggleContainer {
-      position: absolute; top: 10px; left: 10px;
-      background: rgba(0,0,0,0.5); color: white;
-      padding: 8px 12px; border-radius: 8px;
-      font-family: sans-serif; z-index: 10;
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(0,0,0,0.5);
+      color: white;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-family: sans-serif;
+      z-index: 10;
     }
-    input[type="checkbox"] { transform: scale(1.3); margin-right: 8px; }
+    input[type="checkbox"] {
+      transform: scale(1.3);
+      margin-right: 8px;
+    }
+
     canvas { display: block; }
   </style>
 </head>
 <body>
-  <div id="crosshair" style="
-    position: fixed; top: 50%; left: 50%;
-    width: 10px; height: 10px; margin-left: -5px; margin-top: -5px;
-    background: white; border-radius: 50%; z-index: 1000;
-    pointer-events: none; display: none;">
+    <div id="crosshair" style="
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    width: 10px;
+    height: 10px;
+    margin-left: -5px;
+    margin-top: -5px;
+    background: white;
+    border-radius: 50%;
+    z-index: 1000;
+    pointer-events: none;
+    display: none;">
   </div>
   <div id="loginContainer">
     <h2>Login</h2>
     <form id="loginForm">
       <input type="text" id="username" placeholder="Username" required>
       <input type="password" id="password" placeholder="Password" required>
-      <input type="text" id="screenName" placeholder="Screen Name">
+      <input type="text" id ='screenName' placeholder="Screen Name">
       <button id='joinBtn' type='button'>Enter Game</button>
       <button type="button" id="createAccountBtn">Create Account</button>
+      
     </form>
+    
   </div>
-  <div id="toggleContainer">
+   <div id="toggleContainer">
     <label>
       <input type="checkbox" id="graphicsToggle" checked>
       Enable Shadows
     </label>
   </div>
-  <script type="importmap">{
-    "imports": {
-      "three": "https://threejs.org/build/three.module.js",
-      "three/addons/": "https://threejs.org/examples/jsm/"
-    }
-  }</script>
+<!--   <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script> -->
+  <script  type="importmap">{
+	"imports": {
+		"three": "https://threejs.org/build/three.module.js",
+		"three/addons/": "https://threejs.org/examples/jsm/"
+	}
+}</script>
+  <!-- <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/utils/BufferGeometryUtils.js"></script> -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
   <script type="module">
-    import * as THREE from 'three';
+    
+import * as THREE from 'three';
     import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
     import * as GLTFLoader from 'three/addons/loaders/GLTFLoader.js';
     const firebaseConfig = {
@@ -105,7 +157,7 @@
     if (!urlParams.has('id')){
       playerId = "player_" + Math.random().toString(36).substring(2, 10);
       uname = null;
-      screenName = null;
+      screenName=null;
       firstTime = true;
     } else {
       playerId = urlParams.get('id');
@@ -113,41 +165,73 @@
       screenName = urlParams.get('screenName');
       firstTime = false;
     }
+    
     const playerRef = db.ref('players/' + playerId);
-    let yourIP = localStorage.getItem("fakeIP") || Math.random().toString(36).substring(2, 10);
+    // playerRef.update({ achrcv: false });
+    let yourIP=localStorage.getItem("fakeIP")||Math.random().toString(36).substring(2, 10);
     localStorage.setItem("fakeIP", yourIP);
     function sendInfo(event){
       event.preventDefault();
+      // fetch('https://api.ipify.org?format=json')
+      // .then(res => res.json())
+      // .then(data => {
+      //   const ip = data.ip;
+      //   yourIP=data.ip;
+      //   screenName = document.getElementById('screenName').value.trim();
+      //   uname = document.getElementById('username').value.trim();
+      //   let pword = document.getElementById('password').value.trim();
+      //   if (uname && pword){
+      //     playerRef.set({ x: 0, y: 5, z: 0, screenName: screenName||'Player', ip:ip, uname:uname, pword:pword, world: 'spawn' });
+      //   } else {
+      //     alert("Please enter the username and password fields to authenticate yourself.");
+      //   }
+      // });
       screenName = document.getElementById('screenName').value.trim();
       uname = document.getElementById('username').value.trim();
       let pword = document.getElementById('password').value.trim();
+      
       if (uname && pword){
-        playerRef.set({ x: 0, y: 5, z: 0, screenName: screenName||'Player', ip: yourIP, uname: uname, pword: pword, world: 'spawn' });
+        playerRef.set({ x: 0, y: 5, z: 0, screenName: screenName||'Player', ip:yourIP, uname:uname, pword:pword, world: 'spawn' });
       } else {
         alert("Please enter the username and password fields to authenticate yourself.");
       }
     }
-    document.getElementById("joinBtn").addEventListener("click", sendInfo);
+	document.getElementById("joinBtn").addEventListener("click", sendInfo);
 
-    function tpBoss(){
-      playerRef.onDisconnect().cancel().then(()=>{
-        playerRef.update({ world: 'boss', achrcv: false });
-        window.location.href = 'b.html?id='+playerId+'&screenName='+screenName+'&uname='+uname;
-      });
-    }
-    function tpCity(){
-      playerRef.onDisconnect().cancel().then(()=>{
-        playerRef.update({ world: 'city', achrcv: false });
-        window.location.href = 'irCity.html?id='+playerId+'&screenName='+screenName+'&uname='+uname;
-      });
-    }
+  function tpBoss(){
+    playerRef.onDisconnect().cancel().then(()=>{
+      playerRef.update({ world: 'boss', achrcv: false });
+      window.location.href = 'b.html?id='+playerId+'&screenName='+screenName+'&uname='+uname;
+    });
+  }
+
+  function tpCity(){
+    playerRef.onDisconnect().cancel().then(()=>{
+      playerRef.update({ world: 'city', achrcv: false });
+      window.location.href = 'irCity.html?id='+playerId+'&screenName='+screenName+'&uname='+uname;
+    });
+  }
     function createAccount(event){
       event.preventDefault();
+      // fetch('https://api.ipify.org?format=json')
+      // .then(res => res.json())
+      // .then(data => {
+      //   const ip = data.ip;
+      //   yourIP=data.ip;
+      //   screenName = document.getElementById('screenName').value.trim();
+      //   uname = document.getElementById('username').value.trim();
+      //   let pword = document.getElementById('password').value.trim();
+      //   if (uname && pword){
+      //     playerRef.set({ x: 0, y: 5, z: 0, screenName: screenName||'Player', ip:ip, uname:uname, pword:pword, new: true });
+      //   } else {
+      //     alert("Please enter the username and password fields with your new account info to create it.");
+      //   }
+      // });
       screenName = document.getElementById('screenName').value.trim();
       uname = document.getElementById('username').value.trim();
       let pword = document.getElementById('password').value.trim();
       if (uname && pword){
-        playerRef.set({ x: 0, y: 5, z: 0, screenName: screenName||'Player', ip: yourIP, uname: uname, pword: pword, new: true });
+        playerRef.set({ x: 0, y: 5, z: 0, screenName: screenName||'Player', ip:yourIP, uname:uname, pword:pword, new: true });
       } else {
         alert("Please enter the username and password fields with your new account info to create it.");
       }
@@ -164,49 +248,107 @@
             this.velocity = direction.clone().multiplyScalar(0.5);
             scene.add(this.mesh);
         }
-        update() { this.mesh.position.add(this.velocity); }
+
+        update() {
+            this.mesh.position.add(this.velocity);
+        }
     }
 
     function makePlatform(x, y, z, height, width, depth, scene, platformList, color = 0x00ff00, opacity = 1.0, rotx = 0, roty = 0, rotz = 0, ret = false) {
         const loader = new THREE.TextureLoader();
         let imagePath;
-        if(color === 0x00ff00) { imagePath = 'download.jpeg'; }
-        else if (color === 0x737373) { imagePath = 'rocks.jpeg'; }
-        else if (color === 0x00fff7) { imagePath = 'portal.jpeg'; }
-        else { imagePath = 'studs.jpeg'; }
+        if(color === 0x00ff00) {
+          imagePath = 'download.jpeg' ;
+        }else if (color === 0x737373) {
+          imagePath = 'rocks.jpeg';
+        }else if (color === 0x00fff7){
+          imagePath= 'portal.jpeg';
+        }else{
+          imagePath='studs.jpeg';
+        }
         loader.load(imagePath, (baseTexture) => {
+            // Set wrapping mode to repeat
             baseTexture.wrapS = THREE.RepeatWrapping;
             baseTexture.wrapT = THREE.RepeatWrapping;
-            const boxWidth = width;
-            const boxHeight = depth;
-            const boxDepth = height;
-            const textureScale = 2;
+
+            // Correctly map your variables to Three.js's standard BoxGeometry dimensions
+            const boxWidth = width;   // Mapped to X-axis
+            const boxHeight = depth;  // Mapped to Y-axis
+            const boxDepth = height;  // Mapped to Z-axis
+
+            // Define a desired texture scale (e.g., how many units per repeat)
+            const textureScale = 2; // This means one texture tile will be 2x2 units
+
+            // Calculate repeat values for each face based on its dimensions and the desired texture scale
             const faceSizes = [
-                [boxDepth, boxHeight],[boxDepth, boxHeight],
-                [boxWidth, boxDepth],[boxWidth, boxDepth],
-                [boxWidth, boxHeight],[boxWidth, boxHeight],
+                [boxDepth, boxHeight], // Right side (+X) -> depth by height
+                [boxDepth, boxHeight], // Left side (-X) -> depth by height
+                [boxWidth, boxDepth],  // Top side (+Y) -> width by depth
+                [boxWidth, boxDepth],  // Bottom side (-Y) -> width by depth
+                [boxWidth, boxHeight], // Front side (+Z) -> width by height
+                [boxWidth, boxHeight], // Back side (-Z) -> width by height
             ];
+
             const materials = faceSizes.map(([fw, fh]) => {
                 const tex = baseTexture.clone();
+                
+                // Dynamically calculate the repeat values for each face
                 tex.repeat.set(fw / textureScale, fh / textureScale);
-                return new THREE.MeshStandardMaterial({ color, transparent: opacity < 1, opacity, map: tex });
+
+                return new THREE.MeshStandardMaterial({
+                    color: color,
+                    transparent: opacity < 1,
+                    opacity: opacity,
+                    map: tex
+                });
             });
-            const platform = new THREE.Mesh(new THREE.BoxGeometry(boxWidth, boxHeight, boxDepth), materials);
+
+            const platform = new THREE.Mesh(
+                new THREE.BoxGeometry(boxWidth, boxHeight, boxDepth),
+                materials
+            );
+
+            // Map your position and rotation variables to Three.js's standard axes
             platform.position.set(x, z, y);
             platform.rotation.x = rotx;
             platform.rotation.y = rotz;
             platform.rotation.z = roty;
             platform.castShadow = true;
             platform.receiveShadow = true;
+
             scene.add(platform);
-            if (!ret){ platformList.push(platform); } else { return platform; }
+            if (!ret){
+              platformList.push(platform);
+            } else {
+              return platform;
+            }
         });
+    }
+    function makeTorus(x, y, z, radius, tube, radialSegments, tubularSegments, scene, list){
+      const shape = new THREE.Mesh(
+            new THREE.TorusGeometry(radius, tube, radialSegments, tubularSegments),
+            new THREE.MeshStandardMaterial({ color: color })
+        );
+      shape.position.set(x, z, y);
+      shape.rotation.x=Math.PI/2;
+      scene.add(shape);
+      list.push(shape);
+    }
+    function makeCircle(x, y, z, radius, scene, list) {
+      const shape = new THREE.Mesh(
+            new THREE.CylinderGeometry(radius, radius, 0.1),
+            new THREE.MeshStandardMaterial({ color: color })
+        );
+      shape.position.set(x, z, y);
+      // shape.rotation.x=Math.PI/2;
+      scene.add(shape);
+      list.push(shape);
     }
     const ladders = [];
     function makeCylinder(x, y, z, radius, height, scene, list, color=0x000dff) {
       const shape = new THREE.Mesh(
         new THREE.CylinderGeometry(radius, radius, height),
-        new THREE.MeshStandardMaterial({ color })
+        new THREE.MeshStandardMaterial({ color:color })
       );
       shape.position.set(x, y, z);
       scene.add(shape);
@@ -216,23 +358,35 @@
       let bot = createPlayer(0x0a9600);
       bot.position.set(x, 1, z);
       scene.add(bot);
-      list.push({ mesh: bot, age: 0 });
+      list.push({ mesh: bot, age: 0 })
     }
     function makeLadder(x, y, z, height = 5, spacing = 0.5) {
       const ladderGroup = new THREE.Group();
+    
       for (let i = 0; i < height; i++) {
         const step = new THREE.Mesh(
           new THREE.BoxGeometry(0.8, 0.1, 0.1),
           new THREE.MeshStandardMaterial({ color: 0x8b4513 })
         );
-        step.castShadow = true; step.receiveShadow = true;
+        step.castShadow = true;
+        step.receiveShadow = true;
         step.position.set(x, y + i * spacing, z);
         ladderGroup.add(step);
       }
+    
       ladderGroup.userData.isLadder = true;
       ladderGroup.position.set(x, y, z);
       scene.add(ladderGroup);
       ladders.push(ladderGroup);
+    }
+    function makeRoad(x, y, z, width, height, scene){
+      const road = new THREE.Mesh(
+        new THREE.PlaneGeometry(width, height),
+        new THREE.MeshStandardMaterial({ color: 0x545252})
+      );
+      road.position.set(x, y, z);
+      road.rotation.x=-Math.PI/2;
+      scene.add(road);
     }
     let zoomDistance = 6;
     const scene = new THREE.Scene();
@@ -246,36 +400,59 @@
     const light = new THREE.DirectionalLight(0xffffff, 1);
     light.position.set(5, 10, 5);
     light.castShadow = true;
-    light.shadow.mapSize.width = 2048; light.shadow.mapSize.height = 2048;
-    light.shadow.camera.near = 0.5; light.shadow.camera.far = 50;
-    light.shadow.camera.left = -50; light.shadow.camera.right = 50;
-    light.shadow.camera.top = 50; light.shadow.camera.bottom = -50;
+
+    light.shadow.mapSize.width = 2048;
+    light.shadow.mapSize.height = 2048;
+    light.shadow.camera.near = 0.5;
+    light.shadow.camera.far = 50;
+    light.shadow.camera.left = -50;
+    light.shadow.camera.right = 50;
+    light.shadow.camera.top = 50;
+    light.shadow.camera.bottom = -50;
     light.shadow.camera.updateProjectionMatrix();
+
     function toggleGraphics(enabled) {
-      if (enabled){ scene.add(light); } else { scene.remove(light); }
+      console.log("Graphics toggled:", enabled);
+      // You can add your own graphics toggle logic here
+      if (enabled){
+        scene.add(light);
+      } else {
+        scene.remove(light);
+      }
+
     }
+
+    // --- Checkbox event listener ---
     const checkbox = document.getElementById('graphicsToggle');
-    checkbox.addEventListener('change', (e) => { toggleGraphics(e.target.checked); });
+    checkbox.addEventListener('change', (e) => {
+      toggleGraphics(e.target.checked);
+    });
+    // Optional: ambient light
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
     scene.add(ambientLight);
     const dirLight = new THREE.DirectionalLight(0xffffff, 1);
     dirLight.position.set(10, 10, 10);
+    // dirLight.castShadow = true;
     scene.add(dirLight);
 
     const platforms = [];
     const killBricks = [];
     const rings = [];
-    const bouncers = [];
-    const markers = [];
-    const bots = [];
-    const skyscrapers = [];
-    let lightningsTimed = {};
-    let markersFound = [];
+    const bouncers=[];
+    const markers=[];
+    const bots=[];
+    const skyscrapers=[]
+    let lightningsTimed={};
+    let markersFound=[];
     playerRef.onDisconnect().update({ Achievements: markersFound.join(', ') });
-    for (let i = 1; i < 5; i++) { makePlatform(0, i, i, 1, 3, 0.5, scene, platforms, 0x000dff); }
+    for (let i = 1; i < 5; i++) {
+      makePlatform(0, i, i, 1, 3, 0.5, scene, platforms, 0x000dff);
+    }
     makePlatform(-2475, 2460, 0, 5080, 5050, 0.5, scene, platforms);
     makePlatform(0, 6, 5, 3, 3, 0.5, scene, platforms, 0x000dff);
-    for (let i=1; i<5; i++) { makePlatform(-i-1, 6, i+5, 3, 1, 0.5, scene, platforms, 0x000dff); }
+    for (let i=1; i<5; i++) {
+      makePlatform(-i-1, 6, i+5, 3, 1, 0.5, scene, platforms, 0x000dff);
+    }
     for(let i=1; i<5; i++) {
       if (i%2==1){
         makePlatform(-i*5-5, 6, 9, 3, 3, 0.5, scene, platforms, 0x000dff);
@@ -289,12 +466,19 @@
     makePlatform(-32, 6, 14, 7, 1, 10, scene, platforms, 0x000dff);
     makePlatform(-36, 6, 14, 7, 1, 10, scene, platforms, 0x000dff);
     makeCylinder(-38, 10, 6, 0.5, 2, scene, markers, 0x00f2ff);
+    // makePlatform(-19, -10, 5, 0.5, 48, 10, scene, platforms, 0x737373);
     makePlatform(-6.25, -10, 2.5, 0.5, 22.5, 5, scene, platforms, 0x737373);
     makePlatform(-31.75, -10, 2.5, 0.5, 22.5, 5, scene, platforms, 0x737373);
+    // width = 22.5
+    // dist from ends = 11.25
+    // end 1 = 5
+    // end 2 = -43
     makePlatform(-19, -10, 7.5, 0.5, 48, 5, scene, platforms, 0x737373);
     makePlatform(-42.75, 1.5, 5, 23, 0.5, 10, scene, platforms, 0x737373);
     makePlatform(-19, 13.25, 5, 0.5, 48, 10, scene, platforms, 0x737373);
     makePlatform(4.75, 1.5, 5, 23, 0.5, 10, scene, platforms, 0x737373);
+    // makeRoad(-19, 0.3, -24.75, 3, 30, scene);
+
     makePlatform(-15, -20, 2.5, 0.5, 30, 5, scene, platforms, 0x737373);
     makePlatform(16.5, -20, 2.5, 0.5, 27, 5, scene, platforms, 0x737373);
     makePlatform(30, -50, 2.5, 60, 0.5, 5, scene, platforms, 0x737373);
@@ -322,6 +506,7 @@
     makePlatform(-27, -32, 2.5, 0.5, 6, 5, scene, platforms, 0x737373);
     makePlatform(-24, -35, 2.5, 6, 0.5, 5, scene, platforms, 0x737373);
     makePlatform(-15, -32, 2.5, 0.5, 12, 5, scene, platforms, 0x737373);
+
     makePlatform(-13.5, -35, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
     makePlatform(-7.5, -35, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
     makePlatform(-4.5, -32, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
@@ -349,6 +534,7 @@
     makePlatform(-6, -48.5, 2.5, 9, 0.5, 5, scene, platforms, 0x737373);
     makePlatform(-12, -51.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
     makePlatform(-27, -53, 2.5, 6, 0.5, 5, scene, platforms, 0x737373);
+
     makePlatform(-19.5, -53, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
     makePlatform(0, -35, 2.5, 0.5, 6, 5, scene, platforms, 0x737373);
     makePlatform(0, -41, 2.5, 0.5, 6, 5, scene, platforms, 0x737373);
@@ -403,6 +589,7 @@
     makePlatform(0, -65, 2.5, 12, 0.5, 5, scene, platforms, 0x737373);
     makePlatform(3, -54.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
     makePlatform(3, -48.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
+
     makePlatform(1.5, -62, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
     makePlatform(4.5, -71, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
     makePlatform(4.5, -59, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
@@ -441,7 +628,7 @@
     makePlatform(28.5, -29, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
     makePlatform(28.5, -44, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
     makePlatform(28.5, -53, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
-    makePlatform(28.5, -77, 2.5, 0.5, 3, 5, scene, platforms, 0x737373);
+    makePlatform(28.5, -77, 2.5, 0.5, 3, 5, scene, platforms, 0x737373); //width
     makePlatform(3, -63.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
     makePlatform(3, -74, 2.5, 6, 0.5, 5, scene, platforms, 0x737373);
     makePlatform(6, -26, 2.5, 6, 0.5, 5, scene, platforms, 0x737373);
@@ -457,6 +644,7 @@
     makePlatform(12, -36.5, 2.5, 9, 0.5, 5, scene, platforms, 0x737373);
     makePlatform(12, -45.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
     makePlatform(12, -57.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
+
     makePlatform(12, -69.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
     makePlatform(15, -29, 2.5, 6, 0.5, 5, scene, platforms, 0x737373);
     makePlatform(15, -45.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
@@ -484,6 +672,7 @@
     makePlatform(27, -60.5, 2.5, 3, 0.5, 5, scene, platforms, 0x737373);
     makePlatform(27, -71, 2.5, 6, 0.5, 5, scene, platforms, 0x737373);
     makePlatform(0, -50, 5, 60, 60, 0.5, scene, platforms, 0x737373);
+
     makePlatform(-1.5, -86, 0, 4.5, 1.5, 0.5, scene, platforms, 0xff0000, 1.0);
     const cityTele = [];
     makePlatform(-7.5, -87.5, 0, 1.5, 1.5, 0.5, scene, cityTele, 0x00fff7, 1.0);
@@ -491,35 +680,41 @@
     function createNameTag(name) {
       const canvas = document.createElement('canvas');
       const context = canvas.getContext('2d');
-      canvas.width = 256; canvas.height = 64;
+      canvas.width = 256;
+      canvas.height = 64;
+
       context.fillStyle = 'white';
       context.fillRect(0, 0, canvas.width, canvas.height);
       context.fillStyle = 'black';
       context.font = '24px Arial';
       context.textAlign = 'center';
       context.fillText(name, canvas.width / 2, canvas.height / 2 + 8);
+
       const texture = new THREE.CanvasTexture(canvas);
       const material = new THREE.SpriteMaterial({ map: texture });
       const sprite = new THREE.Sprite(material);
-      sprite.scale.set(2, 0.5, 1);
-      sprite.position.y = 3;
+      sprite.scale.set(2, 0.5, 1); // Adjust size
+      sprite.position.y = 3; // Position above the avatar's head
       return sprite;
     }
+
     document.addEventListener('mousedown', () => {
         const direction = new THREE.Vector3();
         camera.getWorldDirection(direction);
-        const position = player.position.clone().add(new THREE.Vector3(0, 1.5, 0));
+        const position = player.position.clone().add(new THREE.Vector3(0, 1.5, 0)); // Adjust as needed
         bullets.push(new Bullet(position, direction));
     });
     function updateBullets() {
         bullets.forEach((bullet, index) => {
             bullet.update();
+            // Remove bullets that are too far
             if (bullet.mesh.position.length() > 1000) {
-                scene.remove(bullet.mesh);
-                bullets.splice(index, 1);
+            scene.remove(bullet.mesh);
+            bullets.splice(index, 1);
             }
         });
     }
+    
     function updateHealthBar(player) {
         const { context, texture } = player.healthBar;
         context.clearRect(0, 0, 128, 16);
@@ -528,58 +723,102 @@
         context.fillStyle = 'green';
         context.fillRect(0, 0, (player.health / 100) * 128, 16);
         texture.needsUpdate = true;
+        // playerRef.update({health:player.health});
     }
     let climbing = false;
+
     function checkLadderClimb() {
       climbing = false;
       for (const ladder of ladders) {
         const dist = player.position.distanceTo((ladder.position)*2);
         if (dist < 1.5) {
-          if (keys['w']) { velocityY = 0.05; climbing = true; }
-          else { velocityY = 0; }
-          break;
+          if (keys['w']) {
+            velocityY = 0.05; // smooth upward climb
+            climbing = true;
+          } else {
+            velocityY=0;
+          }
+          break; // Only climb one ladder at a time
         }
       }
     }
+
     function createDetailedGun() {
       const gun = new THREE.Group();
-      const body = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.2, 1), new THREE.MeshStandardMaterial({ color: 0x333333 }));
+
+      const body = new THREE.Mesh(
+        new THREE.BoxGeometry(0.2, 0.2, 1),
+        new THREE.MeshStandardMaterial({ color: 0x333333 })
+      );
+      // body.castShadow = true;
+      // body.receiveShadow = true;
       gun.add(body);
-      const grip = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.4, 0.2), new THREE.MeshStandardMaterial({ color: 0x222222 }));
+
+      const grip = new THREE.Mesh(
+        new THREE.BoxGeometry(0.15, 0.4, 0.2),
+        new THREE.MeshStandardMaterial({ color: 0x222222 })
+      );
       grip.position.set(0, -0.3, -0.3);
+      // grip.castShadow = true;
+      // grip.receiveShadow = true;
       gun.add(grip);
-      const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.6, 16), new THREE.MeshStandardMaterial({ color: 0x111111 }));
+
+      const barrel = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.05, 0.05, 0.6, 16),
+        new THREE.MeshStandardMaterial({ color: 0x111111 })
+      );
       barrel.rotation.x = Math.PI / 2;
       barrel.position.set(0, 0.05, 0.5);
+      // barrel.castShadow = true;
+      // barrel.receiveShadow = true;
       gun.add(barrel);
-      gun.rotation.y = Math.PI;
+      gun.rotation.y=Math.PI;
       return gun;
     }
     function createPlayer(color = 0x0077ff, admin=false, scale=0.6) {
       const group = new THREE.Group();
       const gun = createDetailedGun();
-      gun.position.set(0.5, 1, -0.6);
+      gun.position.set(0.5, 1, -0.6); // Adjust as needed
       group.add(gun);
       const torso = new THREE.Mesh(new THREE.BoxGeometry(1, 1.5, 0.5), new THREE.MeshStandardMaterial({ color }));
       torso.position.y = 1.5;
+      // torso.castShadow=true;
+      // torso.receiveShadow=true;
       group.add(torso);
+
       const head = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.6, 0.6), new THREE.MeshStandardMaterial({ color: 0xffcc99 }));
       head.position.y = 2.4;
+      // head.castShadow=true;
+      // head.receiveShadow=true;
       group.add(head);
+
       const armMaterial = new THREE.MeshStandardMaterial({ color });
       const leftArm = new THREE.Mesh(new THREE.BoxGeometry(0.3, 1.2, 0.3), armMaterial);
       const rightArm = leftArm.clone();
+      // leftArm.castShadow=true;
+      // leftArm.receiveShadow=true;
+      // rightArm.castShadow=true;
+      // rightArm.receiveShadow=true;
       leftArm.position.set(-0.65, 1.5, 0);
       rightArm.position.set(0.65, 1.5, 0);
       group.add(leftArm, rightArm);
+
       const legMaterial = new THREE.MeshStandardMaterial({ color: 0x333333 });
       const leftLeg = new THREE.Mesh(new THREE.BoxGeometry(0.4, 2.3, 0.4), legMaterial);
       const rightLeg = leftLeg.clone();
+      // leftLeg.castShadow=true;
+      // leftLeg.receiveShadow=true;
+      // rightLeg.castShadow=true;
+      // rightLeg.receiveShadow=true;
       leftLeg.position.set(-0.3, 0.3, 0);
       rightLeg.position.set(0.3, 0.3, 0);
       group.add(leftLeg, rightLeg);
-      if(admin===false){ group.scale.set(scale, scale, scale); }
+      if(admin===false){
+        group.scale.set(scale, scale, scale);
+      }
+      
       group.userData = { leftArm, rightArm, leftLeg, rightLeg, walkTime: 0 };
+
       return group;
     }
     const player = createPlayer();
@@ -587,7 +826,8 @@
     scene.add(player);
     function createHealthBar(p) {
         const canvas = document.createElement('canvas');
-        canvas.width = 128; canvas.height = 16;
+        canvas.width = 128;
+        canvas.height = 16;
         const context = canvas.getContext('2d');
         context.fillStyle = 'green';
         context.fillRect(0, 0, 128, 16);
@@ -595,10 +835,11 @@
         const material = new THREE.SpriteMaterial({ map: texture });
         const sprite = new THREE.Sprite(material);
         sprite.scale.set(2, 0.25, 1);
-        sprite.position.set(0, 2.5, 0);
+        sprite.position.set(0, 2.5, 0); // Position above the player's head
         p.add(sprite);
         p.healthBar = { sprite, context, texture };
     }
+    // Initialize player health here (added fix)
     let velocityY = 0;
     let onGround = false;
     player.health = 100;
@@ -611,7 +852,12 @@
     const keys = {};
     document.addEventListener('keydown', e => keys[e.key.toLowerCase()] = true);
     document.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
-    document.body.addEventListener('click', () => { if (started){ renderer.domElement.requestPointerLock(); } });
+    document.body.addEventListener('click', () => {
+      if (started){
+        renderer.domElement.requestPointerLock();
+      }
+    });
+
     document.addEventListener('pointerlockchange', () => {
       if (document.pointerLockElement === renderer.domElement) {
         document.addEventListener('mousemove', onMouseMove, false);
@@ -620,7 +866,11 @@
       }
     });
     let startX, startY;
-    document.addEventListener('touchstart', (e)=>{ startX=e.touches[0].clientX; startY=e.touches[0].clientY; });
+    document.addEventListener('touchstart', (e)=>{
+      startX=e.touches[0].clientX;
+      startY=e.touches[0].clientY;
+    });
+
     document.addEventListener('touchmove', onTouchMove, false);
     function onMouseMove(event) {
       const movementX = event.movementX || 0;
@@ -632,9 +882,10 @@
     function onTouchMove(event) {
       const nowX = event.touches[0].clientX || 0;
       const nowY = event.touches[0].clientY || 0;
-      const movementX = nowX - startX;
-      const movementY = nowY - startY;
-      startX = nowX; startY = nowY;
+      const movementX=nowX-startX;
+      const movementY=nowY-startY;
+      startX=nowX;
+      startY=nowY;
       yaw -= movementX * 0.002;
       pitch -= movementY * 0.002;
       pitch = Math.max(-Math.PI / 2 + 0.1, Math.min(Math.PI / 2 - 0.1, pitch));
@@ -643,22 +894,33 @@
       if (event.key.toLowerCase() === 't' && admin) {
         const targetName = prompt("Enter the screen name of the player to teleport to:");
         if (!targetName) return;
+
         db.ref('players').once('value').then(snapshot => {
           const players = snapshot.val() || {};
           let found = false;
+
           for (const id in players) {
             const pdata = players[id];
             if (pdata.screenName?.toLowerCase() === targetName.toLowerCase()) {
+              // Found the target
               player.position.set(pdata.x, pdata.y, pdata.z);
-              db.ref('players/' + playerId).update({ x: pdata.x, y: pdata.y, z: pdata.z });
+              db.ref('players/' + playerId).update({
+                x: pdata.x,
+                y: pdata.y,
+                z: pdata.z
+              });
               found = true;
               break;
             }
           }
-          if (!found) { alert("Player with that screen name not found."); }
+
+          if (!found) {
+            alert("Player with that screen name not found.");
+          }
         });
       }
     });
+
     document.addEventListener('wheel', (event) => {
       zoomDistance += event.deltaY * 0.01;
       zoomDistance = Math.max(0, Math.min(25, zoomDistance));
@@ -667,57 +929,75 @@
     const crosshair = document.getElementById('crosshair');
     var standingPlatform = null;
     let gameTicks = 0;
-    let lightningTicks = 0;
+    let lightningTicks=0;
     let lightningID = null;
     let lightningRef = null;
-    let toStrikeX = null;
-    let toStrikeZ = null;
+    let toStrikeX=null;
+    let toStrikeZ=null;
     let prevL = null;
     const bossTele = [];
     makePlatform(-50, -20, 1, 3, 0.5, 10, scene, bossTele, 0x00fff7);
-
+    
     function animate() {
         gameTicks++;
         let phasing = false;
-        let callLightning = false;
+        let callLightning=false;
         requestAnimationFrame(animate);
+
         const direction = new THREE.Vector3();
         const speed = 0.1;
         var oldPosition = player.position.clone();
-        if (keys['w'] && !climbing) direction.z -= 1;
+        if (keys['w']&&!climbing) direction.z -= 1;
         if (keys['s']) direction.z += 1;
         if (keys['a']) direction.x -= 1;
         if (keys['d']) direction.x += 1;
-        if (keys['p']) phasing = true;
-        if (keys['l'] && admin) callLightning = true;
+        if (keys['p']) phasing=true;
+        if (keys['l'] && admin) callLightning=true;
         checkLadderClimb();
-        if (keys['arrowleft']) { yaw += 15 * 0.002; }
-        if (keys['arrowright']) { yaw -= 15 * 0.002; }
-        if (keys['arrowup']) { direction.z -= 1; }
-        if (keys['arrowdown']) { direction.z += 1; }
+        if (keys['arrowleft']) {
+          yaw += 15 * 0.002;
+        }
+        if (keys['arrowright']) {
+          yaw-=15*0.002
+        }
+        if (keys['arrowup']) {
+          direction.z -= 1;
+        }
+        if (keys['arrowdown']) {
+          direction.z += 1;
+        }
         direction.applyEuler(new THREE.Euler(0, yaw + Math.PI, 0));
         direction.normalize();
-        if (!onGround){ velocityY -= 0.01; }
+        if (!onGround){
+          velocityY -= 0.01;
+        }
         onGround = false;
         player.position.y += velocityY;
         var bboxplayer = new THREE.Box3().setFromObject(player);
         for (const p of platforms) {
           bboxobj = new THREE.Box3().setFromObject(p);
           if (bboxplayer.intersectsBox(bboxobj)) {
-            if (player.position.y > p.position.y + p.geometry.parameters.height/2){
-              onGround = true; standingPlatform = p; velocityY = 0; break;
+            if (player.position.y>p.position.y+p.geometry.parameters.height/2){
+              onGround = true;
+              standingPlatform=p;
+              velocityY=0;
+              
+              break;
             }
-            player.position.y = oldPosition.y;
+            player.position.y=oldPosition.y;
           }
         }
         for (const m of markers) {
           bboxobj = new THREE.Box3().setFromObject(m);
           if (bboxplayer.intersectsBox(bboxobj)) {
-            if (player.position.y > m.position.y + m.geometry.parameters.height/2){
-              onGround = true; standingPlatform = m;
+            if (player.position.y>m.position.y+m.geometry.parameters.height/2){
+                onGround = true;
+                standingPlatform=m;
             }
-            velocityY = 0; player.position.y = oldPosition.y;
-            if (!markersFound.includes("Obby Marker")){
+            velocityY=0;
+            player.position.y=oldPosition.y;
+            if (markersFound.includes("Obby Marker")){
+            } else {
               alert("You found Obby Marker!");
               markersFound.push("Obby Marker");
               playerRef.onDisconnect().update({ Achievements: markersFound.join(', ') });
@@ -725,285 +1005,437 @@
             break;
           }
         }
-        let testPosition = player.position.clone();
-        testPosition.x += direction.x * speed;
-        let testBox = new THREE.Box3().setFromObject(player);
-        let offset = testPosition.clone().sub(player.position);
-        testBox.translate(offset);
-        let blocked = false;
-        for (const p of platforms) {
-          var bboxobj = new THREE.Box3().setFromObject(p);
-          if (testBox.intersectsBox(bboxobj)) {
-            if (standingPlatform != p || !onGround) {
-              if (admin != true || !phasing){ blocked = true; break; }
-            }
-          }
-        }
-        for (const m of markers) {
-          var bboxobj = new THREE.Box3().setFromObject(m);
-          if (testBox.intersectsBox(bboxobj)) {
-            if (standingPlatform != m || !onGround) {
-              blocked = true;
-              if (!markersFound.includes("Obby Marker")){
-                alert("You found Obby Marker!"); markersFound.push("Obby Marker");
-                playerRef.onDisconnect().update({ Achievements: markersFound.join(', ') });
-              }
-              break;
-            }
-          }
-        }
-        if (!blocked) { player.position.x = testPosition.x; }
-        testPosition = player.position.clone();
-        testPosition.z += direction.z * speed;
-        testBox = new THREE.Box3().setFromObject(player);
-        offset = testPosition.clone().sub(player.position);
-        testBox.translate(offset);
-        blocked = false;
-        for (const p of platforms) {
-          var bboxobj = new THREE.Box3().setFromObject(p);
-          if (testBox.intersectsBox(bboxobj)) {
-            if (standingPlatform != p || !onGround) {
-              if (admin != true || !phasing){ blocked = true; break; }
-            }
-          }
-        }
-        for (const m of markers) {
-          var bboxobj = new THREE.Box3().setFromObject(m);
-          if (testBox.intersectsBox(bboxobj)) {
-            if (standingPlatform != m || !onGround) {
-              blocked = true;
-              if (!markersFound.includes("Obby Marker")){
-                alert("You found Obby Marker!"); markersFound.push("Obby Marker");
-                playerRef.onDisconnect().update({ Achievements: markersFound.join(', ') });
-              }
-              break;
-            }
-          }
-        }
-        if (!blocked){ player.position.z = testPosition.z; }
-        bboxplayer = new THREE.Box3().setFromObject(player);
-        for (const k of killBricks) {
-          var bboxobj = new THREE.Box3().setFromObject(k);
-          if (bboxplayer.intersectsBox(bboxobj)) { player.position.set(0, 5, 0); }
-        }
-        bboxplayer = new THREE.Box3().setFromObject(player);
-        for (const l in lightnings){
-          for (const m of lightnings[l]) {
-            var bboxobj = new THREE.Box3().setFromObject(m);
-            if (bboxplayer.intersectsBox(bboxobj)) {
-              if (!callLightning){
-                if (prevL != m){
-                  player.health -= 50;
-                  if (player.health <= 0){ player.health = 100; player.position.set(0, 3, 0); onGround = true; }
-                  updateHealthBar(player); prevL = m;
+        // if (!inCar) {
+          let testPosition = player.position.clone();
+
+          testPosition.x += direction.x * speed;
+          let testBox = new THREE.Box3().setFromObject(player);
+          let offset = testPosition.clone().sub(player.position); 
+          testBox.translate(offset);
+          let blocked = false;
+          for (const p of platforms) {
+            var bboxobj = new THREE.Box3().setFromObject(p);
+            if (testBox.intersectsBox(bboxobj)) {
+              if (standingPlatform != p || !onGround) {
+                if (admin!=true || !phasing){
+                  blocked=true;
+                  break;
+                  // player.position.x = oldPosition.x; 
                 }
               }
             }
           }
-        }
-        bboxplayer = new THREE.Box3().setFromObject(player);
-        for (const bt of bossTele){
-          let bboxBossTele = new THREE.Box3().setFromObject(bt);
-          if (bboxplayer.intersectsBox(bboxBossTele)) { tpBoss(); }
-        }
-        for (const ct of cityTele){
-          let bboxCityTele = new THREE.Box3().setFromObject(ct);
-          if (bboxplayer.intersectsBox(bboxCityTele)) {
-            if (!markersFound.includes("Maze Completed")){
-              alert("You have completed the Maze");
-              markersFound.push("Maze Completed");
-              playerRef.onDisconnect().update({ Achievements: markersFound.join(', ') });
+          for (const m of markers) {
+            var bboxobj = new THREE.Box3().setFromObject(m);
+            if (testBox.intersectsBox(bboxobj)) {
+              if (standingPlatform != m || !onGround) {
+                // player.position.x = oldPosition.x;
+                blocked=true;
+                if (markersFound.includes("Obby Marker")){
+                } else {
+                  alert("You found Obby Marker!");
+                  markersFound.push("Obby Marker");
+                  playerRef.onDisconnect().update({ Achievements: markersFound.join(', ') });
+                }
+                break;
+              }
             }
-            tpCity();
           }
-        }
+          if (!blocked) {
+            player.position.x = testPosition.x;
+          }
+          testPosition = player.position.clone();
+
+          testPosition.z += direction.z * speed;
+          testBox = new THREE.Box3().setFromObject(player);
+          offset = testPosition.clone().sub(player.position); 
+          testBox.translate(offset);
+          blocked = false;
+          for (const p of platforms) {
+            var bboxobj = new THREE.Box3().setFromObject(p);
+            if (testBox.intersectsBox(bboxobj)) {
+              if (standingPlatform != p || !onGround) {
+                if (admin != true || !phasing){
+                  blocked=true;
+                  break;
+                }
+                
+              }
+            }
+          }
+          for (const m of markers) {
+            var bboxobj = new THREE.Box3().setFromObject(m);
+            if (testBox.intersectsBox(bboxobj)) {
+              if (standingPlatform != m || !onGround) {
+                // player.position.z = oldPosition.z; 
+                blocked=true;
+                if (markersFound.includes("Obby Marker")){
+                } else {
+                  alert("You found Obby Marker!");
+                  markersFound.push("Obby Marker");
+                  playerRef.onDisconnect().update({ Achievements: markersFound.join(', ') });
+                }
+                break;
+              }
+            }
+          }
+          if (!blocked){
+            player.position.z = testPosition.z;
+          }
+          bboxplayer = new THREE.Box3().setFromObject(player);
+          for (const k of killBricks) {
+            var bboxobj = new THREE.Box3().setFromObject(k);
+            if (bboxplayer.intersectsBox(bboxobj)) {
+              player.position.set(0, 5, 0);
+            }
+          }
+          bboxplayer = new THREE.Box3().setFromObject(player);
+          for (const l in lightnings){
+            for (const m of lightnings[l]) {
+              var bboxobj = new THREE.Box3().setFromObject(m);
+              if (bboxplayer.intersectsBox(bboxobj)) {
+                if (!callLightning){
+                  if (prevL!=m){
+                    player.health -= 50;
+                    if (player.health <= 0){
+                      player.health=100;
+                      player.position.set(0, 3, 0);
+                      onGround=True;
+                    }
+                    updateHealthBar(player);
+                    prevL=m;
+                  }
+                  
+                }
+              }
+            }
+          }
+          bboxplayer = new THREE.Box3().setFromObject(player);
+          for (const bt of bossTele){
+            let bboxBossTele = new THREE.Box3().setFromObject(bt);
+            if (bboxplayer.intersectsBox(bboxBossTele)) {
+              tpBoss();
+            }
+          }
+          for (const ct of cityTele){
+            let bboxCityTele = new THREE.Box3().setFromObject(ct);
+            if (bboxplayer.intersectsBox(bboxCityTele)) {
+              if (markersFound.includes("Maze Completed")){
+              } else {
+                alert("You have completed the Maze");
+                markersFound.push("Maze Completed");
+                playerRef.onDisconnect().update({ Achievements: markersFound.join(', ') });
+              }
+              tpCity();
+            }
+          }
+
         if (keys[' '] && onGround) {
           velocityY = 0.22;
-          if (admin != true){ onGround = false; }
+          if (admin!=true){
+            onGround = false;
+          }
         }
-        if (gameTicks % 5 === 0) {
-          lightningTicks += 1;
+
+        if (gameTicks%5 === 0) {
+          lightningTicks+=1;
           if (lightningTicks%5===0 && lightningTicks%10 != 0 && callLightning){
             lightningID = "lightning_" + Math.random().toString(36).substring(2, 10);
             lightningRef = db.ref('lightning/' + lightningID);
             lightningRef.set({ x: toStrikeX, z: toStrikeZ, ip: yourIP });
           } else if (lightningTicks%10 === 0) {
             lightningRef.remove();
-          } else if (lightningTicks%10 == 2){
-            toStrikeX = player.position.x;
-            toStrikeZ = player.position.z;
+          }
+          else if (lightningTicks%10 == 2){
+            toStrikeX=player.position.x;
+            toStrikeZ=player.position.z;
           }
           for (const l in lightnings) {
-            for (const m of lightnings[l]){ m.rotation.x = -m.rotation.x; }
+            for (const m of lightnings[l]){
+              m.rotation.x = -m.rotation.x;
+            }
           }
         }
+        
+
         for (const bt of bossTele){
           bt.material.forEach((mat) => {
-            if (mat.map){ mat.map.offset.x += 0.01; mat.map.offset.y += 0.005; }
+            if (mat.map) {
+              mat.map.offset.x += 0.01;
+              mat.map.offset.y += 0.005;
+            }
           });
         }
         for (const ct of cityTele) {
           ct.material.forEach((mat) => {
-            if (mat.map){ mat.map.offset.x += 0.01; mat.map.offset.y += 0.005; }
+            if (mat.map) {
+              mat.map.offset.x += 0.01;
+              mat.map.offset.y += 0.005;
+            }
           });
         }
         const lookDirection = new THREE.Vector3(
-          Math.sin(yaw) * Math.cos(pitch),
-          Math.sin(pitch),
-          Math.cos(yaw) * Math.cos(pitch)
+        Math.sin(yaw) * Math.cos(pitch),
+        Math.sin(pitch),
+        Math.cos(yaw) * Math.cos(pitch)
         );
+
+        // Player should face the same direction as camera
         player.rotation.y = yaw + Math.PI;
+        // if (inCar) {
+        //   car.rotation.z = yaw+Math.PI/2;
+        // }
+
+
         const isFirstPerson = zoomDistance < 2;
+
         if (isFirstPerson) {
-          crosshair.style.display = 'block';
+          crosshair.style.display='block';
           const eyeOffset = new THREE.Vector3(0, 1.7, 0);
           const cameraPosition = player.position.clone().add(eyeOffset);
           camera.position.copy(cameraPosition);
           camera.lookAt(cameraPosition.clone().add(lookDirection));
-          player.traverse(child => { if (child.isMesh) child.visible = false; });
-          player.healthBar.sprite.visible = false;
+
+          // Hide body in first-person
+          player.traverse(child => {
+              if (child.isMesh) child.visible = false;
+          });
+          player.healthBar.sprite.visible=false;
+
+
         } else {
-          crosshair.style.display = 'none';
-          player.healthBar.sprite.visible = true;
-          const cameraPosition = player.position.clone().sub(lookDirection.clone().multiplyScalar(zoomDistance));
-          cameraPosition.y += 2;
-          camera.position.copy(cameraPosition);
-          camera.lookAt(player.position.clone().add(new THREE.Vector3(0, 1, 0)));
-          player.traverse(child => { if (child.isMesh) child.visible = true; });
+          crosshair.style.display='none';
+          player.healthBar.sprite.visible=true;
+          // if (!inCar){
+            const cameraPosition = player.position.clone().sub(lookDirection.clone().multiplyScalar(zoomDistance));
+            cameraPosition.y += 2;
+            camera.position.copy(cameraPosition);
+            camera.lookAt(player.position.clone().add(new THREE.Vector3(0, 1, 0)));
+
+            // Show body in third-person
+            player.traverse(child => {
+                if (child.isMesh) child.visible = true;
+            });
+          // } else {
+          //   const cameraPosition = car.position.clone().sub(lookDirection.clone().multiplyScalar(zoomDistance));
+          //   cameraPosition.y += 2;
+          //   camera.position.copy(cameraPosition);
+          //   camera.lookAt(car.position.clone().add(new THREE.Vector3(0, 1, 0)));
+          // }
         }
+
+
+
         const isMoving = direction.lengthSq() > 0.0001;
         if (isMoving) player.userData.walkTime += 0.2;
         else player.userData.walkTime = 0;
+
         const swing = Math.sin(player.userData.walkTime) * 0.5;
         player.userData.leftArm.rotation.x = swing;
         player.userData.rightArm.rotation.x = -swing;
         player.userData.leftLeg.rotation.x = -swing;
         player.userData.rightLeg.rotation.x = swing;
+
+
+        // Update bullets positions
         updateBullets();
+
+        // Collision between bullets and other players or self
         bullets.forEach((bullet, bulletIndex) => {
+            // Check collision with other players
             let bboxBullet = new THREE.Box3().setFromObject(bullet.mesh);
             for (const id in otherPlayers) {
-              const other = otherPlayers[id];
+            const other = otherPlayers[id];
               if (bullet.mesh.position.distanceTo(other.position) < 1) {
-                if (typeof other.health === 'undefined') other.health = 100;
+                // Decrease health of other player on hit
+                if (typeof other.health === 'undefined') other.health = 100; // safety check
                 other.health -= 10;
                 updateHealthBar(other);
+                // Remove bullet
                 scene.remove(bullet.mesh);
                 bullets.splice(bulletIndex, 1);
-                db.ref('players/' + id).update({health: other.health});
+                db.ref('players/' + id).update({health:other.health});
                 break;
               }
             }
+            // Check collision with local player (friendly fire possible)
             if (bullet.mesh.position.distanceTo(player.position) < 1) {
                 player.health -= 10;
-                if (player.health <= 0){ player.health = 100; player.position.set(0, 3, 0); onGround = true; }
+                if (player.health <= 0){
+                  player.health=100;
+                  player.position.set(0, 3, 0);
+                  onGround=True;
+                }
                 updateHealthBar(player);
                 scene.remove(bullet.mesh);
                 bullets.splice(bulletIndex, 1);
             }
+
             for (const p of platforms){
               let bboxplat = new THREE.Box3().setFromObject(p);
               if (bboxBullet.intersectsBox(bboxplat)){
-                scene.remove(bullet.mesh); bullets.splice(bulletIndex, 1); break;
+                scene.remove(bullet.mesh);
+                bullets.splice(bulletIndex, 1);
+                break;
               }
             }
             for (let i = bots.length - 1; i >= 0; i--) {
               let b = bots[i];
               let bboxBot = new THREE.Box3().setFromObject(b.mesh);
               if (bboxBullet.intersectsBox(bboxBot)){
-                scene.remove(bullet.mesh); bullets.splice(bulletIndex, 1);
-                scene.remove(b.mesh); bots.splice(i, 1);
+                scene.remove(bullet.mesh);
+                bullets.splice(bulletIndex, 1);
+                scene.remove(b.mesh);
+                bots.splice(i, 1);
               }
             }
         });
-        if (player.health <= 0){ player.health = 100; player.position.set(0, 3, 0); onGround = true; }
+        if (player.health <= 0){
+          player.health=100;
+          player.position.set(0, 3, 0);
+          onGround=True;
+        }
+
         renderer.render(scene, camera);
+
+        // Update local player position in Firebase
         if (player.health !== lastHealth) {
-            playerRef.update({ x: player.position.x, y: player.position.y, z: player.position.z, health: player.health });
+            playerRef.update({
+                x: player.position.x,
+                y: player.position.y,
+                z: player.position.z,
+                health: player.health,
+            });
             lastHealth = player.health;
         } else {
-            playerRef.update({ x: player.position.x, y: player.position.y, z: player.position.z });
+            playerRef.update({
+                x: player.position.x,
+                y: player.position.y,
+                z: player.position.z,
+                // health: player.health
+            });
         }
-    }
 
-    let admin = null;
-    let auth = null;
-    playerRef.child("Achievements").on("value", snapshot => {
-      markersFound = snapshot.val().split(', ');
-      playerRef.onDisconnect().update({ Achievements: markersFound.join(', ') });
-      playerRef.update({ achrcv: true });
-      playerRef.child("Achievements").remove();
-    });
-    playerRef.child("admin").on("value", snapshot => { admin = snapshot.val(); checkStart(); });
-    playerRef.child("auth").on("value", snapshot => { auth = snapshot.val(); checkStart(); });
-    db.ref('lightning').on('value', snapshot => {
-      const data = snapshot.val() || {};
-      for (const id in data) {
-        if (!lightnings[id]) {
-          lightnings[id] = [];
-          for (let i = 0; i < 20; i+=2){
-            makePlatform(data[id].x, data[id].z, 3+(2.598076211*i), 0.5, 0.5, 3, scene, lightnings[id], 0xfcfc03, 1.0, -Math.PI/6);
-            makePlatform(data[id].x, data[id].z, 3+(2.598076211*(i+1)), 0.5, 0.5, 3, scene, lightnings[id], 0xfcfc03, 1.0, Math.PI/6);
-          }
-        }
-      }
-      for (const id in lightnings) {
-        if (!data[id]){
-          for (const lin of lightnings[id]) { scene.remove(lin); }
-          delete lightnings[id];
-        }
-      }
-    });
-    function checkStart() {
-      if (!started && admin != null && auth === true) {
-        playerRef.child("ip").once('value').then((snapshot)=>{
-          if(snapshot.exists()){
-            if (localStorage.getItem("fakeIP") == snapshot.val()){
-              started = true;
-              document.getElementById('loginContainer').style.display = 'none';
-              animate();
-            } else { alert("Bad IP"); }
-          }
-        });
-      } else if (auth === false && !started) {
-        alert("Incorrect username or password. If you created an account, your username is already taken.");
+    }
+  
+let admin = null;
+let auth = null;
+playerRef.child("Achievements").on("value", snapshot => {
+  markersFound = snapshot.val().split(', ');
+  playerRef.onDisconnect().update({ Achievements: markersFound.join(', ') });
+  playerRef.update({ achrcv: true });
+  playerRef.child("Achievements").remove();
+});
+playerRef.child("admin").on("value", snapshot => {
+  admin = snapshot.val();
+  checkStart();
+});
+
+playerRef.child("auth").on("value", snapshot => {
+  auth = snapshot.val();
+  checkStart();
+});
+
+db.ref('lightning').on('value', snapshot => {
+  const data = snapshot.val() || {};
+  for (const id in data) {
+    if (!lightnings[id]) {
+      lightnings[id]=[];
+      for (let i = 0; i < 20; i+=2){
+        makePlatform(data[id].x, data[id].z, 3+(2.598076211*i), 0.5, 0.5, 3, scene, lightnings[id], 0xfcfc03, 1.0, -Math.PI/6);
+        makePlatform(data[id].x, data[id].z, 3+(2.598076211*(i+1)), 0.5, 0.5, 3, scene, lightnings[id], 0xfcfc03, 1.0, Math.PI/6);
       }
     }
-    db.ref('players').on('value', snapshot => {
-      const data = snapshot.val() || {};
-      for (const id in data) {
-        const pdata = data[id];
-        if (id === playerId) {
-          player.position.set(pdata.x, pdata.y, pdata.z);
-          if (typeof pdata.health === 'number') { player.health = pdata.health; updateHealthBar(player); }
-        } else if (data[id].world === 'spawn') {
-          if (!otherPlayers[id]) {
-            const newPlayer = createPlayer(0xff0000, pdata.admin||false);
-            newPlayer.health = pdata.health ?? 100;
-            createHealthBar(newPlayer);
-            updateHealthBar(newPlayer);
-            const nameTag = createNameTag(pdata.screenName || 'Player');
-            nameTag.name = 'nameTag';
-            newPlayer.add(nameTag);
-            scene.add(newPlayer);
-            otherPlayers[id] = newPlayer;
-          }
-          const other = otherPlayers[id];
-          other.position.set(pdata.x, pdata.y, pdata.z);
-          const existingTag = other.getObjectByName('nameTag');
-          if (existingTag && existingTag.element && existingTag.element.innerText !== pdata.screenName) {
-            existingTag.element.innerText = pdata.screenName || 'Player';
-          }
-          if (typeof pdata.health === 'number') { other.health = pdata.health; updateHealthBar(other); }
+  }
+
+  for (const id in lightnings) {
+    if (!data[id]){
+      for (const lin of lightnings[id]) {
+        scene.remove(lin);
+      }
+      delete lightnings[id];
+    }
+  }
+});
+
+function checkStart() {
+  if (!started && admin != null && auth === true) {
+    let ipGood = false;
+    playerRef.child("ip").once('value')
+      .then((snapshot)=>{
+        if(snapshot.exists()){
+          // fetch('https://api.ipify.org?format=json')
+          //   .then(res => res.json())
+          //   .then(data => {
+              if (localStorage.getItem("fakeIP") == snapshot.val()){
+                started = true;
+                document.getElementById('loginContainer').style.display='none';
+                animate();
+              } else {alert("Bad IP");}
+            // });
         }
+      });
+  } else if (auth === false && !started) {
+    alert("Incorrect username or password. If you created an account, your username is already taken.");
+  }
+}
+ db.ref('players').on('value', snapshot => {
+  const data = snapshot.val() || {};
+  for (const id in data) {
+    const pdata = data[id];
+    if (id === playerId) {
+      player.position.set(pdata.x, pdata.y, pdata.z);
+      if (typeof pdata.health === 'number') {
+        player.health = pdata.health;
+        updateHealthBar(player);
+      }
+      // Do NOT overwrite player.health here to avoid losing local health changes
+    } else if (data[id].world == 'spawn') {
+      // For other players, update position and health fully from Firebase
+      if (!otherPlayers[id]) {
+        const newPlayer = createPlayer(0xff0000, pdata.admin||false);
+        newPlayer.health = pdata.health ?? 100;
+        createHealthBar(newPlayer);
+        updateHealthBar(newPlayer);
+
+        const nameTag = createNameTag(pdata.screenName || 'Player');
+        nameTag.name = 'nameTag'; // set identifiable name
+        newPlayer.add(nameTag);
+
+        scene.add(newPlayer);
+        otherPlayers[id] = newPlayer;
       }
 
-      // ── FIXED: only remove a player from the scene if they are truly gone
-      // from Firebase OR have moved to a different world. Previously the three
-      // separate if-blocks could crash with a null-ref when data[id] existed
-      // but world was briefly unset during a world transition.
+      const other = otherPlayers[id];
+      other.position.set(pdata.x, pdata.y, pdata.z);
+
+      // Update name tag text only if it changed
+      const existingTag = other.getObjectByName('nameTag');
+      if (existingTag && existingTag.element && existingTag.element.innerText !== pdata.screenName) {
+        existingTag.element.innerText = pdata.screenName || 'Player';
+      }
+
+      if (typeof pdata.health === 'number') {
+        other.health = pdata.health;
+        updateHealthBar(other);
+      }
+
+    }
+  }
+
+  // Remove disconnected players...
+
+      // Remove players who left
       for (const id in otherPlayers) {
-        if (!data[id] || data[id].world === 'boss' || data[id].world === 'city') {
+        if (!data[id]) {
+          scene.remove(otherPlayers[id]);
+          delete otherPlayers[id];
+        }
+        if (data[id].world=='boss') {
+          scene.remove(otherPlayers[id]);
+          delete otherPlayers[id];
+        }
+        if (data[id].world=='city'){
           scene.remove(otherPlayers[id]);
           delete otherPlayers[id];
         }
